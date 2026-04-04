@@ -25,7 +25,7 @@ def fetch_apidoc_js(url: str = PROXMOX_APIDOC_JS_URL, timeout: int = 60) -> str:
             return response.read().decode("utf-8")
 
 
-def extract_api_schema_text(apidoc_source: str) -> str:
+def extract_api_schema_text(apidoc_source: str) -> str:  # noqa: C901
     """Extract the JSON array literal assigned to `const apiSchema = [...]`."""
 
     marker = "const apiSchema ="

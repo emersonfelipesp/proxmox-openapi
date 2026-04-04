@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main, testing, "v*"]
+    tags: ["v*"]
   pull_request:
     branches: [main, testing, "v*"]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -80,7 +81,7 @@ jobs:
   docker-images:
     name: Publish Docker images (Hub)
     needs: [lint, syntax, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/docker-hub-publish.yml
     with:
       source_ref: ${{ github.sha }}

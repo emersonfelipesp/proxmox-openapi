@@ -3,6 +3,7 @@ name: Release proxmox-openapi
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   prepare-release:
@@ -144,14 +145,14 @@ jobs:
 
   publish-docker:
     name: publish proxmox-openapi Docker image
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: [prepare-release, validate-testpypi]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -180,7 +181,7 @@ jobs:
 
   publish-pypi:
     name: publish to PyPI
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: [prepare-release, validate-testpypi]
     runs-on: ubuntu-latest
     steps:

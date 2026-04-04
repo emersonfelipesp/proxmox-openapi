@@ -41,5 +41,7 @@ uv.lock
 .DS_Store
 Thumbs.db
 
-# Generated
-generated/
+# Generated - but not the pre-generated proxmox API
+# (we commit that for users to have immediate access)
+proxmox_openapi/generated/proxmox/*
+!proxmox_openapi/generated/proxmox/latest/

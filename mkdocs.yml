@@ -47,7 +47,13 @@ nav:
   - Getting Started:
       - Installation: installation.md
       - Quick Start: quickstart.md
-  - User Guide:
+  - SDK Guide:
+      - Overview: sdk-guide.md
+      - Authentication & Sessions: sdk-authentication.md
+      - Virtual Machines: sdk-virtual-machines.md
+      - Examples & Recipes: sdk-examples.md
+  - API Modes:
+      - SDK Mock Usage: sdk-mock.md
       - Mock API Mode: mock-api.md
       - Real API Mode: real-api.md
       - API Reference: api-reference.md

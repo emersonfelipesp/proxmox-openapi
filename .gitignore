@@ -34,9 +34,6 @@ coverage.xml
 # Ruff
 .ruff_cache/
 
-#uv.lock is optional - we prefer not to commit it
-uv.lock
-
 # OS
 .DS_Store
 Thumbs.db

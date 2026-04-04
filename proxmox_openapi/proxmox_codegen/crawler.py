@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
-from pathlib import Path
-
-from proxmox_openapi.proxmox_codegen.utils import utc_now_iso
 
 _playwright_sync_api_available: bool | None = None
 

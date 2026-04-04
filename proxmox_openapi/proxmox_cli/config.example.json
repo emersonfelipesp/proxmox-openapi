@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "default_profile": "default",
+  "profiles": {
+    "default": {
+      "backend": "https",
+      "host": "proxmox.example.com",
+      "port": 8006,
+      "service": "PVE",
+      "user": "admin@pam",
+      "password": "",
+      "token_name": "cli-api",
+      "token_value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "verify_ssl": true,
+      "timeout": 30
+    },
+    "staging": {
+      "backend": "https",
+      "host": "staging-proxmox.example.com",
+      "port": 8006,
+      "service": "PVE",
+      "user": "admin@pam",
+      "token_value": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+      "verify_ssl": true,
+      "timeout": 30
+    },
+    "remote-ssh": {
+      "backend": "ssh_paramiko",
+      "host": "pve2.example.com",
+      "port": 22,
+      "service": "PVE",
+      "user": "root",
+      "password": "secure-ssh-password"
+    },
+    "local": {
+      "backend": "local",
+      "service": "PVE"
+    },
+    "mock": {
+      "backend": "mock",
+      "service": "PVE",
+      "custom": {
+        "version": "latest"
+      }
+    }
+  },
+  "global": {
+    "output_format": "auto",
+    "table_mode": "grid",
+    "colors": true,
+    "completion_shell": "bash",
+    "verbose": false,
+    "quiet": false
+  }
+}

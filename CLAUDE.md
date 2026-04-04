@@ -47,6 +47,12 @@ proxmox_openapi/
 # Install dependencies
 uv sync
 
+# Install git hooks (one-time setup)
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+
+# Run pre-commit checks (required before commit and push)
+uv run pre-commit run --all-files
+
 # Run linting
 ruff check .
 ruff format --check .
@@ -61,6 +67,16 @@ uv run python -c "import proxmox_openapi.mock_main"
 # Run tests
 pytest
 ```
+
+## Commit and Push Policy
+
+Before every `git commit` and every `git push`, run:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+If any hook fails, fix the issues and rerun until all hooks pass.
 
 ## Key Endpoints
 

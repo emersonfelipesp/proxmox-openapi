@@ -7,8 +7,8 @@ include = ["proxmox_openapi*"]
 
 [project]
 name = "proxmox-openapi"
-version = "0.0.1"
-description = "Schema-driven FastAPI package for Proxmox API: OpenAPI generation, mock data, and in-memory CRUD"
+version = "0.1.0"
+description = "pvesh-like CLI for Proxmox API with multi-backend support, performance profiling, and advanced configuration management"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -22,9 +22,17 @@ ssh = [
     "paramiko>=3.0",
     "openssh-wrapper>=0.4",
 ]
+cli = [
+    "typer[all]>=0.12.3",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+]
 all = [
     "paramiko>=3.0",
     "openssh-wrapper>=0.4",
+    "typer[all]>=0.12.3",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
 ]
 test = [
     "httpx>=0.28.1",
@@ -45,9 +53,15 @@ docs = [
 [dependency-groups]
 dev = [
     "ruff>=0.15.8",
+    "mypy>=1.8.0",
+    "pre-commit>=4.3.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
 ]
 
 [project.scripts]
+proxmox = "proxmox_openapi.proxmox_cli.cli:cli_main"
+proxmox-cli = "proxmox_openapi.proxmox_cli.cli:cli_main"
 proxmox-openapi-codegen = "proxmox_openapi.proxmox_codegen.cli:main"
 proxmox-openapi-mock = "proxmox_openapi.mock_main:run"
 

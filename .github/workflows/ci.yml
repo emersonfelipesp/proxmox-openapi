@@ -80,7 +80,7 @@ jobs:
   docker-images:
     name: Publish Docker images (Hub)
     needs: [lint, syntax, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
     uses: ./.github/workflows/docker-hub-publish.yml
     with:
       source_ref: ${{ github.sha }}

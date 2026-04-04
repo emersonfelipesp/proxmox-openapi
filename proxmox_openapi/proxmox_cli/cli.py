@@ -8,7 +8,7 @@ from typing import Literal, Optional
 import typer
 
 # Import new CLI modules for registration
-from . import batch, completion, config_commands, performance  # noqa: F401
+from . import batch, commands, completion, config_commands, performance  # noqa: F401
 from .app import app, setup_logging
 from .exceptions import ProxmoxCLIError
 

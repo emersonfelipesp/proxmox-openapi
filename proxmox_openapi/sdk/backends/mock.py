@@ -81,7 +81,9 @@ class MockBackend:
         nodes = await backend.request("GET", "/api2/json/nodes")
     """
 
-    def __init__(self, schema_version: str = DEFAULT_PROXMOX_OPENAPI_TAG, api_path_prefix: str = "/api2/json") -> None:
+    def __init__(
+        self, schema_version: str = DEFAULT_PROXMOX_OPENAPI_TAG, api_path_prefix: str = "/api2/json"
+    ) -> None:
         self._schema_version = schema_version
         self._api_path_prefix = api_path_prefix
         self._schema: dict[str, Any] | None = None
@@ -119,14 +121,14 @@ class MockBackend:
         self._ensure_schema()
 
         method_upper = method.upper()
-        
+
         # Strip API path prefix to match against schema paths
         schema_path = path
         if self._api_path_prefix and path.startswith(self._api_path_prefix):
-            schema_path = path[len(self._api_path_prefix):]
-            if not schema_path.startswith('/'):
-                schema_path = '/' + schema_path
-        
+            schema_path = path[len(self._api_path_prefix) :]
+            if not schema_path.startswith("/"):
+                schema_path = "/" + schema_path
+
         path_item, path_params = _match_path(self._paths, schema_path)
 
         if path_item is None:

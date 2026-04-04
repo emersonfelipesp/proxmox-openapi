@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from proxmox_openapi.sdk.sync import SyncProxmoxSDK
     from proxmox_openapi.sdk.resource import ProxmoxResource
+    from proxmox_openapi.sdk.sync import SyncProxmoxSDK
 
 from .config import BackendConfig
 from .exceptions import BackendError

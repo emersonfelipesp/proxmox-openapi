@@ -42,6 +42,7 @@ def main() -> None:
 
     # Change to project root
     import os
+
     os.chdir(project_root)
 
     steps = [

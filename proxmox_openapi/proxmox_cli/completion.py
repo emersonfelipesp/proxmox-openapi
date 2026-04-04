@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import typer
 
 from proxmox_openapi.proxmox_cli.app import app
@@ -74,7 +72,7 @@ def install_zsh() -> None:
 _proxmox() {
     local curcontext="$curcontext" state ret=1
     local -a commands
-    
+
     commands=(
         'get:Retrieve resources from the Proxmox API'
         'create:Create resources in the Proxmox API'
@@ -84,7 +82,7 @@ _proxmox() {
         'usage:Show API schema and usage information'
         'help-cmd:Show help for API endpoints'
     )
-    
+
     local -a global_opts=(
         '(--version)--version[Show version and exit]'
         '(-v --verbose)--verbose[Enable verbose logging]'
@@ -99,9 +97,9 @@ _proxmox() {
         '(-S --service)--service=[Proxmox service type]:service:(PVE PMG PBS)'
         '(-o --output)--output=[Output format]:format:(json yaml table text auto)'
     )
-    
+
     _arguments $global_opts '*::command:->cmd' && return
-    
+
     case $state in
         cmd)
             _describe commands commands

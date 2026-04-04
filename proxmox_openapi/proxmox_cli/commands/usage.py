@@ -45,4 +45,3 @@ def usage(
         typer.echo("Returns: [included in verbose output]")
     if verbose:
         typer.echo("\nDetailed schema information would be displayed here")
-

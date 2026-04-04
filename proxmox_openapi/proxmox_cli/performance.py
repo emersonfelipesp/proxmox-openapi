@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from statistics import mean, median, stdev
+from statistics import mean, median
 from typing import Any, Callable, Optional
 
 import typer
@@ -29,17 +29,14 @@ class PerformanceMetrics:
     def __str__(self) -> str:
         """Format as readable string."""
         if self.iterations == 1:
-            return (
-                f"{self.operation}: {self.total_time*1000:.2f}ms "
-                f"({self.total_time:.4f}s)"
-            )
+            return f"{self.operation}: {self.total_time * 1000:.2f}ms ({self.total_time:.4f}s)"
         return (
             f"{self.operation}:\n"
             f"  Total: {self.total_time:.2f}s\n"
-            f"  Min: {self.min_time*1000:.2f}ms\n"
-            f"  Max: {self.max_time*1000:.2f}ms\n"
-            f"  Avg: {self.avg_time*1000:.2f}ms\n"
-            f"  Median: {self.median_time*1000:.2f}ms\n"
+            f"  Min: {self.min_time * 1000:.2f}ms\n"
+            f"  Max: {self.max_time * 1000:.2f}ms\n"
+            f"  Avg: {self.avg_time * 1000:.2f}ms\n"
+            f"  Median: {self.median_time * 1000:.2f}ms\n"
             f"  Iterations: {self.iterations}"
         )
 
@@ -96,12 +93,8 @@ class Benchmark:
 
 @app.command()
 def benchmark(
-    iterations: int = typer.Option(
-        5, help="Number of iterations to run"
-    ),
-    path: str = typer.Option(
-        "/nodes", help="API path to benchmark"
-    ),
+    iterations: int = typer.Option(5, help="Number of iterations to run"),
+    path: str = typer.Option("/nodes", help="API path to benchmark"),
     backend: Optional[str] = typer.Option(None, help="Backend to use"),
 ) -> None:
     """Benchmark API performance.
@@ -138,9 +131,7 @@ def benchmark(
 @app.command()
 def perf_test(
     operation: str = typer.Argument("get", help="Operation type (get/create/list)"),
-    iterations: int = typer.Option(
-        10, help="Number of iterations"
-    ),
+    iterations: int = typer.Option(10, help="Number of iterations"),
 ) -> None:
     """Run performance tests.
 

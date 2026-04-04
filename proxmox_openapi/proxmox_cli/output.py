@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
 from pathlib import Path
+from typing import Any
 
 try:
     from rich.console import Console
-    from rich.table import Table
     from rich.syntax import Syntax
-    from rich.panel import Panel
-    from rich.text import Text
+    from rich.table import Table
 
     RICH_AVAILABLE = True
 except ImportError:

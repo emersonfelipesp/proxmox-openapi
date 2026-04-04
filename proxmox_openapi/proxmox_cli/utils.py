@@ -6,7 +6,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 from .exceptions import ParameterError, PathError
 

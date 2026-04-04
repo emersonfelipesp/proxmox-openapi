@@ -38,9 +38,13 @@ def main() -> None:
         print(f"    Found {len(vm_list)} VM(s) in mock data")
 
         print("\n[4] Updating the VM...")
-        updated = proxmox.nodes("pve").qemu(101).put(
-            name="sync-example-vm-updated",
-            memory=8192,
+        updated = (
+            proxmox.nodes("pve")
+            .qemu(101)
+            .put(
+                name="sync-example-vm-updated",
+                memory=8192,
+            )
         )
         print(f"    Updated: {updated}")
 

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from proxmox_openapi.proxmox_cli.exceptions import APIError, BackendError, PathError
-
 
 class ErrorSuggester:
     """Provides helpful suggestions for common errors."""

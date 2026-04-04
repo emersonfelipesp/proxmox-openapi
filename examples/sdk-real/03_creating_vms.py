@@ -14,6 +14,7 @@ To use a real Proxmox instance, update the connection parameters.
 """
 
 import asyncio
+
 from proxmox_openapi import ProxmoxSDK
 
 
@@ -29,7 +30,7 @@ async def create_minimal_vm(node: str) -> None:
                 cores=1,
             )
 
-            print(f"    ✓ VM created successfully!")
+            print("    ✓ VM created successfully!")
             print(f"      VMID: {result.get('vmid')}")
             print(f"      Name: {result.get('name')}")
             print(f"      Memory: {result.get('memory')} MB")
@@ -62,7 +63,7 @@ async def create_standard_vm(node: str) -> None:
                 description="Production web server",
             )
 
-            print(f"    ✓ VM created successfully!")
+            print("    ✓ VM created successfully!")
             print(f"      VMID: {result.get('vmid')}")
             print(f"      Name: {result.get('name')}")
             print(f"      Memory: {result.get('memory')} MB")
@@ -99,11 +100,11 @@ async def create_cloud_init_vm(node: str) -> None:
                 description="Cloud-init enabled VM",
             )
 
-            print(f"    ✓ Cloud-init VM created successfully!")
+            print("    ✓ Cloud-init VM created successfully!")
             print(f"      VMID: {result.get('vmid')}")
             print(f"      Name: {result.get('name')}")
-            print(f"      CI User: ubuntu")
-            print(f"      CI Type: nocloud")
+            print("      CI User: ubuntu")
+            print("      CI Type: nocloud")
 
         except Exception as e:
             print(f"    ✗ Error: {e}")
@@ -132,7 +133,7 @@ async def create_multi_disk_vm(node: str) -> None:
                 description="Multi-disk data VM",
             )
 
-            print(f"    ✓ Multi-disk VM created successfully!")
+            print("    ✓ Multi-disk VM created successfully!")
             print(f"      VMID: {result.get('vmid')}")
             print(f"      Name: {result.get('name')}")
             print(f"      Primary Disk: {result.get('virtio0')}")
@@ -163,7 +164,7 @@ async def create_multi_network_vm(node: str) -> None:
                 description="Multi-network VM",
             )
 
-            print(f"    ✓ Multi-network VM created successfully!")
+            print("    ✓ Multi-network VM created successfully!")
             print(f"      VMID: {result.get('vmid')}")
             print(f"      Name: {result.get('name')}")
             print(f"      Management Network: {result.get('net0')}")
@@ -190,7 +191,7 @@ async def batch_create_vms(node: str) -> None:
 
         for config in vm_configs:
             try:
-                result = await proxmox.nodes(node).qemu.post(
+                await proxmox.nodes(node).qemu.post(
                     vmid=config["vmid"],
                     name=config["name"],
                     memory=2048,
@@ -219,7 +220,7 @@ async def main() -> None:
     async with ProxmoxSDK.mock() as proxmox:
         nodes = await proxmox.nodes.get()
         if nodes:
-            node = nodes[0]['node']
+            node = nodes[0]["node"]
             print(f"\nUsing node: {node}")
 
             # Run examples

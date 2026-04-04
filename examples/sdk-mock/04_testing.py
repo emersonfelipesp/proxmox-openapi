@@ -8,6 +8,7 @@ Demonstrates:
 """
 
 import asyncio
+
 from proxmox_openapi.sdk import ProxmoxSDK
 
 
@@ -35,7 +36,7 @@ async def test_vm_creation_and_retrieval() -> None:
         )
         assert created.get("vmid") == 300, "Created VM should have correct vmid"
         assert created.get("name") == "test-vm", "Created VM should have correct name"
-        
+
         # Retrieve list
         retrieved_list = await proxmox.nodes("pve").qemu.get()
         assert retrieved_list is not None, "Retrieved result should not be None"
@@ -48,11 +49,15 @@ async def test_vm_update() -> None:
     async with ProxmoxSDK.mock() as proxmox:
         # Create
         await proxmox.nodes("pve").qemu.post(vmid=301, name="update-test")
-        
+
         # Update (mock returns None for updates)
-        await proxmox.nodes("pve").qemu(301).put(
-            name="updated-name",
-            memory=4096,
+        await (
+            proxmox.nodes("pve")
+            .qemu(301)
+            .put(
+                name="updated-name",
+                memory=4096,
+            )
         )
         print("    ✓ PASS: VM update works correctly")
 
@@ -63,13 +68,13 @@ async def test_vm_deletion() -> None:
     async with ProxmoxSDK.mock() as proxmox:
         # Create
         await proxmox.nodes("pve").qemu.post(vmid=302, name="delete-test")
-        
+
         # Verify creation (by listing)
         vms = await proxmox.nodes("pve").qemu.get()
         assert vms is not None, "VM list should exist"
-        
+
         # Delete
-        result = await proxmox.nodes("pve").qemu(302).delete()
+        await proxmox.nodes("pve").qemu(302).delete()
         print("    ✓ PASS: VM deletion works correctly")
 
 
@@ -78,13 +83,13 @@ async def main() -> None:
     print("=" * 60)
     print("Example 4: Testing with Mock SDK")
     print("=" * 60)
-    
+
     try:
         await test_node_listing()
         await test_vm_creation_and_retrieval()
         await test_vm_update()
         await test_vm_deletion()
-        
+
         print("\n" + "=" * 60)
         print("✅ All tests passed!")
         print("=" * 60)

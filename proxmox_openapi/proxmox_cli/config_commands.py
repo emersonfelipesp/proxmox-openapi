@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 
 from proxmox_openapi.proxmox_cli.app import app
-from proxmox_openapi.proxmox_cli.config import ConfigManager, BackendConfig
+from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
 
 
 @app.command()

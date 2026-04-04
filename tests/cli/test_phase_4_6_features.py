@@ -9,11 +9,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from proxmox_openapi.proxmox_cli.batch import batch
-from proxmox_openapi.proxmox_cli.cache import Cache, CacheableSDKBridge
+from proxmox_openapi.proxmox_cli.cache import Cache
 from proxmox_openapi.proxmox_cli.cli import app
 from proxmox_openapi.proxmox_cli.completion import completion_app
-from proxmox_openapi.proxmox_cli.config_commands import config_list
 from proxmox_openapi.proxmox_cli.performance import Benchmark, PerformanceMetrics
 from proxmox_openapi.proxmox_cli.themes.themes import get_theme, list_themes
 
@@ -76,6 +74,7 @@ class TestCacheSystem:
             cache.set("test_key", {"data": "value"})
 
             import time
+
             time.sleep(0.1)
 
             result = cache.get("test_key")
@@ -246,6 +245,7 @@ class TestEndToEndAdvancedFeatures:
 
     def test_benchmark_consistency(self) -> None:
         """Test benchmark gives consistent results."""
+
         def test_func() -> None:
             """Simple test function."""
             pass

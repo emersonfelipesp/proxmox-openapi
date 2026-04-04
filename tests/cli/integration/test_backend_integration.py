@@ -6,9 +6,9 @@ import pytest
 from typer.testing import CliRunner
 
 from proxmox_openapi.proxmox_cli.cli import app
-from proxmox_openapi.proxmox_cli.config import ConfigManager, BackendConfig
-from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
+from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
 from proxmox_openapi.proxmox_cli.output import OutputFormatter
+from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 
 
 @pytest.fixture

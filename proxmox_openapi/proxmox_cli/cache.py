@@ -120,9 +120,7 @@ class CacheableSDKBridge:
         self.bridge = bridge
         self.cache = cache or Cache()
 
-    def get(
-        self, path: str, use_cache: bool = True
-    ) -> Any:
+    def get(self, path: str, use_cache: bool = True) -> Any:
         """Get resource with optional caching.
 
         Args:

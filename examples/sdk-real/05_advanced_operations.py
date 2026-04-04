@@ -13,6 +13,7 @@ This example uses the mock backend by default.
 """
 
 import asyncio
+
 from proxmox_openapi import ProxmoxSDK
 
 
@@ -24,10 +25,12 @@ async def list_storage() -> None:
             storage = await proxmox.storage.get(enabled=1)
             print(f"    Available storage: {len(storage)} pool(s)")
             for store in storage:
-                content_types = store.get('content', '').split(',')
-                enabled = "✓" if store.get('enabled') else "✗"
-                print(f"      [{enabled}] {store['storage']:20} Type: {store['type']:10} "
-                      f"Content: {','.join(content_types[:2])}")
+                content_types = store.get("content", "").split(",")
+                enabled = "✓" if store.get("enabled") else "✗"
+                print(
+                    f"      [{enabled}] {store['storage']:20} Type: {store['type']:10} "
+                    f"Content: {','.join(content_types[:2])}"
+                )
         except Exception as e:
             print(f"    ✗ Error: {e}")
 
@@ -37,18 +40,22 @@ async def create_backup(node: str, vmid: int) -> None:
     print(f"\n[2] Creating backup of VM {vmid}...")
     async with ProxmoxSDK.mock() as proxmox:
         try:
-            result = await proxmox.nodes(node).qemu(vmid).backup.post(
-                storage="local",
-                mode="snapshot",
-                compress="zstd",
-                notes="API backup",
+            result = (
+                await proxmox.nodes(node)
+                .qemu(vmid)
+                .backup.post(
+                    storage="local",
+                    mode="snapshot",
+                    compress="zstd",
+                    notes="API backup",
+                )
             )
 
-            print(f"    ✓ Backup initiated")
-            if result.get('upid'):
+            print("    ✓ Backup initiated")
+            if result.get("upid"):
                 print(f"      Task ID: {result['upid']}")
-                print(f"      Storage: local")
-                print(f"      Compression: zstd")
+                print("      Storage: local")
+                print("      Compression: zstd")
 
         except Exception as e:
             print(f"    ✗ Error: {e}")
@@ -60,15 +67,19 @@ async def create_snapshot(node: str, vmid: int) -> None:
     async with ProxmoxSDK.mock() as proxmox:
         try:
             snapshot_name = "pre-update-snapshot"
-            result = await proxmox.nodes(node).qemu(vmid).snapshot.post(
-                snapname=snapshot_name,
-                description="Pre-update snapshot",
-                vmstate=1,  # Include memory state
+            await (
+                proxmox.nodes(node)
+                .qemu(vmid)
+                .snapshot.post(
+                    snapname=snapshot_name,
+                    description="Pre-update snapshot",
+                    vmstate=1,  # Include memory state
+                )
             )
 
-            print(f"    ✓ Snapshot created")
+            print("    ✓ Snapshot created")
             print(f"      Name: {snapshot_name}")
-            print(f"      Include VM State: yes")
+            print("      Include VM State: yes")
 
         except Exception as e:
             print(f"    ✗ Error: {e}")
@@ -83,7 +94,7 @@ async def list_snapshots(node: str, vmid: int) -> None:
             print(f"    Found {len(snapshots)} snapshot(s)")
             for snapshot in snapshots:
                 print(f"      • {snapshot.get('name')}")
-                if snapshot.get('description'):
+                if snapshot.get("description"):
                     print(f"        Description: {snapshot['description']}")
 
         except Exception as e:
@@ -97,16 +108,20 @@ async def monitor_node_resources(node: str) -> None:
         try:
             status = await proxmox.nodes(node).status.get()
 
-            print(f"    Node Status:")
+            print("    Node Status:")
             print(f"      Status:        {status.get('status', 'unknown')}")
             print(f"      Uptime:        {status.get('uptime', 0) / 3600 / 24:.1f} days")
             print(f"      CPU:           {status.get('cpu', 0):.1%}")
-            print(f"      Memory Used:   {status.get('memory', 0) / 1024 / 1024 / 1024:.2f} GB "
-                  f"/ {status.get('maxmem', 0) / 1024 / 1024 / 1024:.2f} GB")
-            print(f"      Disk Used:     {status.get('disk', 0) / 1024 / 1024 / 1024:.2f} GB "
-                  f"/ {status.get('maxdisk', 0) / 1024 / 1024 / 1024:.2f} GB")
+            print(
+                f"      Memory Used:   {status.get('memory', 0) / 1024 / 1024 / 1024:.2f} GB "
+                f"/ {status.get('maxmem', 0) / 1024 / 1024 / 1024:.2f} GB"
+            )
+            print(
+                f"      Disk Used:     {status.get('disk', 0) / 1024 / 1024 / 1024:.2f} GB "
+                f"/ {status.get('maxdisk', 0) / 1024 / 1024 / 1024:.2f} GB"
+            )
 
-            load = status.get('loadavg', [0, 0, 0])
+            load = status.get("loadavg", [0, 0, 0])
             print(f"      Load Average:  {load[0]:.2f}, {load[1]:.2f}, {load[2]:.2f}")
 
         except Exception as e:
@@ -120,10 +135,10 @@ async def get_cluster_info() -> None:
         try:
             cluster_status = await proxmox.cluster.status.get()
 
-            nodes = [c for c in cluster_status if c.get('type') == 'node']
+            nodes = [c for c in cluster_status if c.get("type") == "node"]
             print(f"    Cluster Nodes: {len(nodes)}")
             for node in nodes:
-                status = "online" if node.get('online') else "offline"
+                status = "online" if node.get("online") else "offline"
                 print(f"      • {node['name']:15} {status:10} IP: {node.get('ip', 'N/A')}")
 
         except Exception as e:
@@ -139,20 +154,22 @@ async def find_resource_heavy_vms(node: str) -> None:
 
             vm_resources = []
             for vm in vms:
-                config = await proxmox.nodes(node).qemu(vm['vmid']).config.get()
-                vm_resources.append({
-                    'name': vm['name'],
-                    'vmid': vm['vmid'],
-                    'memory_gb': config.get('memory', 0) / 1024,
-                    'cores': config.get('cores', 0),
-                })
+                config = await proxmox.nodes(node).qemu(vm["vmid"]).config.get()
+                vm_resources.append(
+                    {
+                        "name": vm["name"],
+                        "vmid": vm["vmid"],
+                        "memory_gb": config.get("memory", 0) / 1024,
+                        "cores": config.get("cores", 0),
+                    }
+                )
 
             # Sort by memory
-            vm_resources.sort(key=lambda x: x['memory_gb'], reverse=True)
+            vm_resources.sort(key=lambda x: x["memory_gb"], reverse=True)
 
-            print(f"    Top resource-consuming VMs:")
+            print("    Top resource-consuming VMs:")
             print(f"      {'Name':<20} {'Memory (GB)':<12} {'Cores':<8}")
-            print(f"      {'-'*40}")
+            print(f"      {'-' * 40}")
             for vm in vm_resources[:5]:
                 print(f"      {vm['name']:<20} {vm['memory_gb']:>10.1f}  {vm['cores']:>6}")
 
@@ -162,12 +179,12 @@ async def find_resource_heavy_vms(node: str) -> None:
 
 async def create_vm_with_retry(node: str, max_retries: int = 3) -> None:
     """Create a VM with retry logic on failure."""
-    print(f"\n[8] Creating VM with retry logic...")
+    print("\n[8] Creating VM with retry logic...")
 
     for attempt in range(1, max_retries + 1):
         try:
             async with ProxmoxSDK.mock() as proxmox:
-                result = await proxmox.nodes(node).qemu.post(
+                await proxmox.nodes(node).qemu.post(
                     vmid=999,
                     name="retry-test-vm",
                     memory=1024,
@@ -179,7 +196,7 @@ async def create_vm_with_retry(node: str, max_retries: int = 3) -> None:
 
         except Exception as e:
             if attempt < max_retries:
-                wait_time = 2 ** attempt  # Exponential backoff
+                wait_time = 2**attempt  # Exponential backoff
                 print(f"    ✗ Attempt {attempt} failed: {str(e)[:50]}...")
                 print(f"      Retrying in {wait_time}s...")
                 await asyncio.sleep(wait_time)
@@ -196,7 +213,7 @@ async def main() -> None:
     async with ProxmoxSDK.mock() as proxmox:
         nodes = await proxmox.nodes.get()
         if nodes:
-            node = nodes[0]['node']
+            node = nodes[0]["node"]
             vms = await proxmox.nodes(node).qemu.get()
 
             print(f"\nUsing node: {node}")
@@ -207,7 +224,7 @@ async def main() -> None:
             await monitor_node_resources(node)
 
             if vms:
-                vmid = vms[0]['vmid']
+                vmid = vms[0]["vmid"]
                 print(f"Using VM: {vms[0]['name']} (ID: {vmid})")
 
                 await create_backup(node, vmid)

@@ -19,6 +19,7 @@ Or edit the example values below.
 
 import asyncio
 import os
+
 from proxmox_openapi import ProxmoxSDK
 
 
@@ -36,7 +37,7 @@ async def example_api_token_auth() -> None:
     ) as proxmox:
         try:
             nodes = await proxmox.nodes.get()
-            print(f"✓ Connected successfully!")
+            print("✓ Connected successfully!")
             print(f"  Found {len(nodes)} node(s)")
         except Exception as e:
             print(f"✗ Connection failed (check credentials): {e}")
@@ -54,8 +55,8 @@ async def example_password_auth() -> None:
         password="my-password",  # Use env var in production!
     ) as proxmox:
         try:
-            nodes = await proxmox.nodes.get()
-            print(f"✓ Connected successfully!")
+            await proxmox.nodes.get()
+            print("✓ Connected successfully!")
         except Exception as e:
             print(f"✗ Connection failed: {e}")
 
@@ -73,8 +74,8 @@ async def example_ssh_key_auth() -> None:
         backend="ssh_paramiko",
     ) as proxmox:
         try:
-            nodes = await proxmox.nodes.get()
-            print(f"✓ Connected successfully via SSH!")
+            await proxmox.nodes.get()
+            print("✓ Connected successfully via SSH!")
         except Exception as e:
             print(f"✗ Connection failed: {e}")
 
@@ -93,7 +94,7 @@ def example_sync_wrapper() -> None:
     ) as proxmox:
         try:
             nodes = proxmox.nodes.get()
-            print(f"✓ Connected successfully (sync)!")
+            print("✓ Connected successfully (sync)!")
             print(f"  Found {len(nodes)} node(s)")
         except Exception as e:
             print(f"✗ Connection failed: {e}")
@@ -107,7 +108,7 @@ async def example_mock_backend() -> None:
 
     async with ProxmoxSDK.mock() as proxmox:
         nodes = await proxmox.nodes.get()
-        print(f"✓ Mock connection successful!")
+        print("✓ Mock connection successful!")
         print(f"  Mock nodes: {[n['node'] for n in nodes]}")
 
 

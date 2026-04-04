@@ -92,4 +92,3 @@ def delete(
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
-

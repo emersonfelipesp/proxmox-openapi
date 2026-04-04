@@ -89,10 +89,10 @@ def test_output_formatter() -> None:
 def test_exceptions() -> None:
     """Test CLI exceptions."""
     from proxmox_openapi.proxmox_cli.exceptions import (
-        ConfigError,
-        PathError,
-        ParameterError,
         BackendError,
+        ConfigError,
+        ParameterError,
+        PathError,
     )
 
     err = ConfigError("test config error")
@@ -114,7 +114,7 @@ def test_exceptions() -> None:
 
 def test_utils_validate_path() -> None:
     """Test path validation utility."""
-    from proxmox_openapi.proxmox_cli.utils import validate_api_path, extract_path_components
+    from proxmox_openapi.proxmox_cli.utils import extract_path_components, validate_api_path
 
     path = validate_api_path("/nodes/pve1/qemu/100")
     assert path == "/nodes/pve1/qemu/100"

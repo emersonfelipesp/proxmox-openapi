@@ -9,6 +9,7 @@ Demonstrates:
 """
 
 import asyncio
+
 from proxmox_openapi.sdk import ProxmoxSDK
 
 
@@ -35,21 +36,31 @@ async def main() -> None:
         all_vms = await proxmox.nodes("pve").qemu.get()
         print(f"    Total VMs: {len(all_vms)}")
         for vm in all_vms:
-            print(f"      - {vm.get('name')} (ID: {vm.get('vmid')}, Memory: {vm.get('memory')} bytes)")
+            print(
+                f"      - {vm.get('name')} (ID: {vm.get('vmid')}, Memory: {vm.get('memory')} bytes)"
+            )
 
         print("\n[UPDATE] Updating VM properties...")
-        updated = await proxmox.nodes("pve").qemu(200).put(
-            name="crud-vm-0-updated",
-            memory=4096,
-            cores=4,
+        updated = (
+            await proxmox.nodes("pve")
+            .qemu(200)
+            .put(
+                name="crud-vm-0-updated",
+                memory=4096,
+                cores=4,
+            )
         )
         print(f"    ✓ Updated: {updated.get('name')}")
         print(f"      Memory: {updated.get('memory')} bytes")
         print(f"      Cores: {updated.get('cores')}")
 
         print("\n[PATCH] Patching VM name only...")
-        patched = await proxmox.nodes("pve").qemu(201).patch(
-            name="crud-vm-1-patched",
+        patched = (
+            await proxmox.nodes("pve")
+            .qemu(201)
+            .patch(
+                name="crud-vm-1-patched",
+            )
         )
         print(f"    ✓ Patched: {patched.get('name')}")
 

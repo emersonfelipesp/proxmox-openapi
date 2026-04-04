@@ -18,9 +18,7 @@ from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 def batch(
     file: str = typer.Argument(..., help="JSON file with batch operations"),
     dry_run: bool = typer.Option(False, help="Show what would be executed"),
-    continue_on_error: bool = typer.Option(
-        False, help="Continue if operation fails"
-    ),
+    continue_on_error: bool = typer.Option(False, help="Continue if operation fails"),
     backend: Optional[str] = typer.Option(None, help="Backend to use"),
 ) -> None:
     """Execute batch operations from a JSON file.
@@ -90,7 +88,7 @@ def batch(
                 else:
                     raise ParameterError(f"Unknown action: {action}")
 
-                typer.echo(f"  ✓ Success")
+                typer.echo("  ✓ Success")
                 results.append(
                     {
                         "op": i,

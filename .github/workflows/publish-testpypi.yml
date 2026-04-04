@@ -145,7 +145,7 @@ jobs:
 
   publish-docker:
     name: publish proxmox-openapi Docker image
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: [prepare-release, validate-testpypi]
     runs-on: ubuntu-latest
     steps:

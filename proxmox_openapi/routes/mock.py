@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import os
-
 from fastapi import APIRouter
 
 from proxmox_openapi import __version__
-from proxmox_openapi.schema import DEFAULT_PROXMOX_OPENAPI_TAG
 
 router = APIRouter()
 

@@ -7,7 +7,6 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 from proxmox_openapi.proxmox_codegen.apidoc_parser import (
-    PROXMOX_APIDOC_JS_URL,
     PROXMOX_API_VIEWER_URL,
     fetch_apidoc_js,
     flatten_api_schema,

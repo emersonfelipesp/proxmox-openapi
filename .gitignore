@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Coverage
+coverage.xml
+.coverage.*
+
+# Ruff
+.ruff_cache/
+
+#uv.lock is optional - we prefer not to commit it
+uv.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+generated/

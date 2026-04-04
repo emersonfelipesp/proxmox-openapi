@@ -8,10 +8,10 @@ from proxmox_openapi.mock.routes import (
 from proxmox_openapi.mock.schema_helpers import (
     deep_merge,
     merge_with_schema_defaults,
+    resolved_schema,
     sample_value_for_schema,
     schema_fingerprint,
     schema_kind,
-    resolved_schema,
 )
 from proxmox_openapi.mock.state import (
     SharedMemoryMockStore,

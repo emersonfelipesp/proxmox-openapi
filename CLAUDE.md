@@ -76,5 +76,6 @@ pytest
 ## Environment Variables
 
 - `PROXMOX_MOCK_SCHEMA_VERSION` - Specify version tag for mock (default: "latest")
+- `PROXMOX_MOCK_DATA_PATH` - Path to custom mock data file (default: "/etc/proxmox-openapi/mock-data.json")
 - `HOST` - Host to bind to (default: "0.0.0.0")
 - `PORT` - Port to bind to (default: "8000")

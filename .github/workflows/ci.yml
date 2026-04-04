@@ -9,6 +9,50 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run ruff check
+        run: uv run ruff check .
+
+      - name: Run ruff format check
+        run: uv run ruff format --check .
+
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra test --group dev
+
+      - name: Compile package
+        run: uv run python -m compileall proxmox_openapi tests
+
+      - name: Import smoke checks
+        run: |
+          uv run python -c "import proxmox_openapi.main"
+          uv run python -c "import proxmox_openapi.mock_main"
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -24,20 +68,6 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen --extra test --group dev
 
-      - name: Ruff (lint + format check)
-        run: |
-          ruff check . &
-          ruff format --check . &
-          wait
-
-      - name: Compile package
-        run: uv run python -m compileall proxmox_openapi tests
-
-      - name: Import smoke checks
-        run: |
-          uv run python -c "import proxmox_openapi.main"
-          uv run python -c "import proxmox_openapi.mock_main"
-
       - name: Run mocked schema-driven tests
         run: uv run pytest -n auto --cov=proxmox_openapi --cov-report=term-missing --cov-report=xml tests
 
@@ -49,7 +79,7 @@ jobs:
 
   docker-images:
     name: Publish Docker images (Hub)
-    needs: [test]
+    needs: [lint, syntax, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/docker-hub-publish.yml
     with:

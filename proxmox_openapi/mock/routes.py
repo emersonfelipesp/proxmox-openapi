@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from types import ModuleType
 from typing import Any
 
-from fastapi import Body, FastAPI, HTTPException, Path, Query
+from fastapi import APIRouter, Body, FastAPI, HTTPException, Path, Query
 
 from proxmox_openapi.exception import ProxmoxOpenAPIException
 from proxmox_openapi.mock.schema_helpers import (
@@ -888,12 +888,13 @@ def _build_topology(
 
 
 def register_generated_proxmox_mock_routes(
-    app: FastAPI,
+    app: FastAPI | APIRouter,
     *,
     version_tag: str = DEFAULT_PROXMOX_OPENAPI_TAG,
     openapi_document: dict[str, object] | None = None,
     namespace: str | None = None,
     owner_pid: int | None = None,
+    custom_mock_data: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Register standalone schema-driven Proxmox mock routes on the FastAPI app."""
 
@@ -949,6 +950,18 @@ def register_generated_proxmox_mock_routes(
                 namespace=namespace,
                 owner_pid=owner_pid,
             )
+
+            if custom_mock_data and topology.absolute_path_template in custom_mock_data:
+                store = shared_mock_store(
+                    document_fingerprint,
+                    namespace=namespace,
+                    owner_pid=owner_pid,
+                )
+                store.set_object(
+                    topology.absolute_path_template,
+                    custom_mock_data[topology.absolute_path_template],
+                )
+
             route_name = f"{_GENERATED_ROUTE_NAME_PREFIX}{method_name.lower()}__{operation_id}"
             app.add_api_route(
                 path=f"{base_prefix}{_mounted_fastapi_path(path_template, operation)}",

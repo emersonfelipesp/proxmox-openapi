@@ -7,7 +7,6 @@ from pathlib import Path
 from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
 
-from proxmox_openapi import __version__
 from proxmox_openapi.proxmox_codegen.pipeline import (
     LATEST_VERSION_TAG,
     generate_proxmox_codegen_bundle_async,

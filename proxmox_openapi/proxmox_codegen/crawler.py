@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import importlib.util
 from pathlib import Path
 
 from proxmox_openapi.proxmox_codegen.utils import utc_now_iso
@@ -15,12 +15,7 @@ def _check_playwright_sync_api_available() -> bool:
     """Check if playwright sync API is available."""
     global _playwright_sync_api_available
     if _playwright_sync_api_available is None:
-        try:
-            from playwright.sync_api import sync_playwright
-
-            _playwright_sync_api_available = True
-        except ImportError:
-            _playwright_sync_api_available = False
+        _playwright_sync_api_available = importlib.util.find_spec("playwright.sync_api") is not None
     return _playwright_sync_api_available
 
 
@@ -48,8 +43,6 @@ async def crawl_proxmox_api_viewer_async(
     endpoints: dict[str, object] = {}
     failed_endpoints: list[str] = []
     discovered_navigation_items = 0
-
-    start_time = utc_now_iso()
 
     def run_crawler():
         nonlocal discovered_navigation_items

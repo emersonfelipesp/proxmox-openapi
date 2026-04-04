@@ -1,3 +1,0 @@
-[console_scripts]
-proxmox-openapi-codegen = proxmox_openapi.proxmox_codegen.cli:main
-proxmox-openapi-mock = proxmox_openapi.mock_main:run

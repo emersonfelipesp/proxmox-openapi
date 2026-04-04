@@ -139,6 +139,9 @@ jobs:
           uv run python -c "import proxmox_openapi.main"
           uv run python -c "import proxmox_openapi.mock_main"
 
+      - name: Run test suite
+        run: uv run pytest -n auto --cov=proxmox_openapi --cov-report=term-missing --cov-report=xml tests
+
   publish-docker:
     name: publish proxmox-openapi Docker image
     if: github.event_name == 'release'

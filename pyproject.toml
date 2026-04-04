@@ -7,7 +7,7 @@ include = ["proxmox_openapi*"]
 
 [project]
 name = "proxmox-openapi"
-version = "0.1.0"
+version = "0.0.1"
 description = "pvesh-like CLI for Proxmox API with multi-backend support, performance profiling, and advanced configuration management"
 readme = "README.md"
 requires-python = ">=3.11"

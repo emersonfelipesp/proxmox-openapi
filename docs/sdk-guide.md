@@ -204,7 +204,7 @@ ProxmoxSDK(
     # OR
     token_name="api-token",            # API token ID (instead of password)
     token_value="xxxxxxxx-...",        # API token secret
-    
+
     port=8006,                         # Custom port (default: 8006)
     verify_ssl=True,                   # Verify SSL cert (default: True)
     cert="/path/to/cert.pem",          # Custom CA cert
@@ -224,7 +224,7 @@ ProxmoxSDK(
     password="secret",
     # OR
     private_key_file="/home/user/.ssh/id_rsa",
-    
+
     backend="ssh_paramiko",
     # Paramiko-specific options
     identity_file="/custom/key",
@@ -385,7 +385,7 @@ async with ProxmoxSDK(...) as proxmox:
         vmid=100,
         name="my-vm"
     )
-    
+
     task_id = result.get("upid")
     if task_id:
         # Monitor the task
@@ -403,7 +403,7 @@ from proxmox_openapi.sdk.tools import Files
 
 async with ProxmoxSDK(...) as proxmox:
     files_tool = Files(proxmox)
-    
+
     # Download a file
     content = await files_tool.download(
         node="pve1",

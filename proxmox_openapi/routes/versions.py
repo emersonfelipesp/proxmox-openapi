@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_versions():
+async def list_versions() -> dict[str, object]:
     """List available Proxmox OpenAPI versions."""
     versions = available_proxmox_openapi_versions()
     return {
@@ -19,7 +19,7 @@ async def list_versions():
 
 
 @router.get("/latest")
-async def get_latest_version():
+async def get_latest_version() -> dict[str, str]:
     """Get the latest version tag."""
     return {
         "version": DEFAULT_PROXMOX_OPENAPI_TAG,

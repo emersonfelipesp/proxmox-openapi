@@ -16,11 +16,11 @@ async with ProxmoxSDK.mock() as proxmox:
     # Query mock data
     nodes = await proxmox.nodes.get()
     print(f"Nodes: {nodes}")
-    
+
     # Create mock resources
     vm = await proxmox.nodes("pve").qemu.post(vmid=100, name="test-vm")
     print(f"Created VM: {vm}")
-    
+
     # Retrieve created resource
     retrieved = await proxmox.nodes("pve").qemu(100).get()
     print(f"Retrieved VM: {retrieved}")
@@ -36,7 +36,7 @@ with ProxmoxSDK.sync_mock() as proxmox:
     # All API calls block until complete
     nodes = proxmox.nodes.get()
     print(f"Nodes: {nodes}")
-    
+
     # Create mock resources
     vm = proxmox.nodes("pve").qemu.post(vmid=100, name="test-vm")
     print(f"Created VM: {vm}")
@@ -46,12 +46,12 @@ with ProxmoxSDK.sync_mock() as proxmox:
 
 ## Features
 
-✅ **Zero Setup** — No real Proxmox server needed  
-✅ **In-Memory CRUD** — Create, read, update, delete mock resources  
-✅ **Deterministic Data** — Same seed produces same data (testable)  
-✅ **Schema-Driven** — Mock data respects Proxmox OpenAPI schema  
-✅ **Multi-Service Support** — PVE, PMG, PBS  
-✅ **State Persistence** — Changes persist during runtime  
+✅ **Zero Setup** — No real Proxmox server needed
+✅ **In-Memory CRUD** — Create, read, update, delete mock resources
+✅ **Deterministic Data** — Same seed produces same data (testable)
+✅ **Schema-Driven** — Mock data respects Proxmox OpenAPI schema
+✅ **Multi-Service Support** — PVE, PMG, PBS
+✅ **State Persistence** — Changes persist during runtime
 
 ---
 
@@ -65,7 +65,7 @@ from proxmox_openapi.sdk import ProxmoxSDK
 async with ProxmoxSDK.mock() as proxmox:
     # proxmox is the root ProxmoxResource
     nodes = await proxmox.nodes.get()
-    
+
     # Automatic cleanup when exiting context
 ```
 
@@ -91,7 +91,7 @@ from proxmox_openapi.sdk import ProxmoxSDK
 with ProxmoxSDK.sync_mock() as proxmox:
     nodes = proxmox.nodes.get()
     print(nodes)
-    
+
     # Automatic cleanup when exiting context
 ```
 
@@ -122,11 +122,11 @@ with ProxmoxSDK.sync_mock() as proxmox:
     # List nodes
     nodes = proxmox.nodes.get()
     print(f"Nodes: {nodes}")
-    
+
     # List VMs on a node
     vms = proxmox.nodes("pve").qemu.get()
     print(f"VMs: {vms}")
-    
+
     # List containers (LXC)
     containers = proxmox.nodes("pve").lxc.get()
     print(f"Containers: {containers}")
@@ -153,7 +153,7 @@ with ProxmoxSDK.sync_mock() as proxmox:
     # Get a specific VM
     vm = proxmox.nodes("pve").qemu(100).get()
     print(f"VM 100: {vm}")
-    
+
     # Get node status
     node_status = proxmox.nodes("pve").status.get()
     print(f"Node status: {node_status}")
@@ -169,7 +169,7 @@ with ProxmoxSDK.sync_mock() as proxmox:
         memory=4096
     )
     print(f"Updated: {updated}")
-    
+
     # Patch a VM (PATCH updates specific fields)
     patched = proxmox.nodes("pve").qemu(100).patch(
         name="patched-vm"
@@ -273,7 +273,7 @@ async def test_vm_retrieval():
             vmid=101,
             name="test-vm-2"
         )
-        
+
         # Retrieve
         retrieved = await proxmox.nodes("pve").qemu(101).get()
         assert retrieved.get("vmid") == created.get("vmid")
@@ -292,20 +292,20 @@ def test_vm_lifecycle_sync():
             name="lifecycle-test"
         )
         assert vm["vmid"] == 200
-        
+
         # Retrieve
         retrieved = proxmox.nodes("pve").qemu(200).get()
         assert retrieved["vmid"] == 200
-        
+
         # Update
         updated = proxmox.nodes("pve").qemu(200).put(
             name="lifecycle-updated"
         )
         assert updated["name"] == "lifecycle-updated"
-        
+
         # Delete
         proxmox.nodes("pve").qemu(200).delete()
-        
+
         # Verify deletion (should raise or be empty, depending on mock behavior)
 ```
 

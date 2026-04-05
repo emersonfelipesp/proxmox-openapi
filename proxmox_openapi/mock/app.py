@@ -51,22 +51,25 @@ def create_mock_app() -> FastAPI:
                 openapi_document=openapi_doc,
                 custom_mock_data=custom_mock_data,
             )
-        else:
-            _register_static_mock_routes(app, custom_mock_data)
-    elif openapi_doc:
+            return app
+
+        _register_static_mock_routes(app, custom_mock_data)
+        return app
+
+    if openapi_doc:
         from proxmox_openapi.mock.routes import register_generated_proxmox_mock_routes
 
         register_generated_proxmox_mock_routes(
             app, version_tag=version_tag, openapi_document=openapi_doc
         )
-    else:
+        return app
 
-        @app.get("/api2/json")
-        async def no_schema() -> dict[str, str]:
-            return {
-                "error": "No schema loaded",
-                "message": f"Run /codegen/generate to generate version '{version_tag}' or use the full API server.",
-            }
+    @app.get("/api2/json")
+    async def no_schema() -> dict[str, str]:
+        return {
+            "error": "No schema loaded",
+            "message": f"Run /codegen/generate to generate version '{version_tag}' or use the full API server.",
+        }
 
     return app
 

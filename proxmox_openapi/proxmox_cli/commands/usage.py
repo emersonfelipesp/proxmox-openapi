@@ -8,6 +8,7 @@ from typing import Optional
 import typer
 
 from ..app import app
+from ..output import OutputFormatter, resolve_output_format
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,19 @@ def usage(
         "--verbose",
         help="Verbose output",
     ),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Show API schema and usage information for an endpoint.
 
@@ -39,9 +53,27 @@ def usage(
         proxmox usage /nodes/pve1/qemu/100 --command GET
         proxmox usage /nodes/pve1/qemu/100 --command POST --returns
     """
-    typer.echo(f"API Schema for {path}")
-    typer.echo(f"Method: {command or 'GET'}")
+    ctx = typer.get_app_context()
+    ctx_obj = ctx.obj or {}
+    output_fmt = resolve_output_format(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+        fallback=ctx_obj.get("output_format", "human"),
+    )
+    formatter = OutputFormatter(format=output_fmt, colors=True)
+
+    payload: dict[str, object] = {
+        "path": path,
+        "method": command or "GET",
+        "returns_requested": returns,
+        "verbose": verbose,
+    }
+
     if returns:
-        typer.echo("Returns: [included in verbose output]")
+        payload["returns"] = "Included in verbose output"
     if verbose:
-        typer.echo("\nDetailed schema information would be displayed here")
+        payload["details"] = "Detailed schema information would be displayed here"
+
+    formatter.print_output(payload)

@@ -10,7 +10,7 @@ import typer
 from ..app import app
 from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter
+from ..output import OutputFormatter, resolve_output_format
 from ..sdk_bridge import ProxmoxSDKBridge
 from ..utils import validate_api_path
 
@@ -35,7 +35,14 @@ def ls(
         None,
         "--output",
         "-o",
-        help="Output format (json, yaml, table, text, auto)",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
     ),
 ) -> None:
     """List child resources at a given path.
@@ -84,9 +91,13 @@ def ls(
             result = sorted(result, key=lambda x: str(x.get(sort, "")))
 
         # Format and output
-        output_fmt = output or ctx_obj.get("output_format", "auto")
-        if output_fmt == "auto":
-            output_fmt = "table"  # LS defaults to table format
+        output_fmt = resolve_output_format(
+            output,
+            json_output=json_output,
+            yaml_output=yaml_output,
+            markdown_output=markdown_output,
+            fallback=ctx_obj.get("output_format", "human"),
+        )
         formatter = OutputFormatter(
             format=output_fmt,
             colors=config_mgr.global_config.colors,

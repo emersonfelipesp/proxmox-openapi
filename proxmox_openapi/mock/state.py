@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+import hashlib
 import json
 import os
 import tempfile
@@ -11,7 +12,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from multiprocessing import shared_memory
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from proxmox_openapi.logger import logger
 
@@ -27,6 +28,7 @@ _STATE_CLIENTS: dict[str, "SharedMemoryMockStore"] = {}
 
 
 def _process_exists(pid: int) -> bool:
+    """Return whether the process with the given PID is still running."""
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -51,27 +53,33 @@ def mock_state_owner_pid() -> int:
 
 
 def _resolved_namespace(namespace: str | None) -> str:
+    """Resolve the active shared-state namespace."""
     return namespace or os.environ.get("PROXMOX_MOCK_STATE_NAMESPACE", "default")
 
 
 def _namespace_digest(namespace: str) -> str:
-    return f"{abs(hash(namespace)) & 0xFFFF_FFFF:08x}"
+    """Return a stable digest for a namespace name."""
+    return hashlib.sha256(namespace.encode("utf-8")).hexdigest()[:8]
 
 
 def _state_basename(owner_pid: int, namespace: str) -> str:
+    """Build the shared-memory base name for a namespace and owner PID."""
     return f"pmxmock_{_namespace_digest(namespace)}_{owner_pid}"
 
 
 def _meta_path(owner_pid: int, namespace: str) -> Path:
+    """Return the metadata file path for a shared mock state store."""
     return Path(tempfile.gettempdir()) / f"{_state_basename(owner_pid, namespace)}.meta"
 
 
 def _lock_path(owner_pid: int, namespace: str) -> Path:
+    """Return the lock file path for a shared mock state store."""
     return Path(tempfile.gettempdir()) / f"{_state_basename(owner_pid, namespace)}.lock"
 
 
 @contextmanager
-def _locked_file(path: Path):
+def _locked_file(path: Path) -> Iterator[None]:
+    """Acquire an interprocess lock for a filesystem-backed state file."""
     path.touch(exist_ok=True)
     with path.open("r+", encoding="utf-8") as handle:
         if fcntl is not None:
@@ -94,6 +102,7 @@ class SharedMemoryMockStore:
         shm: shared_memory.SharedMemory,
         state_bytes: int,
     ) -> None:
+        """Initialize the shared-memory mock store."""
         self.owner_pid = owner_pid
         self.namespace = namespace
         self._shm = shm
@@ -102,6 +111,7 @@ class SharedMemoryMockStore:
         self._meta_path = _meta_path(owner_pid, namespace)
 
     def touch_schema(self, schema_fingerprint: str) -> bool:
+        """Reset state when the schema fingerprint changes."""
         with self._locked_state() as state:
             if state["schema_fingerprint"] == schema_fingerprint:
                 return False
@@ -112,17 +122,20 @@ class SharedMemoryMockStore:
             return True
 
     def reset(self) -> None:
+        """Reset stored objects, collections, and tombstones."""
         with self._locked_state() as state:
             state["objects"] = {}
             state["collections"] = {}
             state["deleted"] = []
 
     def get_object(self, key: str) -> Any | None:
+        """Return a deep copy of a stored object by key."""
         with self._locked_state(write=False) as state:
             value = state["objects"].get(key)
             return deepcopy(value)
 
     def set_object(self, key: str, value: Any) -> Any:
+        """Store an object value and return the persisted copy."""
         with self._locked_state() as state:
             state["objects"][key] = deepcopy(value)
             if key in state["deleted"]:
@@ -130,16 +143,19 @@ class SharedMemoryMockStore:
             return deepcopy(state["objects"][key])
 
     def delete_object(self, key: str) -> None:
+        """Delete an object and mark it as removed."""
         with self._locked_state() as state:
             state["objects"].pop(key, None)
             if key not in state["deleted"]:
                 state["deleted"].append(key)
 
     def is_deleted(self, key: str) -> bool:
+        """Return whether a key has been marked as deleted."""
         with self._locked_state(write=False) as state:
             return key in state["deleted"]
 
     def get_collection(self, key: str) -> list[Any] | None:
+        """Return a list copy of a stored collection."""
         with self._locked_state(write=False) as state:
             members = state["collections"].get(key)
             if members is None:
@@ -147,6 +163,7 @@ class SharedMemoryMockStore:
             return [deepcopy(value) for value in members.values()]
 
     def replace_collection(self, key: str, values: list[Any]) -> list[Any]:
+        """Replace a collection with the provided values."""
         with self._locked_state() as state:
             state["collections"][key] = {
                 f"seed:{index}": deepcopy(value) for index, value in enumerate(values)
@@ -154,6 +171,7 @@ class SharedMemoryMockStore:
             return [deepcopy(value) for value in state["collections"][key].values()]
 
     def upsert_collection_member(self, key: str, member_key: str, value: Any) -> list[Any]:
+        """Insert or replace a member in a stored collection."""
         with self._locked_state() as state:
             members = state["collections"].setdefault(key, {})
             members[member_key] = deepcopy(value)
@@ -162,6 +180,7 @@ class SharedMemoryMockStore:
             return [deepcopy(item) for item in members.values()]
 
     def delete_collection_member(self, key: str, member_key: str) -> list[Any]:
+        """Remove a member from a stored collection."""
         with self._locked_state() as state:
             members = state["collections"].setdefault(key, {})
             members.pop(member_key, None)
@@ -170,7 +189,8 @@ class SharedMemoryMockStore:
             return [deepcopy(item) for item in members.values()]
 
     @contextmanager
-    def _locked_state(self, *, write: bool = True):
+    def _locked_state(self, *, write: bool = True) -> Iterator[dict[str, Any]]:
+        """Load the current state under a filesystem lock and optionally persist it."""
         with _locked_file(self._lock_path):
             state = self._read_state()
             yield state
@@ -178,13 +198,26 @@ class SharedMemoryMockStore:
                 self._write_state(state)
 
     def _read_state(self) -> dict[str, Any]:
-        length = int.from_bytes(self._shm.buf[:_STATE_HEADER_BYTES], "big")
-        if length <= 0:
+        """Deserialize the shared-memory payload into a normalized state mapping."""
+        try:
+            length = int.from_bytes(self._shm.buf[:_STATE_HEADER_BYTES], "big")
+        except (TypeError, ValueError):
             return self._default_state()
-        payload = bytes(self._shm.buf[_STATE_HEADER_BYTES : _STATE_HEADER_BYTES + length])
-        return json.loads(payload.decode("utf-8"))
+
+        max_bytes = self._state_bytes - _STATE_HEADER_BYTES
+        if length <= 0 or length > max_bytes:
+            return self._default_state()
+
+        try:
+            payload = bytes(self._shm.buf[_STATE_HEADER_BYTES : _STATE_HEADER_BYTES + length])
+            state = json.loads(payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError, TypeError):
+            return self._default_state()
+
+        return self._normalize_state(state)
 
     def _write_state(self, state: dict[str, Any]) -> None:
+        """Serialize the state mapping back into shared memory."""
         payload = json.dumps(state, sort_keys=True, separators=(",", ":")).encode("utf-8")
         max_bytes = self._state_bytes - _STATE_HEADER_BYTES
         if len(payload) > max_bytes:
@@ -195,6 +228,7 @@ class SharedMemoryMockStore:
         self._shm.buf[_STATE_HEADER_BYTES : _STATE_HEADER_BYTES + len(payload)] = payload
 
     def close(self, *, unlink: bool = False) -> None:
+        """Close the shared-memory segment and optionally unlink its metadata."""
         try:
             self._shm.close()
         except FileNotFoundError:  # pragma: no cover - defensive cleanup
@@ -209,6 +243,7 @@ class SharedMemoryMockStore:
 
     @staticmethod
     def _default_state() -> dict[str, Any]:
+        """Return the default shared mock state structure."""
         return {
             "schema_fingerprint": "",
             "objects": {},
@@ -216,8 +251,35 @@ class SharedMemoryMockStore:
             "deleted": [],
         }
 
+    @classmethod
+    def _normalize_state(cls, state: Any) -> dict[str, Any]:
+        """Coerce loaded state into the expected mapping shape."""
+        default_state = cls._default_state()
+        if not isinstance(state, dict):
+            return default_state
+
+        normalized = default_state.copy()
+        schema_fingerprint = state.get("schema_fingerprint")
+        if isinstance(schema_fingerprint, str):
+            normalized["schema_fingerprint"] = schema_fingerprint
+
+        objects = state.get("objects")
+        if isinstance(objects, dict):
+            normalized["objects"] = objects
+
+        collections = state.get("collections")
+        if isinstance(collections, dict):
+            normalized["collections"] = collections
+
+        deleted = state.get("deleted")
+        if isinstance(deleted, list):
+            normalized["deleted"] = deleted
+
+        return normalized
+
 
 def _cleanup_stale_states(namespace: str, owner_pid: int) -> None:
+    """Remove stale shared-memory segments for a namespace."""
     digest = _namespace_digest(namespace)
     temp_root = Path(tempfile.gettempdir())
     for meta_file in temp_root.glob(f"pmxmock_{digest}_*.meta"):
@@ -246,6 +308,7 @@ def _cleanup_stale_states(namespace: str, owner_pid: int) -> None:
 
 
 def _create_or_attach_store(owner_pid: int, namespace: str) -> SharedMemoryMockStore:
+    """Create a new shared-memory store or attach to an existing one."""
     state_bytes = int(os.environ.get("PROXMOX_MOCK_STATE_BYTES", str(_DEFAULT_STATE_BYTES)))
     basename = _state_basename(owner_pid, namespace)
     meta_file = _meta_path(owner_pid, namespace)
@@ -277,6 +340,7 @@ def _create_or_attach_store(owner_pid: int, namespace: str) -> SharedMemoryMockS
 
 
 def _attach_existing_store(owner_pid: int, namespace: str) -> SharedMemoryMockStore:
+    """Attach to an already-created shared-memory store."""
     state_bytes = int(os.environ.get("PROXMOX_MOCK_STATE_BYTES", str(_DEFAULT_STATE_BYTES)))
     basename = _state_basename(owner_pid, namespace)
     shm = shared_memory.SharedMemory(name=basename, create=False)
@@ -329,6 +393,7 @@ def reset_shared_mock_state(*, namespace: str | None = None, owner_pid: int | No
 
 
 def _close_cached_stores() -> None:
+    """Close cached shared-memory stores during interpreter shutdown."""
     current_pid = os.getpid()
     with _STATE_CACHE_LOCK:
         for store in _STATE_CLIENTS.values():

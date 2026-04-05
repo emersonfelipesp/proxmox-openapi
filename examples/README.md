@@ -248,7 +248,7 @@ from proxmox_openapi.sdk.tools import Tasks
 
 async with ProxmoxSDK(...) as proxmox:
     result = await proxmox.nodes("pve").qemu.post(vmid=100, name="vm")
-    
+
     task_id = result.get("upid")
     if task_id:
         tasks = Tasks(proxmox)

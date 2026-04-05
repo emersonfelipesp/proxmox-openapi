@@ -1,7 +1,7 @@
 # Proxmox SDK Documentation Delivery Summary
 
-**Date:** April 4, 2026  
-**Project:** proxmox-openapi  
+**Date:** April 4, 2026
+**Project:** proxmox-openapi
 **Deliverable:** Complete SDK documentation with real-world examples and HOW-TOs
 
 ---
@@ -348,7 +348,7 @@ async with ProxmoxSDK(
 ) as proxmox:
     # List nodes
     nodes = await proxmox.nodes.get()
-    
+
     # Create VM
     vm = await proxmox.nodes("pve1").qemu.post(
         vmid=100,

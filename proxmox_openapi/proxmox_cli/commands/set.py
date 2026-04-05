@@ -10,7 +10,7 @@ import typer
 from ..app import app
 from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter
+from ..output import OutputFormatter, resolve_output_format
 from ..sdk_bridge import ProxmoxSDKBridge
 from ..utils import parse_parameter_data, validate_api_path
 
@@ -36,7 +36,14 @@ def set_cmd(
         None,
         "--output",
         "-o",
-        help="Output format (json, yaml, table, text, auto)",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
     ),
 ) -> None:
     """Update resources in the Proxmox API.
@@ -90,15 +97,25 @@ def set_cmd(
         result = bridge.put(path, params)
 
         # Format and output
-        output_fmt = output or ctx_obj.get("output_format", "auto")
+        output_fmt = resolve_output_format(
+            output,
+            json_output=json_output,
+            yaml_output=yaml_output,
+            markdown_output=markdown_output,
+            fallback=ctx_obj.get("output_format", "human"),
+        )
         formatter = OutputFormatter(
             format=output_fmt,
             colors=config_mgr.global_config.colors,
         )
 
-        formatter.print_success(f"Updated {path}")
-        if result:
-            formatter.print_output(result)
+        payload = {
+            "status": "success",
+            "action": "set",
+            "path": path,
+            "data": result,
+        }
+        formatter.print_output(payload)
         bridge.close()
 
     except ProxmoxCLIError as e:

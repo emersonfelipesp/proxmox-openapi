@@ -41,7 +41,8 @@ async def crawl_proxmox_api_viewer_async(
     failed_endpoints: list[str] = []
     discovered_navigation_items = 0
 
-    def run_crawler():
+    def run_crawler() -> None:
+        """Run the synchronous Playwright crawl in a worker thread."""
         nonlocal discovered_navigation_items
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)

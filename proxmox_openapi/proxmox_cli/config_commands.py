@@ -8,10 +8,45 @@ import typer
 
 from proxmox_openapi.proxmox_cli.app import app
 from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
+from proxmox_openapi.proxmox_cli.output import OutputFormatter, resolve_output_format
+
+
+def _build_formatter(
+    output: str | None,
+    *,
+    json_output: bool,
+    yaml_output: bool,
+    markdown_output: bool,
+) -> OutputFormatter:
+    """Build formatter from command options and inherited global CLI output settings."""
+    ctx = typer.get_app_context()
+    ctx_obj = ctx.obj or {}
+    output_fmt = resolve_output_format(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+        fallback=ctx_obj.get("output_format", "human"),
+    )
+    return OutputFormatter(format=output_fmt, colors=True)
 
 
 @app.command()
-def config_list() -> None:
+def config_list(
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
+) -> None:
     """List all available configuration profiles.
 
     Example:
@@ -19,21 +54,47 @@ def config_list() -> None:
     """
     mgr = ConfigManager()
     profiles = mgr.list_profiles()
+    formatter = _build_formatter(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+    )
 
     if not profiles:
-        typer.echo("No profiles configured")
+        formatter.print_output({"profiles": []})
         return
 
-    typer.echo("Available profiles:")
-    for profile in profiles:
-        backend_type = profile.backend or "https"
-        host = profile.host or "localhost"
-        user = profile.user or "unknown"
-        typer.echo(f"  {profile.name:<15} {backend_type:<12} {user}@{host}")
+    payload = [
+        {
+            "name": profile.name,
+            "backend": profile.backend or "https",
+            "host": profile.host or "localhost",
+            "user": profile.user or "unknown",
+            "service": profile.service,
+        }
+        for profile in profiles
+    ]
+    formatter.print_output(payload)
 
 
 @app.command()
-def config_show(profile: str = typer.Argument("default", help="Profile name")) -> None:
+def config_show(
+    profile: str = typer.Argument("default", help="Profile name"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
+) -> None:
     """Show configuration for a specific profile.
 
     Example:
@@ -41,21 +102,30 @@ def config_show(profile: str = typer.Argument("default", help="Profile name")) -
         proxmox config-show staging
     """
     mgr = ConfigManager()
+    formatter = _build_formatter(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+    )
     config = mgr.get_profile(profile)
 
     if not config:
         typer.echo(f"Profile not found: {profile}", err=True)
         raise typer.Exit(code=1)
 
-    typer.echo(f"Profile: {profile}")
-    typer.echo(f"  Backend: {config.backend or 'https'}")
-    typer.echo(f"  Host: {config.host or 'localhost'}")
-    typer.echo(f"  Port: {config.port or 8006}")
-    typer.echo(f"  User: {config.user or '(not set)'}")
-    typer.echo(f"  Token Name: {config.token_name or '(not set)'}")
-    typer.echo(f"  Service: {config.service or 'PVE'}")
-    typer.echo(f"  Verify SSL: {config.verify_ssl if hasattr(config, 'verify_ssl') else True}")
-    typer.echo(f"  Timeout: {config.timeout if hasattr(config, 'timeout') else 60}s")
+    payload = {
+        "profile": profile,
+        "backend": config.backend or "https",
+        "host": config.host or "localhost",
+        "port": config.port or 8006,
+        "user": config.user or "(not set)",
+        "token_name": config.token_name or "(not set)",
+        "service": config.service or "PVE",
+        "verify_ssl": config.verify_ssl if hasattr(config, "verify_ssl") else True,
+        "timeout_seconds": config.timeout if hasattr(config, "timeout") else 60,
+    }
+    formatter.print_output(payload)
 
 
 @app.command()
@@ -68,6 +138,19 @@ def config_add(
     token_name: Optional[str] = typer.Option(None, help="Token name"),
     token_value: Optional[str] = typer.Option(None, help="Token value"),
     service: str = typer.Option("PVE", help="Service type (PVE/PMG/PBS)"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Add a new configuration profile.
 
@@ -91,17 +174,41 @@ def config_add(
     mgr.add_profile(name, config)
     mgr.save_config()
 
-    typer.echo(f"✓ Profile '{name}' added successfully")
-    typer.echo(f"  Backend: {backend}")
-    typer.echo(f"  Host: {host}:{port}")
-    if user:
-        typer.echo(f"  User: {user}")
+    formatter = _build_formatter(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+    )
+    payload = {
+        "status": "success",
+        "action": "config-add",
+        "profile": name,
+        "backend": backend,
+        "host": host,
+        "port": port,
+        "user": user,
+    }
+    formatter.print_output(payload)
 
 
 @app.command()
 def config_remove(
     name: str = typer.Argument(..., help="Profile name"),
     force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Remove a configuration profile.
 
@@ -118,12 +225,31 @@ def config_remove(
     mgr.remove_profile(name)
     mgr.save_config()
 
-    typer.echo(f"✓ Profile '{name}' removed")
+    formatter = _build_formatter(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+    )
+    formatter.print_output({"status": "success", "action": "config-remove", "profile": name})
 
 
 @app.command()
 def config_set_default(
     name: str = typer.Argument(..., help="Profile name to set as default"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Set the default profile.
 
@@ -134,4 +260,10 @@ def config_set_default(
     mgr.set_default_profile(name)
     mgr.save_config()
 
-    typer.echo(f"✓ Default profile set to '{name}'")
+    formatter = _build_formatter(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+    )
+    formatter.print_output({"status": "success", "action": "config-set-default", "profile": name})

@@ -49,6 +49,19 @@ with ProxmoxSDK.sync_mock() as proxmox:
     nodes = proxmox.nodes.get()
 ```
 
+### CLI TUI
+
+```bash
+# Install with CLI extras
+pip install proxmox-openapi[cli]
+
+# Production TUI
+pbx tui
+
+# Mock TUI
+pbx tui mock
+```
+
 ### Real Mode (Connect to Proxmox)
 
 ```bash

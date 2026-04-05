@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+
 import pytest
 from typer.testing import CliRunner
 
@@ -144,3 +146,89 @@ def test_utils_parse_parameters() -> None:
     assert params2["enabled"] is True
     assert params2["count"] == 42
     assert params2["ratio"] == 3.14
+
+
+def test_tui_defaults_to_production_mode(
+    cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that 'tui' defaults to production mode and avoids mock backend."""
+    tui_module = importlib.import_module("proxmox_openapi.proxmox_cli.commands.tui")
+    from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
+
+    captured: dict[str, object] = {}
+
+    def fake_load_config(self: ConfigManager, config_path: str | None = None) -> None:
+        _ = config_path
+
+    def fake_get_profile(self: ConfigManager, profile_name: str | None = None) -> BackendConfig:
+        _ = profile_name
+        return BackendConfig(name="default", backend="mock", service="PVE")
+
+    class DummyBridge:
+        def close(self) -> None:
+            captured["closed"] = True
+
+    def fake_create(config: BackendConfig) -> DummyBridge:
+        captured["backend"] = config.backend
+        return DummyBridge()
+
+    def fake_launch_tui(*, bridge: DummyBridge, mode: str, initial_path: str) -> None:
+        _ = bridge
+        captured["mode"] = mode
+        captured["path"] = initial_path
+
+    monkeypatch.setattr(ConfigManager, "load_config", fake_load_config)
+    monkeypatch.setattr(ConfigManager, "get_profile", fake_get_profile)
+    monkeypatch.setattr(tui_module.ProxmoxSDKBridge, "create", fake_create)
+    monkeypatch.setattr(tui_module, "launch_tui", fake_launch_tui)
+
+    result = cli_runner.invoke(app, ["tui"])
+
+    assert result.exit_code == 0
+    assert captured["backend"] == "https"
+    assert captured["mode"] == "production"
+    assert captured["path"] == "/nodes"
+    assert captured["closed"] is True
+
+
+def test_tui_mock_mode_uses_mock_backend(
+    cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that 'tui mock' forces mock backend and mode."""
+    tui_module = importlib.import_module("proxmox_openapi.proxmox_cli.commands.tui")
+    from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
+
+    captured: dict[str, object] = {}
+
+    def fake_load_config(self: ConfigManager, config_path: str | None = None) -> None:
+        _ = config_path
+
+    def fake_get_profile(self: ConfigManager, profile_name: str | None = None) -> BackendConfig:
+        _ = profile_name
+        return BackendConfig(name="default", backend="https", service="PVE")
+
+    class DummyBridge:
+        def close(self) -> None:
+            captured["closed"] = True
+
+    def fake_create(config: BackendConfig) -> DummyBridge:
+        captured["backend"] = config.backend
+        return DummyBridge()
+
+    def fake_launch_tui(*, bridge: DummyBridge, mode: str, initial_path: str) -> None:
+        _ = bridge
+        captured["mode"] = mode
+        captured["path"] = initial_path
+
+    monkeypatch.setattr(ConfigManager, "load_config", fake_load_config)
+    monkeypatch.setattr(ConfigManager, "get_profile", fake_get_profile)
+    monkeypatch.setattr(tui_module.ProxmoxSDKBridge, "create", fake_create)
+    monkeypatch.setattr(tui_module, "launch_tui", fake_launch_tui)
+
+    result = cli_runner.invoke(app, ["tui", "mock", "--path", "/cluster/status"])
+
+    assert result.exit_code == 0
+    assert captured["backend"] == "mock"
+    assert captured["mode"] == "mock"
+    assert captured["path"] == "/cluster/status"
+    assert captured["closed"] is True

@@ -53,7 +53,7 @@ async def generate_viewer_codegen_artifacts(
         default=LATEST_VERSION_TAG,
         description="Version tag used for generated artifacts subdirectory.",
     ),
-):
+) -> dict[str, object]:
     """Run Proxmox API Viewer to OpenAPI and Pydantic generation pipeline."""
     output_dir = None
     if persist:
@@ -116,7 +116,7 @@ async def proxmox_viewer_openapi(
         default=LATEST_VERSION_TAG,
         description="Generated artifact version tag to load.",
     ),
-):
+) -> dict[str, object]:
     """Return generated OpenAPI schema for Proxmox API viewer endpoints."""
     from proxmox_openapi.schema import load_proxmox_generated_openapi
 
@@ -149,7 +149,7 @@ async def proxmox_viewer_pydantic_models(
         default=LATEST_VERSION_TAG,
         description="Generated artifact version tag to load.",
     ),
-):
+) -> str:
     """Return generated Pydantic v2 models source code for Proxmox API endpoints."""
     from proxmox_openapi.schema import load_pydantic_models
 
@@ -169,7 +169,7 @@ async def proxmox_viewer_pydantic_models(
 
 
 @router.get("/versions")
-async def list_available_versions():
+async def list_available_versions() -> dict[str, object]:
     """List available Proxmox OpenAPI versions."""
     from proxmox_openapi.schema import available_proxmox_openapi_versions
 

@@ -40,13 +40,13 @@ def load_mock_data(file_path: str | Path | None = None) -> dict[str, Any] | None
 
     try:
         content = file_path_obj.read_text(encoding="utf-8")
-    except Exception:
+    except OSError:
         return None
 
     suffix = file_path_obj.suffix.lower()
     if suffix in (".yaml", ".yml"):
         return _load_yaml(content)
-    elif suffix == ".json":
+    if suffix == ".json":
         return _load_json(content)
 
     return None
@@ -55,9 +55,14 @@ def load_mock_data(file_path: str | Path | None = None) -> dict[str, Any] | None
 def _load_json(content: str) -> dict[str, Any] | None:
     """Load JSON content."""
     try:
-        return json.loads(content)
+        data = json.loads(content)
     except json.JSONDecodeError:
         return None
+
+    if not isinstance(data, dict):
+        return None
+
+    return data
 
 
 def _load_yaml(content: str) -> dict[str, Any] | None:
@@ -65,11 +70,16 @@ def _load_yaml(content: str) -> dict[str, Any] | None:
     try:
         import yaml
 
-        return yaml.safe_load(content)
+        data = yaml.safe_load(content)
     except ImportError:
         return None
     except yaml.YAMLError:
         return None
+
+    if not isinstance(data, dict):
+        return None
+
+    return data
 
 
 __all__ = [

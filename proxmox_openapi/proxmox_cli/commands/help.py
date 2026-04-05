@@ -8,6 +8,7 @@ from typing import Optional
 import typer
 
 from ..app import app
+from ..output import OutputFormatter, resolve_output_format
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,19 @@ def help_cmd(
         "-s",
         help="Search for endpoints matching pattern",
     ),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Show help for API endpoints.
 
@@ -30,25 +44,46 @@ def help_cmd(
         proxmox help /nodes/pve1/qemu
         proxmox help --search qemu
     """
+    ctx = typer.get_app_context()
+    ctx_obj = ctx.obj or {}
+    output_fmt = resolve_output_format(
+        output,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+        fallback=ctx_obj.get("output_format", "human"),
+    )
+    formatter = OutputFormatter(format=output_fmt, colors=True)
+
     if not path and not search:
-        typer.echo("Proxmox CLI - Available commands:")
-        typer.echo()
-        typer.echo("  get <path>          - Retrieve resources")
-        typer.echo("  create <path>       - Create resources")
-        typer.echo("  set <path>          - Update configuration")
-        typer.echo("  delete <path>       - Delete resources")
-        typer.echo("  ls <path>           - List child resources")
-        typer.echo("  usage <path>        - Show endpoint schema")
-        typer.echo("  help [path]         - Show help for endpoints")
-        typer.echo()
-        typer.echo("For detailed help on any command, use: proxmox <command> --help")
-        typer.echo("For endpoint-specific help: proxmox help /nodes/pve1")
+        payload = {
+            "title": "Proxmox CLI - Available commands",
+            "commands": [
+                {"name": "get", "usage": "get <path>", "description": "Retrieve resources"},
+                {"name": "create", "usage": "create <path>", "description": "Create resources"},
+                {"name": "set", "usage": "set <path>", "description": "Update configuration"},
+                {"name": "delete", "usage": "delete <path>", "description": "Delete resources"},
+                {"name": "ls", "usage": "ls <path>", "description": "List child resources"},
+                {"name": "usage", "usage": "usage <path>", "description": "Show endpoint schema"},
+                {"name": "help", "usage": "help [path]", "description": "Show help for endpoints"},
+            ],
+            "hints": [
+                "For detailed help on any command, use: proxmox <command> --help",
+                "For endpoint-specific help: proxmox help /nodes/pve1",
+            ],
+        }
+        formatter.print_output(payload)
     elif search:
-        typer.echo(f"Endpoints matching '{search}':")
-        typer.echo("  [Full search not yet implemented - use help /path for specific endpoints]")
+        payload = {
+            "search": search,
+            "note": "Full search not yet implemented; use 'help /path' for specific endpoints.",
+            "matches": [],
+        }
+        formatter.print_output(payload)
     elif path:
-        typer.echo(f"Help for endpoint: {path}")
-        typer.echo()
-        typer.echo("This endpoint is part of the Proxmox VE API.")
-        typer.echo(f"For more information about {path}, consult the API documentation:")
-        typer.echo("  https://pve.proxmox.com/pve-docs/api-viewer/")
+        payload = {
+            "endpoint": path,
+            "description": "This endpoint is part of the Proxmox VE API.",
+            "documentation": "https://pve.proxmox.com/pve-docs/api-viewer/",
+        }
+        formatter.print_output(payload)

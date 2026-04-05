@@ -11,6 +11,7 @@ import typer
 from . import batch, commands, completion, config_commands, performance  # noqa: F401
 from .app import app, setup_logging
 from .exceptions import ProxmoxCLIError
+from .output import resolve_output_format
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,22 @@ def main(
         None,
         "--output",
         "-o",
-        help="Output format (json, yaml, table, text, auto)",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Shortcut for --output json",
+    ),
+    yaml_output: bool = typer.Option(
+        False,
+        "--yaml",
+        help="Shortcut for --output yaml",
+    ),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
     ),
 ) -> None:
     """Proxmox CLI - A pvesh-like command-line interface for Proxmox API."""
@@ -110,7 +126,13 @@ def main(
     ctx.obj["token_value"] = token_value
     ctx.obj["port"] = port
     ctx.obj["service"] = service
-    ctx.obj["output_format"] = output_format or "auto"
+    ctx.obj["output_format"] = resolve_output_format(
+        output_format,
+        json_output=json_output,
+        yaml_output=yaml_output,
+        markdown_output=markdown_output,
+        fallback="human",
+    )
 
 
 def cli_main() -> None:

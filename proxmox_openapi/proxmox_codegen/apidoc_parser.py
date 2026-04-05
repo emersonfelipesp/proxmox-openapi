@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import ssl
+import warnings
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -11,16 +12,46 @@ PROXMOX_API_VIEWER_URL = "https://pve.proxmox.com/pve-docs/api-viewer/"
 PROXMOX_APIDOC_JS_URL = "https://pve.proxmox.com/pve-docs/api-viewer/apidoc.js"
 
 
-def fetch_apidoc_js(url: str = PROXMOX_APIDOC_JS_URL, timeout: int = 60) -> str:
-    """Download the upstream Proxmox `apidoc.js` source file."""
+def fetch_apidoc_js(
+    url: str = PROXMOX_APIDOC_JS_URL,
+    timeout: int = 60,
+    allow_insecure: bool = False,
+) -> str:
+    """Download the upstream Proxmox `apidoc.js` source file.
 
+    Args:
+        url: URL to fetch the apidoc.js file from.
+        timeout: Request timeout in seconds.
+        allow_insecure: If True, retry with SSL verification disabled when the
+            initial request fails due to an SSL error. This should only be used
+            in controlled/offline environments. Emits a :class:`UserWarning`
+            when active. Defaults to False.
+
+    Raises:
+        URLError: On network errors, or SSL errors when ``allow_insecure=False``.
+    """
     try:
         with urlopen(url, timeout=timeout) as response:
             return response.read().decode("utf-8")
     except URLError as error:
         if not isinstance(getattr(error, "reason", None), ssl.SSLError):
             raise
-        insecure_context = ssl._create_unverified_context()
+        if not allow_insecure:
+            raise URLError(
+                f"SSL verification failed for {url!r}. "
+                "If you are fetching from a host with a self-signed certificate, "
+                "pass allow_insecure=True (NOT recommended for production)."
+            ) from error
+        warnings.warn(
+            f"SSL verification disabled for {url!r}. "
+            "This bypasses certificate validation and should only be used in "
+            "trusted/offline environments.",
+            UserWarning,
+            stacklevel=2,
+        )
+        insecure_context = ssl.create_default_context()
+        insecure_context.check_hostname = False
+        insecure_context.verify_mode = ssl.CERT_NONE
         with urlopen(url, timeout=timeout, context=insecure_context) as response:
             return response.read().decode("utf-8")
 

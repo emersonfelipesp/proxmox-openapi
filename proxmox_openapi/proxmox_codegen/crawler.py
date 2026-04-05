@@ -68,8 +68,7 @@ async def crawl_proxmox_api_viewer_async(
 
             browser.close()
 
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, run_crawler)
+    await asyncio.to_thread(run_crawler)
 
     return {
         "endpoints": endpoints,

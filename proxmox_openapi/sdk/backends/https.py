@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 import re
@@ -130,6 +131,7 @@ class HttpsBackend:
         self._proxy = (proxies or {}).get("https") or (proxies or {}).get("http")
 
         self._session: aiohttp.ClientSession | None = None
+        self._session_loop: asyncio.AbstractEventLoop | None = None
         self._ticket_url = f"{self._base_url}/access/ticket"
 
     # ------------------------------------------------------------------
@@ -211,6 +213,8 @@ class HttpsBackend:
         """Close the underlying aiohttp session."""
         if self._session and not self._session.closed:
             await self._session.close()
+        self._session = None
+        self._session_loop = None
 
     # ------------------------------------------------------------------
     # Token access
@@ -237,12 +241,39 @@ class HttpsBackend:
     # ------------------------------------------------------------------
 
     async def _ensure_session(self) -> aiohttp.ClientSession:
+        current_loop = asyncio.get_running_loop()
+
+        if (
+            self._session is not None
+            and not self._session.closed
+            and self._session_loop is not None
+            and self._session_loop is not current_loop
+        ):
+            logger.warning(
+                "Detected aiohttp session loop mismatch; rebuilding session on current loop"
+            )
+            old_session = self._session
+            old_loop = self._session_loop
+            self._session = None
+            self._session_loop = None
+
+            # Attempt best-effort cleanup on the loop that owns the old session.
+            try:
+                if old_loop.is_running():
+                    def _schedule_close() -> None:
+                        asyncio.create_task(old_session.close())
+
+                    old_loop.call_soon_threadsafe(_schedule_close)
+            except Exception:
+                logger.debug("Failed to schedule stale aiohttp session close", exc_info=True)
+
         if self._session is None or self._session.closed:
             connector = aiohttp.TCPConnector()
             self._session = aiohttp.ClientSession(
                 connector=connector,
                 timeout=self._timeout,
             )
+            self._session_loop = current_loop
         return self._session
 
     async def _ensure_authenticated(self, session: aiohttp.ClientSession) -> None:

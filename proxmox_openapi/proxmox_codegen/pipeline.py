@@ -153,6 +153,32 @@ def _capture_completeness(
     }
 
 
+def _run_async_from_sync(coro: object) -> object:
+    """Run a coroutine from sync code, even when already inside an event loop."""
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    result: dict[str, object] = {"value": None, "error": None}
+
+    def _runner() -> None:
+        try:
+            result["value"] = asyncio.run(coro)
+        except Exception as error:  # pragma: no cover - surfaced to caller
+            result["error"] = error
+
+    import threading
+
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    thread.join()
+    if result["error"] is not None:
+        raise result["error"]
+    return result["value"]
+
+
 def generate_proxmox_codegen_bundle(
     output_dir: str | Path | None = None,
     *,
@@ -162,10 +188,11 @@ def generate_proxmox_codegen_bundle(
     retry_count: int = 2,
     retry_backoff_seconds: float = 0.35,
     checkpoint_every: int = 50,
+    allow_insecure_ssl: bool = False,
 ) -> GenerationBundle:
     """Sync wrapper for async generation pipeline."""
 
-    return asyncio.run(
+    return _run_async_from_sync(
         generate_proxmox_codegen_bundle_async(
             output_dir=output_dir,
             source_url=source_url,
@@ -174,6 +201,7 @@ def generate_proxmox_codegen_bundle(
             retry_count=retry_count,
             retry_backoff_seconds=retry_backoff_seconds,
             checkpoint_every=checkpoint_every,
+            allow_insecure_ssl=allow_insecure_ssl,
         )
     )
 
@@ -187,6 +215,7 @@ async def generate_proxmox_codegen_bundle_async(
     retry_count: int = 2,
     retry_backoff_seconds: float = 0.35,
     checkpoint_every: int = 50,
+    allow_insecure_ssl: bool = False,
 ) -> GenerationBundle:
     """Run full generation pipeline and optionally persist artifacts."""
 
@@ -217,7 +246,10 @@ async def generate_proxmox_codegen_bundle_async(
             "duration_seconds": 0.0,
         }
 
-    apidoc_source = fetch_apidoc_js(url=_viewer_apidoc_js_url(source_url))
+    apidoc_source = fetch_apidoc_js(
+        url=_viewer_apidoc_js_url(source_url),
+        allow_insecure=allow_insecure_ssl,
+    )
     apidoc_tree = parse_api_schema(apidoc_source)
     apidoc_flat = flatten_api_schema(apidoc_tree)
 

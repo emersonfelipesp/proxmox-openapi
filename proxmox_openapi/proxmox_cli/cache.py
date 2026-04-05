@@ -100,7 +100,7 @@ class Cache:
             Path to cache file
         """
         # Hash the key to avoid filesystem issues with special characters
-        key_hash = hashlib.md5(key.encode()).hexdigest()
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
         return self.cache_dir / f"{key_hash}.json"
 
 

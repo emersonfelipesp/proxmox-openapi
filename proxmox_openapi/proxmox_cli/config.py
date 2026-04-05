@@ -246,9 +246,7 @@ class ConfigManager:
         data = {
             "version": "1.0",
             "default_profile": self.default_profile or "default",
-            "profiles": {
-                name: _profile_dict(cfg) for name, cfg in self.profiles.items()
-            },
+            "profiles": {name: _profile_dict(cfg) for name, cfg in self.profiles.items()},
             "global": {
                 "output_format": self.global_config.output_format,
                 "table_mode": self.global_config.table_mode,

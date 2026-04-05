@@ -33,6 +33,11 @@ def validate_api_path(path: str) -> str:
     normalized = "/".join(part for part in path.split("/") if part)
     normalized = "/" + normalized
 
+    # Reject path traversal attempts
+    components = normalized.split("/")
+    if ".." in components or "." in components:
+        raise PathError("Path must not contain '.' or '..' segments", path=path)
+
     return normalized
 
 
@@ -103,9 +108,9 @@ def _coerce_value(value: str) -> Any:
         Coerced value (bool, int, float, or str)
     """
     # Boolean values
-    if value.lower() in ("true", "yes", "on", "1"):
+    if value.lower() in ("true", "yes", "on"):
         return True
-    if value.lower() in ("false", "no", "off", "0"):
+    if value.lower() in ("false", "no", "off"):
         return False
 
     # Integer values

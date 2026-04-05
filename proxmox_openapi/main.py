@@ -83,7 +83,6 @@ def create_app() -> FastAPI:
             "proxmox_methods": proxmox_route_info.get("method_count", 0),
         }
         if api_mode == "real":
-            result["proxmox_url"] = config.api_url
             result["auth_method"] = (
                 "token" if config.token_id else "password" if config.username else "none"
             )

@@ -123,6 +123,11 @@ def main(
     ctx.obj["host"] = host
     ctx.obj["user"] = user
     ctx.obj["password"] = password
+    if password:
+        logger.warning(
+            "Password provided via --password flag is visible in process history. "
+            "Consider using PROXMOX_CLI_PASSWORD environment variable instead for better security."
+        )
     ctx.obj["token_value"] = token_value
     ctx.obj["port"] = port
     ctx.obj["service"] = service

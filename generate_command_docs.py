@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 def main() -> int:
+    """Parse arguments and run capture doc generation."""
     parser = argparse.ArgumentParser(
         description="Generate proxmox CLI capture documentation.",
     )

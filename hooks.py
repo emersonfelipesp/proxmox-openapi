@@ -59,7 +59,7 @@ def _render_section(section: str, runs: list[dict], stdout_map: dict[tuple[str, 
 def _not_generated() -> str:
     return (
         "# CLI command captures\n\n"
-        "!!! warning \"Not yet generated\"\n"
+        '!!! warning "Not yet generated"\n'
         "    Run `uv run proxmox docs generate-capture` from repo root, then rebuild docs.\n"
     )
 
@@ -104,7 +104,7 @@ def _build_command_capture_pages() -> None:
     index_lines: list[str] = [
         "# CLI command captures",
         "",
-        "!!! info \"Machine-generated\"",
+        '!!! info "Machine-generated"',
         "    Built from `docs/generated/raw/index.json` during MkDocs build.",
         f"    Last updated: `{generated_at}`",
         "",
@@ -121,4 +121,5 @@ def _build_command_capture_pages() -> None:
 
 
 def on_pre_build(config, **kwargs) -> None:
+    """Generate command-capture reference pages before MkDocs build."""
     _build_command_capture_pages()

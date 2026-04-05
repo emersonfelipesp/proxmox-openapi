@@ -42,3 +42,11 @@ Thumbs.db
 # (we commit that for users to have immediate access)
 proxmox_openapi/generated/proxmox/*
 !proxmox_openapi/generated/proxmox/latest/
+
+# Sensitive files
+.env
+.env.*
+*.pem
+*.key
+*.crt
+.proxmox-cli/

@@ -42,7 +42,10 @@ RUN apt-get update \
     supervisor \
   && rm -rf /var/lib/apt/lists/* \
   && rm -f /etc/nginx/sites-enabled/default \
-  && rm -f /etc/nginx/conf.d/default.conf
+  && rm -f /etc/nginx/conf.d/default.conf \
+  && groupadd -r proxapi \
+  && useradd -r -g proxapi -d /app -s /sbin/nologin proxapi \
+  && chown -R proxapi:proxapi /app
 
 COPY docker/nginx/proxmox-openapi-http.conf.template /etc/proxmox-openapi/nginx-http.conf.template
 COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf

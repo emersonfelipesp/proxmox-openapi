@@ -1,0 +1,230 @@
+{
+  "meta": {
+    "generated_at": "2026-04-05T01:14:34.729455+00:00",
+    "proxmox_invocation": [
+      "/root/nms/proxmox-openapi/.venv/bin/proxmox"
+    ]
+  },
+  "runs": [
+    {
+      "section": "Top-level",
+      "title": "proxmox --help",
+      "argv": [
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.293,
+      "truncated": true
+    },
+    {
+      "section": "Batch",
+      "title": "proxmox batch --help",
+      "argv": [
+        "batch",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.079,
+      "truncated": true
+    },
+    {
+      "section": "Benchmark",
+      "title": "proxmox benchmark --help",
+      "argv": [
+        "benchmark",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.261,
+      "truncated": false
+    },
+    {
+      "section": "Completion Install",
+      "title": "proxmox completion-install --help",
+      "argv": [
+        "completion-install",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.143,
+      "truncated": false
+    },
+    {
+      "section": "Config Add",
+      "title": "proxmox config-add --help",
+      "argv": [
+        "config-add",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.182,
+      "truncated": false
+    },
+    {
+      "section": "Config List",
+      "title": "proxmox config-list --help",
+      "argv": [
+        "config-list",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.28,
+      "truncated": false
+    },
+    {
+      "section": "Config Remove",
+      "title": "proxmox config-remove --help",
+      "argv": [
+        "config-remove",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.481,
+      "truncated": false
+    },
+    {
+      "section": "Config Set Default",
+      "title": "proxmox config-set-default --help",
+      "argv": [
+        "config-set-default",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.187,
+      "truncated": false
+    },
+    {
+      "section": "Config Show",
+      "title": "proxmox config-show --help",
+      "argv": [
+        "config-show",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.258,
+      "truncated": false
+    },
+    {
+      "section": "Create",
+      "title": "proxmox create --help",
+      "argv": [
+        "create",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.436,
+      "truncated": false
+    },
+    {
+      "section": "Delete",
+      "title": "proxmox delete --help",
+      "argv": [
+        "delete",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.588,
+      "truncated": false
+    },
+    {
+      "section": "Docs",
+      "title": "proxmox docs --help",
+      "argv": [
+        "docs",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.74,
+      "truncated": false
+    },
+    {
+      "section": "Docs",
+      "title": "proxmox docs generate-capture --help",
+      "argv": [
+        "docs",
+        "generate-capture",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.891,
+      "truncated": false
+    },
+    {
+      "section": "Get",
+      "title": "proxmox get --help",
+      "argv": [
+        "get",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.96,
+      "truncated": false
+    },
+    {
+      "section": "Help Cmd",
+      "title": "proxmox help-cmd --help",
+      "argv": [
+        "help-cmd",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.397,
+      "truncated": false
+    },
+    {
+      "section": "Ls",
+      "title": "proxmox ls --help",
+      "argv": [
+        "ls",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.796,
+      "truncated": false
+    },
+    {
+      "section": "Perf Test",
+      "title": "proxmox perf-test --help",
+      "argv": [
+        "perf-test",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.146,
+      "truncated": false
+    },
+    {
+      "section": "Set Cmd",
+      "title": "proxmox set-cmd --help",
+      "argv": [
+        "set-cmd",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 9.247,
+      "truncated": false
+    },
+    {
+      "section": "Tui",
+      "title": "proxmox tui --help",
+      "argv": [
+        "tui",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.667,
+      "truncated": false
+    },
+    {
+      "section": "Usage",
+      "title": "proxmox usage --help",
+      "argv": [
+        "usage",
+        "--help"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.806,
+      "truncated": false
+    }
+  ]
+}

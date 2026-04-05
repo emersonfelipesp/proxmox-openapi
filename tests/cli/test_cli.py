@@ -250,3 +250,79 @@ def test_tui_mock_mode_uses_mock_backend(
     assert captured["mode"] == "mock"
     assert captured["path"] == "/cluster/status"
     assert captured["closed"] is True
+
+
+def test_init_command_creates_production_and_mock_profiles(
+    cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that init prompts for production data and auto-creates mock profile."""
+    from proxmox_openapi.proxmox_cli.config import ConfigManager
+
+    captured: dict[str, object] = {}
+
+    def fake_load_config(self: ConfigManager, config_path: str | None = None) -> None:
+        _ = config_path
+
+    def fake_save_config(self: ConfigManager, config_path: str | None = None) -> None:
+        captured["config_path"] = config_path
+        captured["default_profile"] = self.default_profile
+        captured["profiles"] = self.profiles
+
+    monkeypatch.setattr(ConfigManager, "load_config", fake_load_config)
+    monkeypatch.setattr(ConfigManager, "save_config", fake_save_config)
+
+    user_input = "https://pve.example.com:8006\nadmin@pam\ncli-api\nsecret-token\ny\n"
+    result = cli_runner.invoke(app, ["init"], input=user_input)
+
+    assert result.exit_code == 0
+    assert captured["default_profile"] == "default"
+
+    profiles = captured["profiles"]
+    assert isinstance(profiles, dict)
+    assert "default" in profiles
+    assert "mock" in profiles
+
+    default_profile = profiles["default"]
+    assert default_profile.backend == "https"
+    assert default_profile.host == "pve.example.com"
+    assert default_profile.port == 8006
+    assert default_profile.user == "admin@pam"
+    assert default_profile.token_name == "cli-api"
+    assert default_profile.token_value == "secret-token"
+    assert default_profile.verify_ssl is True
+
+    mock_profile = profiles["mock"]
+    assert mock_profile.backend == "mock"
+    assert mock_profile.token_name is None
+    assert mock_profile.token_value is None
+    assert mock_profile.host is None
+
+
+def test_init_command_accepts_url_without_scheme(
+    cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that init parses host-only endpoint input and applies default port."""
+    from proxmox_openapi.proxmox_cli.config import ConfigManager
+
+    captured: dict[str, object] = {}
+
+    def fake_load_config(self: ConfigManager, config_path: str | None = None) -> None:
+        _ = config_path
+
+    def fake_save_config(self: ConfigManager, config_path: str | None = None) -> None:
+        _ = config_path
+        captured["profiles"] = self.profiles
+
+    monkeypatch.setattr(ConfigManager, "load_config", fake_load_config)
+    monkeypatch.setattr(ConfigManager, "save_config", fake_save_config)
+
+    user_input = "pve.lab.local\nroot@pam\nlab-token\nlab-secret\nn\n"
+    result = cli_runner.invoke(app, ["init", "--profile", "lab"], input=user_input)
+
+    assert result.exit_code == 0
+    profiles = captured["profiles"]
+    assert isinstance(profiles, dict)
+    lab_profile = profiles["lab"]
+    assert lab_profile.host == "pve.lab.local"
+    assert lab_profile.port == 8006
+    assert lab_profile.verify_ssl is False

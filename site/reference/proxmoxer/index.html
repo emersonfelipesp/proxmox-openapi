@@ -15,6 +15,10 @@
         <link rel="canonical" href="https://emersonfelipesp.github.io/proxmox-openapi/reference/proxmoxer/">
 
 
+        <link rel="prev" href="../PVESH/">
+
+
+        <link rel="next" href="../../faq/">
 
 
 
@@ -25,7 +29,7 @@
 
 
 
-        <title>Proxmoxer: Python Wrapper for Proxmox REST API - Proxmox OpenAPI</title>
+        <title>proxmoxer - Proxmox OpenAPI</title>
 
 
 
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
 
-              Proxmoxer: Python Wrapper for Proxmox REST API
+              proxmoxer
 
           </span>
         </div>
@@ -314,6 +318,28 @@
 
 
   Development
+
+        </a>
+      </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../command-capture/" class="md-tabs__link">
+
+
+
+  Reference
 
         </a>
       </li>
@@ -986,6 +1012,1127 @@
 
 
       </a>
+    </li>
+
+
+
+
+          </ul>
+        </nav>
+
+    </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+
+
+
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+
+
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+
+
+
+  <span class="md-ellipsis">
+
+
+    Reference
+
+
+
+  </span>
+
+
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+
+
+    Reference
+
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../command-capture/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    CLI Command Captures
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../PVESH/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    pvesh
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item md-nav__item--active">
+
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+
+
+
+
+
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+
+
+
+  <span class="md-ellipsis">
+
+
+    proxmoxer
+
+
+
+  </span>
+
+
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+
+      <a href="./" class="md-nav__link md-nav__link--active">
+
+
+
+  <span class="md-ellipsis">
+
+
+    proxmoxer
+
+
+
+  </span>
+
+
+
+      </a>
+
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+
+
+
+
+
+
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Overview
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#key-information" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Key Information
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#supported-proxmox-services" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Supported Proxmox Services
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Design Philosophy
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Architecture
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Core Components
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-proxmoxapi-corepy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1. ProxmoxAPI (core.py)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-proxmoxresource-corepy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2. ProxmoxResource (core.py)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-backend-abstraction-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3. Backend Abstraction Layer
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#backend-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Backend Implementations
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Backend Implementations">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-https-backend-backendshttpspy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1. HTTPS Backend (backends/https.py)
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="1. HTTPS Backend (backends/https.py)">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#authentication-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Authentication Methods
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Authentication Methods">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#password-authentication-proxmoxhttpauth" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Password Authentication (ProxmoxHTTPAuth)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#api-token-authentication-proxmoxhttpapitokenauth" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        API Token Authentication (ProxmoxHTTPApiTokenAuth)
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#file-upload-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        File Upload Handling
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#session-management-proxmoxhttpsession" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Session Management (ProxmoxHttpSession)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#ipv6-support" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        IPv6 Support
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#path-prefix-support" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Path Prefix Support
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-ssh-backends-paramiko-openssh" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2. SSH Backends (Paramiko &amp; OpenSSH)
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="2. SSH Backends (Paramiko &amp; OpenSSH)">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#ssh_paramiko-backend-backendsssh_paramikopy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        ssh_paramiko Backend (backends/ssh_paramiko.py)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#openssh-backend-backendsopensshpy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        openssh Backend (backends/openssh.py)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#command-execution-commandbasesession" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Command Execution (CommandBaseSession)
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-local-backend-backendslocalpy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3. Local Backend (backends/local.py)
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#backend-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Backend Comparison
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#features-capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Features &amp; Capabilities
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Features &amp; Capabilities">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-dynamic-resource-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1. Dynamic Resource Navigation
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-restful-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2. RESTful Operations
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-multi-service-support" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3. Multi-Service Support
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#4-file-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        4. File Operations
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#5-task-management" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        5. Task Management
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#6-file-downloadupload-utilities" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        6. File Download/Upload Utilities
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#7-error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        7. Error Handling
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#8-advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        8. Advanced Features
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="8. Advanced Features">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#automatic-parameter-cleaning" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Automatic Parameter Cleaning
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#qemu-guest-agent-exec" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        QEMU Guest Agent Exec
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#ssltls-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        SSL/TLS Configuration
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#timeout-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Timeout Configuration
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#http-proxy-support" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        HTTP Proxy Support
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#design-choices-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Design Choices &amp; Patterns
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Design Choices &amp; Patterns">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-dynamic-attribute-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1. Dynamic Attribute Generation
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-url-building-with-posixpath" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2. URL Building with posixpath
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-none-value-filtering" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3. None Value Filtering
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#4-backend-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        4. Backend Abstraction
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#5-service-configuration-dictionary" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        5. Service Configuration Dictionary
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#6-command-base-inheritance" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        6. Command Base Inheritance
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#7-response-object-design" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        7. Response Object Design
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#8-lazy-error-decoding" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        8. Lazy Error Decoding
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#9-ticket-renewal-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        9. Ticket Renewal Strategy
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#10-file-stream-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        10. File Stream Detection
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#technical-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Technical Stack
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Technical Stack">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#core-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Core Dependencies
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#development-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Development Stack
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Project Structure
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#code-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Code Metrics
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#code-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Code Examples
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Code Examples">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#basic-usage-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Basic Usage Patterns
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Basic Usage Patterns">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-list-all-vms" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1. List All VMs
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-create-and-configure-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2. Create and Configure VM
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-backup-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3. Backup and Restore
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#4-bulk-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        4. Bulk Operations
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#5-storage-management" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        5. Storage Management
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#6-network-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        6. Network Configuration
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#7-monitoring-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        7. Monitoring and Metrics
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#8-user-and-permission-management" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        8. User and Permission Management
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#9-cluster-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        9. Cluster Operations
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#10-error-handling-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        10. Error Handling Best Practices
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#comparison-with-proxmox-openapi" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Comparison with proxmox-openapi
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Comparison with proxmox-openapi">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#architectural-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Architectural Approach
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#design-philosophy_1" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Design Philosophy
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#use-case-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Use Case Recommendations
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#integration-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Integration Opportunities
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#feature-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Feature Matrix
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#version-history-highlights" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Version History Highlights
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Version History Highlights">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#recent-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Recent Releases
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#key-milestones" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Key Milestones
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Summary
+
+    </span>
+  </a>
+
+</li>
+
+    </ul>
+
+</nav>
+
     </li>
 
 
@@ -2013,7 +3160,7 @@
 <p>Proxmoxer supports multiple Proxmox products:</p>
 <ol>
 <li><strong>PVE</strong> (Proxmox Virtual Environment) - Full support</li>
-<li><strong>PMG</strong> (Proxmox Mail Gateway) - Full support  </li>
+<li><strong>PMG</strong> (Proxmox Mail Gateway) - Full support</li>
 <li><strong>PBS</strong> (Proxmox Backup Server) - HTTPS backend only</li>
 </ol>
 <h3 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h3>
@@ -3662,14 +4809,14 @@
 <hr />
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <p><strong>Proxmoxer</strong> is a mature, battle-tested Python library providing:</p>
-<p>✅ <strong>Simple, Pythonic API</strong> for Proxmox REST API access<br />
-✅ <strong>Multiple backends</strong> (HTTPS, SSH, local) with unified interface<br />
-✅ <strong>Dynamic resource navigation</strong> - works with any API endpoint<br />
-✅ <strong>Multi-service support</strong> - PVE, PMG, and PBS<br />
-✅ <strong>Comprehensive authentication</strong> - password, tokens, 2FA<br />
-✅ <strong>Production-ready</strong> - 10+ years of development, high test coverage<br />
-✅ <strong>Minimal dependencies</strong> - core library is pure Python<br />
-✅ <strong>Active maintenance</strong> - regular updates and security fixes  </p>
+<p>✅ <strong>Simple, Pythonic API</strong> for Proxmox REST API access
+✅ <strong>Multiple backends</strong> (HTTPS, SSH, local) with unified interface
+✅ <strong>Dynamic resource navigation</strong> - works with any API endpoint
+✅ <strong>Multi-service support</strong> - PVE, PMG, and PBS
+✅ <strong>Comprehensive authentication</strong> - password, tokens, 2FA
+✅ <strong>Production-ready</strong> - 10+ years of development, high test coverage
+✅ <strong>Minimal dependencies</strong> - core library is pure Python
+✅ <strong>Active maintenance</strong> - regular updates and security fixes</p>
 <p><strong>Best suited for:</strong>
 - Scripts and automation
 - Multi-backend scenarios (SSH/local access needed)

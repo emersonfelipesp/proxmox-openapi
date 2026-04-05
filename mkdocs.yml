@@ -42,6 +42,9 @@ theme:
   icon:
     repo: fontawesome/brands/github
 
+hooks:
+  - docs/hooks.py
+
 nav:
   - Home: index.md
   - Getting Started:
@@ -60,6 +63,10 @@ nav:
   - Development:
       - Contributing: development.md
       - Architecture: architecture.md
+  - Reference:
+      - CLI Command Captures: reference/command-capture/index.md
+      - pvesh: reference/PVESH.md
+      - proxmoxer: reference/proxmoxer.md
   - FAQ: faq.md
 
 markdown_extensions:

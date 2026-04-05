@@ -326,6 +326,26 @@
 
 
 
+
+
+      <li class="md-tabs__item">
+        <a href="../../reference/command-capture/" class="md-tabs__link">
+
+
+
+  Reference
+
+        </a>
+      </li>
+
+
+
+
+
+
+
+
+
     <li class="md-tabs__item">
       <a href="../../faq/" class="md-tabs__link">
 
@@ -978,6 +998,151 @@
 
 
     Architecture
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+          </ul>
+        </nav>
+
+    </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item md-nav__item--nested">
+
+
+
+
+
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+
+
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+
+
+
+  <span class="md-ellipsis">
+
+
+    Reference
+
+
+
+  </span>
+
+
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+
+
+    Reference
+
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../../reference/command-capture/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    CLI Command Captures
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../../reference/PVESH/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    pvesh
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../../reference/proxmoxer/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    proxmoxer
 
 
 
@@ -2197,7 +2362,7 @@
 </span><span id="__span-21-23"><a id="__codelineno-21-23" name="__codelineno-21-23" href="#__codelineno-21-23"></a>
 </span><span id="__span-21-24"><a id="__codelineno-21-24" name="__codelineno-21-24" href="#__codelineno-21-24"></a>    <span class="c1"># Checksum discovery strategies (same as proxmoxer):</span>
 </span><span id="__span-21-25"><a id="__codelineno-21-25" name="__codelineno-21-25" href="#__codelineno-21-25"></a>    <span class="c1">#   1. {url}.{algo}           e.g. file.iso.sha512</span>
-</span><span id="__span-21-26"><a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>    <span class="c1">#   2. {url}.{ALGO}           e.g. file.iso.SHA512  </span>
+</span><span id="__span-21-26"><a id="__codelineno-21-26" name="__codelineno-21-26" href="#__codelineno-21-26"></a>    <span class="c1">#   2. {url}.{ALGO}           e.g. file.iso.SHA512</span>
 </span><span id="__span-21-27"><a id="__codelineno-21-27" name="__codelineno-21-27" href="#__codelineno-21-27"></a>    <span class="c1">#   3. {base_url}/SHA512SUMS  (containing filename)</span>
 </span><span id="__span-21-28"><a id="__codelineno-21-28" name="__codelineno-21-28" href="#__codelineno-21-28"></a>    <span class="c1">#   4. {base_url}/sha512sums  (containing filename)</span>
 </span><span id="__span-21-29"><a id="__codelineno-21-29" name="__codelineno-21-29" href="#__codelineno-21-29"></a>
@@ -2338,7 +2503,7 @@
 <hr />
 <h2 id="refactoring-plan-for-existing-code">Refactoring Plan for Existing Code<a class="headerlink" href="#refactoring-plan-for-existing-code" title="Permanent link">&para;</a></h2>
 <h3 id="proxmox_openapiproxmoxclientpy"><code>proxmox_openapi/proxmox/client.py</code><a class="headerlink" href="#proxmox_openapiproxmoxclientpy" title="Permanent link">&para;</a></h3>
-<p><strong>Current role:</strong> Full async HTTP client, raises <code>fastapi.HTTPException</code>.<br />
+<p><strong>Current role:</strong> Full async HTTP client, raises <code>fastapi.HTTPException</code>.
 <strong>Post-refactor role:</strong> Thin adapter — delegates to <code>sdk/backends/https.py</code>, translates <code>ResourceException</code> → <code>HTTPException</code> for the FastAPI layer.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># After refactor:</span>
 </span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ProxmoxClient</span><span class="p">:</span>

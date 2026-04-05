@@ -8,7 +8,6 @@ import typer
 
 from .app import app
 
-
 docs_app = typer.Typer(
     no_args_is_help=True,
     help="Generate CLI documentation artifacts for MkDocs.",

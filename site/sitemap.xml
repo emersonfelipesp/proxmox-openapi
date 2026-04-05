@@ -2,70 +2,154 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/api-reference/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/architecture/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/development/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/faq/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/installation/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/mock-api/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/quickstart/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/real-api/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-authentication/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-examples/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-guide/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-mock/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-virtual-machines/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/generated/proxmox-command-capture/</loc>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/PVESH/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/proxmoxer/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/batch/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/benchmark/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/completion-install/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/config-add/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/config-list/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/config-remove/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/config-set-default/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/config-show/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/create/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/delete/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/docs/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/get/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/help-cmd/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/ls/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/perf-test/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/set-cmd/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/top-level/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/tui/</loc>
+         <lastmod>2026-04-05</lastmod>
+    </url>
+    <url>
+         <loc>https://emersonfelipesp.github.io/proxmox-openapi/reference/command-capture/usage/</loc>
+         <lastmod>2026-04-05</lastmod>
     </url>
     <url>
          <loc>https://emersonfelipesp.github.io/proxmox-openapi/sdk-implementation/SDK/</loc>
-         <lastmod>2026-04-04</lastmod>
+         <lastmod>2026-04-05</lastmod>
     </url>
 </urlset>

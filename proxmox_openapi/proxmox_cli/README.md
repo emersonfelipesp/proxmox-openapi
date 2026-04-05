@@ -68,6 +68,9 @@ pbx tui
 
 # Launch TUI against mock backend
 pbx tui mock
+
+# Initialize production profile interactively (also creates mock profile automatically)
+pbx init
 ```
 
 ### TUI

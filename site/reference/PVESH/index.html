@@ -15,6 +15,10 @@
         <link rel="canonical" href="https://emersonfelipesp.github.io/proxmox-openapi/reference/PVESH/">
 
 
+        <link rel="prev" href="../command-capture/">
+
+
+        <link rel="next" href="../proxmoxer/">
 
 
 
@@ -25,7 +29,7 @@
 
 
 
-        <title>PVESH: Structured Review - Proxmox OpenAPI</title>
+        <title>pvesh - Proxmox OpenAPI</title>
 
 
 
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
 
-              PVESH: Structured Review
+              pvesh
 
           </span>
         </div>
@@ -314,6 +318,28 @@
 
 
   Development
+
+        </a>
+      </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../command-capture/" class="md-tabs__link">
+
+
+
+  Reference
 
         </a>
       </li>
@@ -978,6 +1004,699 @@
 
 
     Architecture
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+          </ul>
+        </nav>
+
+    </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+
+
+
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+
+
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+
+
+
+  <span class="md-ellipsis">
+
+
+    Reference
+
+
+
+  </span>
+
+
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+
+
+    Reference
+
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../command-capture/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    CLI Command Captures
+
+
+
+  </span>
+
+
+
+      </a>
+    </li>
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item md-nav__item--active">
+
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+
+
+
+
+
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+
+
+
+  <span class="md-ellipsis">
+
+
+    pvesh
+
+
+
+  </span>
+
+
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+
+      <a href="./" class="md-nav__link md-nav__link--active">
+
+
+
+  <span class="md-ellipsis">
+
+
+    pvesh
+
+
+
+  </span>
+
+
+
+      </a>
+
+
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+
+
+
+
+
+
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+
+        <li class="md-nav__item">
+  <a href="#scope-and-source" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Scope and Source
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Executive Summary
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#what-pvesh-is-and-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        What pvesh Is (and Is Not)
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="What pvesh Is (and Is Not)">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#what-it-is" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        What it is
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#what-it-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        What it is not
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#command-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Command Surface
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#global-form" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Global Form
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#core-subcommands-and-api-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Core Subcommands and API Mapping
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Core Subcommands and API Mapping">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#pvesh-get-api_path-options-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh get &lt;api_path&gt; [OPTIONS] [FORMAT_OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-create-api_path-options-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh create &lt;api_path&gt; [OPTIONS] [FORMAT_OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-set-api_path-options-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh set &lt;api_path&gt; [OPTIONS] [FORMAT_OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-delete-api_path-options-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh delete &lt;api_path&gt; [OPTIONS] [FORMAT_OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-ls-api_path-options-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh ls &lt;api_path&gt; [OPTIONS] [FORMAT_OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-usage-api_path-options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh usage &lt;api_path&gt; [OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#pvesh-help-options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        pvesh help [OPTIONS]
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#shared-options-by-api-calling-verbs" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Shared Options by API-Calling Verbs
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#output-and-rendering-model-format_options" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Output and Rendering Model (FORMAT_OPTIONS)
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Output and Rendering Model (FORMAT_OPTIONS)">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Output format
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#text-rendering-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Text rendering controls
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#silent-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Silent mode
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#human-readable-transformations-in-text-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Human-readable transformations in text mode
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#official-examples-from-man-page" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Official Examples (from man page)
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#behavioral-review" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Behavioral Review
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#strengths" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Strengths
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Strengths">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-directness-and-fidelity-to-api-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1) Directness and fidelity to API semantics
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-discoverability-from-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2) Discoverability from the host
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-automation-friendly-output-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3) Automation-friendly output controls
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#4-low-additional-dependency-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        4) Low additional dependency surface
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#limitations-and-risk-areas" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Limitations and Risk Areas
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Limitations and Risk Areas">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#1-privilege-model-is-strict" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        1) Privilege model is strict
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#2-path-first-ux-has-a-learning-curve" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        2) Path-first UX has a learning curve
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#3-text-output-defaults-can-surprise-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        3) Text output defaults can surprise scripts
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#4-api-first-behavior-means-low-guardrails" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        4) API-first behavior means low guardrails
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#security-and-operations-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Security and Operations Notes
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#practical-usage-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Practical Usage Patterns
+
+    </span>
+  </a>
+
+    <nav class="md-nav" aria-label="Practical Usage Patterns">
+      <ul class="md-nav__list">
+
+          <li class="md-nav__item">
+  <a href="#endpoint-exploration" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Endpoint exploration
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#deterministic-automation-output" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Deterministic automation output
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#quiet-write-operations-in-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Quiet write operations in scripts
+
+    </span>
+  </a>
+
+</li>
+
+          <li class="md-nav__item">
+  <a href="#human-facing-cli-output-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Human-facing CLI output cleanup
+
+    </span>
+  </a>
+
+</li>
+
+      </ul>
+    </nav>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#relevance-to-proxmox-openapi" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Relevance to proxmox-openapi
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#suggested-validation-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Suggested Validation Checklist
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        Conclusion
+
+    </span>
+  </a>
+
+</li>
+
+    </ul>
+
+</nav>
+
+    </li>
+
+
+
+
+
+
+
+
+
+
+    <li class="md-nav__item">
+      <a href="../proxmoxer/" class="md-nav__link">
+
+
+
+  <span class="md-ellipsis">
+
+
+    proxmoxer
 
 
 

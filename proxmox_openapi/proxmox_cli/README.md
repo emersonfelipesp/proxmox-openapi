@@ -159,7 +159,7 @@ Create a config file at `~/.proxmox-cli/config.json`:
     }
   },
   "global": {
-    "output_format": "auto",
+    "output_format": "human",
     "colors": true,
     "completion_shell": "bash"
   }
@@ -274,6 +274,14 @@ proxmox create /nodes/pve1/qemu/100/status/current \
 
 ```bash
 proxmox get /nodes/pve1/qemu/100/status/current --output json
+```
+
+Equivalent shorthand flags are also available on all commands:
+
+```bash
+proxmox get /nodes --json
+proxmox ls /nodes --yaml
+proxmox usage /nodes --markdown
 ```
 
 ### List snapshots

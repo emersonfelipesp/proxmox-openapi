@@ -78,7 +78,7 @@ def test_config_paths() -> None:
 
 def test_output_formatter() -> None:
     """Test output formatter initialization."""
-    from proxmox_openapi.proxmox_cli.output import OutputFormatter
+    from proxmox_openapi.proxmox_cli.output import OutputFormatter, resolve_output_format
 
     formatter = OutputFormatter(format="json")
     assert formatter.format == "json"
@@ -86,6 +86,24 @@ def test_output_formatter() -> None:
     formatter2 = OutputFormatter(format="table", colors=False)
     assert formatter2.format == "table"
     assert not formatter2.colors
+
+    assert resolve_output_format(json_output=True) == "json"
+    assert resolve_output_format(yaml_output=True) == "yaml"
+    assert resolve_output_format(markdown_output=True) == "markdown"
+
+
+def test_usage_markdown_output(cli_runner: CliRunner) -> None:
+    """Test usage command markdown output flag."""
+    result = cli_runner.invoke(app, ["usage", "/nodes", "--markdown"])
+    assert result.exit_code == 0
+    assert "| key | value |" in result.stdout
+
+
+def test_help_yaml_output(cli_runner: CliRunner) -> None:
+    """Test help command YAML output flag."""
+    result = cli_runner.invoke(app, ["help-cmd", "--yaml"])
+    assert result.exit_code == 0
+    assert "commands:" in result.stdout
 
 
 def test_exceptions() -> None:

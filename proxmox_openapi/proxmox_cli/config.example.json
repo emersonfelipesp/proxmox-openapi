@@ -45,7 +45,7 @@
     }
   },
   "global": {
-    "output_format": "auto",
+    "output_format": "human",
     "table_mode": "grid",
     "colors": true,
     "completion_shell": "bash",

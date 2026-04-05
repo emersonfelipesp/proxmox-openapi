@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -82,6 +83,21 @@ class ConfigManager:
         if not config_file or not config_file.exists():
             logger.debug("No config file found, using defaults")
             return
+
+        # Warn if the config file is readable by group or others — it may
+        # contain plaintext credentials.
+        try:
+            file_mode = config_file.stat().st_mode
+            if file_mode & (stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH):
+                logger.warning(
+                    "Config file %s has loose permissions (%s). "
+                    "It may contain credentials — run 'chmod 600 %s' to restrict access.",
+                    config_file,
+                    oct(file_mode & 0o777),
+                    config_file,
+                )
+        except OSError:
+            pass  # Non-fatal; proceed with loading
 
         try:
             content = config_file.read_text()
@@ -198,25 +214,40 @@ class ConfigManager:
         """
         path = Path(config_path) if config_path else self.DEFAULT_CONFIG_PATHS[0]
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Restrict the config directory to the owner only so credential files
+        # written inside are not accidentally exposed.
+        try:
+            path.parent.chmod(0o700)
+        except OSError:
+            pass  # Best-effort; don't block save on permission failure
+
+        def _profile_dict(cfg: BackendConfig) -> dict:
+            """Serialize a profile, omitting None-valued credential fields."""
+            entry: dict = {
+                "backend": cfg.backend,
+                "host": cfg.host,
+                "port": cfg.port,
+                "service": cfg.service,
+                "user": cfg.user,
+                "verify_ssl": cfg.verify_ssl,
+                "timeout": cfg.timeout,
+                "custom": cfg.custom,
+            }
+            # Only include secret fields when they have a value so that the
+            # serialized JSON doesn't suggest credentials are expected.
+            if cfg.password is not None:
+                entry["password"] = cfg.password
+            if cfg.token_name is not None:
+                entry["token_name"] = cfg.token_name
+            if cfg.token_value is not None:
+                entry["token_value"] = cfg.token_value
+            return entry
 
         data = {
             "version": "1.0",
             "default_profile": self.default_profile or "default",
             "profiles": {
-                name: {
-                    "backend": cfg.backend,
-                    "host": cfg.host,
-                    "port": cfg.port,
-                    "service": cfg.service,
-                    "user": cfg.user,
-                    "password": cfg.password,
-                    "token_name": cfg.token_name,
-                    "token_value": cfg.token_value,
-                    "verify_ssl": cfg.verify_ssl,
-                    "timeout": cfg.timeout,
-                    "custom": cfg.custom,
-                }
-                for name, cfg in self.profiles.items()
+                name: _profile_dict(cfg) for name, cfg in self.profiles.items()
             },
             "global": {
                 "output_format": self.global_config.output_format,
@@ -230,6 +261,8 @@ class ConfigManager:
 
         try:
             path.write_text(json.dumps(data, indent=2))
+            # Restrict the config file to owner read/write only.
+            path.chmod(0o600)
             logger.debug(f"Saved config to {path}")
         except (IOError, OSError) as e:
             raise ConfigError(f"Cannot write config to {path}: {e}")

@@ -10,7 +10,7 @@ Real mode transforms proxmox-openapi into a **validated proxy** for your Proxmox
 
 - ✅ **646 endpoints** route to real Proxmox server
 - ✅ **Request validation** - Pydantic models ensure correct request format
-- ✅ **Response validation** - Guarantees response data integrity  
+- ✅ **Response validation** - Guarantees response data integrity
 - ✅ **Multiple auth methods** - API tokens or username/password
 - ✅ **SSL control** - Verify certificates or disable for self-signed
 - ✅ **Production-ready** - Async HTTP client with connection pooling

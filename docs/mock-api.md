@@ -152,7 +152,7 @@ Create `mock-data.yaml`:
 === "Default Location"
 
     Place your file at the default path:
-    
+
     ```bash
     sudo mkdir -p /etc/proxmox-openapi
     sudo cp mock-data.json /etc/proxmox-openapi/
@@ -302,7 +302,7 @@ def test_create_vm(proxmox_client):
         json={"vmid": 100, "name": "test", "memory": 2048}
     )
     assert response.status_code == 200
-    
+
     # Verify VM was created
     vm = proxmox_client.get("/nodes/pve/qemu/100")
     assert vm.json()["vmid"] == 100
@@ -317,13 +317,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Start Mock Proxmox API
         run: |
           pip install proxmox-openapi
           proxmox-openapi-mock &
           sleep 2
-      
+
       - name: Run Integration Tests
         run: pytest tests/integration/
 ```

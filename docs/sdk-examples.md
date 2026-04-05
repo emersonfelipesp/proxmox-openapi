@@ -13,18 +13,18 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     import asyncio
     from proxmox_openapi import ProxmoxSDK
-    
+
     async def list_backup_storage():
         async with ProxmoxSDK(...) as proxmox:
             storage = await proxmox.storage.get(enabled=1)
-            
+
             for store in storage:
                 if "backup" in store.get("content", "").split(","):
                     print(f"Storage: {store['storage']}")
                     print(f"  Type: {store['type']}")
                     print(f"  Path: {store.get('path', 'N/A')}")
                     print()
-    
+
     asyncio.run(list_backup_storage())
     ```
 
@@ -35,18 +35,18 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     from proxmox_openapi import ProxmoxSDK
     from proxmox_openapi.sdk.tools import Tasks
-    
+
     async def backup_vm(node, vmid, storage="local"):
         async with ProxmoxSDK(...) as proxmox:
             print(f"Starting backup of VM {vmid}...")
-            
+
             result = await proxmox.nodes(node).qemu(vmid).backup.post(
                 storage=storage,
                 mode="snapshot",  # snapshot, stop, or suspend
                 compress="zstd",  # zstd, gzip, lz4
                 notes="Daily backup",
             )
-            
+
             task_id = result.get("upid")
             if task_id:
                 tasks = Tasks(proxmox)
@@ -64,7 +64,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_vm_snapshots(node, vmid):
         async with ProxmoxSDK(...) as proxmox:
             snapshots = await proxmox.nodes(node).qemu(vmid).snapshot.get()
-            
+
             for snapshot in snapshots:
                 print(f"Snapshot: {snapshot['name']}")
                 print(f"  Created: {snapshot.get('snaptime', 'N/A')}")
@@ -83,7 +83,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
                 description="Daily snapshot",
                 vmstate=1,  # Include memory state
             )
-            
+
             print(f"Snapshot created: {snapshot_name}")
     ```
 
@@ -97,7 +97,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
         async with ProxmoxSDK(...) as proxmox:
             # List available backups
             backups = await proxmox.nodes(node).storage(storage).content.get()
-            
+
             print("Available backups:")
             for backup in backups:
                 if backup['content'] == 'backup':
@@ -117,7 +117,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
         async with ProxmoxSDK(...) as proxmox:
             # Cluster status
             cluster_status = await proxmox.cluster.status.get()
-            
+
             print("Cluster Status:")
             for node in cluster_status:
                 if node.get('type') == 'node':
@@ -134,7 +134,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def monitor_node_resources(node):
         async with ProxmoxSDK(...) as proxmox:
             status = await proxmox.nodes(node).status.get()
-            
+
             print(f"\nNode: {node}")
             print(f"  Status: {status.get('status', 'unknown')}")
             print(f"  Uptime: {status.get('uptime', 0) / 3600:.1f} hours")
@@ -152,7 +152,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_node_tasks(node):
         async with ProxmoxSDK(...) as proxmox:
             tasks = await proxmox.nodes(node).tasks.get()
-            
+
             print(f"\nRecent tasks on {node}:")
             for task in tasks[:5]:  # Last 5
                 print(f"  {task['id']}: {task['type']}")
@@ -172,7 +172,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_all_storage():
         async with ProxmoxSDK(...) as proxmox:
             storage = await proxmox.storage.get()
-            
+
             print("\nAvailable Storage:")
             for store in storage:
                 if store.get('enabled'):
@@ -190,7 +190,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_storage_content(storage):
         async with ProxmoxSDK(...) as proxmox:
             content = await proxmox.storage(storage).content.get()
-            
+
             print(f"\n{storage} content:")
             for item in content:
                 print(f"  {item['volid']}")
@@ -210,7 +210,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_network_interfaces(node):
         async with ProxmoxSDK(...) as proxmox:
             net = await proxmox.nodes(node).network.get()
-            
+
             print(f"\nNetwork interfaces on {node}:")
             for interface in net:
                 print(f"  {interface['iface']}")
@@ -230,7 +230,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def get_vm_network_config(node, vmid):
         async with ProxmoxSDK(...) as proxmox:
             config = await proxmox.nodes(node).qemu(vmid).config.get()
-            
+
             print(f"\nVM {vmid} network config:")
             for i in range(10):
                 net_key = f"net{i}"
@@ -250,7 +250,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_firewall_rules():
         async with ProxmoxSDK(...) as proxmox:
             rules = await proxmox.cluster.firewall.rules.get()
-            
+
             print("\nFirewall Rules:")
             for rule in rules:
                 enabled = "✓" if rule.get('enable', 0) else "✗"
@@ -269,7 +269,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
                 enable=1,
                 comment="Allow HTTPS inbound",
             )
-            
+
             print("Firewall rule added")
     ```
 
@@ -285,7 +285,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_users():
         async with ProxmoxSDK(...) as proxmox:
             users = await proxmox.access.users.get()
-            
+
             print("\nProxmox Users:")
             for user in users:
                 print(f"  {user['userid']}")
@@ -301,7 +301,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def list_api_tokens(user):
         async with ProxmoxSDK(...) as proxmox:
             tokens = await proxmox.access.users(user).tokens.get()
-            
+
             print(f"\nAPI tokens for {user}:")
             for token in tokens:
                 print(f"  {token['tokenid']}")
@@ -323,7 +323,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
                 users=user,
                 propagate=1,
             )
-            
+
             print(f"Permissions updated for {user}")
     ```
 
@@ -338,29 +338,29 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     import asyncio
     from proxmox_openapi import ProxmoxSDK
-    
+
     async def monitor_vm_health(node, vmid, interval=5, duration=60):
         """Monitor a VM's health for a duration."""
         async with ProxmoxSDK(...) as proxmox:
             print(f"Monitoring VM {vmid} for {duration}s (interval: {interval}s)")
-            
+
             elapsed = 0
             while elapsed < duration:
                 try:
                     status = await proxmox.nodes(node).qemu(vmid).status.current.get()
-                    
+
                     print(f"\n[{elapsed}s] {status['status'].upper()}")
                     print(f"  CPU: {status.get('cpu', 0):.1%}")
                     print(f"  Memory: {status.get('mem', 0) / 1024 / 1024:.0f} MB "
                           f"/ {status.get('maxmem', 0) / 1024 / 1024:.0f} MB")
-                    
+
                     # Alert if CPU high
                     if status.get('cpu', 0) > 0.8:
                         print("  ⚠ CPU high!")
-                    
+
                     await asyncio.sleep(interval)
                     elapsed += interval
-                    
+
                 except Exception as e:
                     print(f"Error: {e}")
                     break
@@ -374,18 +374,18 @@ Real-world examples for common Proxmox operations including backups, clustering,
     async def health_check_all_vms(alert_to_webhook):
         """Check health of all VMs and send alerts."""
         import aiohttp
-        
+
         async with ProxmoxSDK(...) as proxmox:
             nodes = await proxmox.nodes.get()
-            
+
             for node_info in nodes:
                 node = node_info["node"]
                 vms = await proxmox.nodes(node).qemu.get()
-                
+
                 for vm in vms:
                     try:
                         status = await proxmox.nodes(node).qemu(vm['vmid']).status.current.get()
-                        
+
                         # Check issues
                         if status['status'] == 'stopped':
                             alert = {
@@ -394,10 +394,10 @@ Real-world examples for common Proxmox operations including backups, clustering,
                                 "vmid": vm['vmid'],
                                 "node": node,
                             }
-                            
+
                             async with aiohttp.ClientSession() as session:
                                 await session.post(alert_to_webhook, json=alert)
-                    
+
                     except Exception as e:
                         print(f"Error checking {vm['name']}: {e}")
     ```
@@ -413,7 +413,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     import json
     from proxmox_openapi import ProxmoxSDK
-    
+
     async def export_vm_configs():
         """Export all VM configs to JSON for disaster recovery."""
         async with ProxmoxSDK(...) as proxmox:
@@ -421,13 +421,13 @@ Real-world examples for common Proxmox operations including backups, clustering,
                 "timestamp": __import__("datetime").datetime.now().isoformat(),
                 "vms": {}
             }
-            
+
             nodes = await proxmox.nodes.get()
-            
+
             for node_info in nodes:
                 node = node_info["node"]
                 vms = await proxmox.nodes(node).qemu.get()
-                
+
                 for vm in vms:
                     config = await proxmox.nodes(node).qemu(vm['vmid']).config.get()
                     backup["vms"][str(vm['vmid'])] = {
@@ -435,11 +435,11 @@ Real-world examples for common Proxmox operations including backups, clustering,
                         "name": vm['name'],
                         "config": config
                     }
-            
+
             # Save to file
             with open("vm-backup-configs.json", "w") as f:
                 json.dump(backup, f, indent=2)
-            
+
             print("✓ VM configs exported to vm-backup-configs.json")
     ```
 
@@ -450,18 +450,18 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     import json
     from proxmox_openapi import ProxmoxSDK
-    
+
     async def restore_vms_from_config(config_file):
         """Recreate VMs from saved configuration."""
         async with ProxmoxSDK(...) as proxmox:
             with open(config_file) as f:
                 backup = json.load(f)
-            
+
             for vmid, vm_data in backup["vms"].items():
                 config = vm_data["config"]
-                
+
                 print(f"Restoring VM {vm_data['name']} (ID: {vmid})...")
-                
+
                 try:
                     # Recreate VM with original config
                     await proxmox.nodes(vm_data["node"]).qemu.post(
@@ -491,24 +491,24 @@ Real-world examples for common Proxmox operations including backups, clustering,
         async with ProxmoxSDK(...) as proxmox:
             nodes = await proxmox.nodes.get()
             vms_by_resource = []
-            
+
             for node_info in nodes:
                 node = node_info["node"]
                 vms = await proxmox.nodes(node).qemu.get()
-                
+
                 for vm in vms:
                     config = await proxmox.nodes(node).qemu(vm['vmid']).config.get()
-                    
+
                     vms_by_resource.append({
                         "name": vm['name'],
                         "memory_gb": config.get('memory', 0) / 1024,
                         "cores": config.get('cores', 0),
                         "node": node,
                     })
-            
+
             # Sort by memory
             vms_by_resource.sort(key=lambda x: x['memory_gb'], reverse=True)
-            
+
             print("\nTop VMs by memory allocation:")
             for vm in vms_by_resource[:5]:
                 print(f"  {vm['name']}: {vm['memory_gb']:.1f}GB, {vm['cores']} cores")
@@ -527,7 +527,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
         """Start multiple VMs."""
         async with ProxmoxSDK(...) as proxmox:
             vms = await proxmox.nodes(node).qemu.get()
-            
+
             for vm_name in vm_names:
                 vm = next((v for v in vms if v['name'] == vm_name), None)
                 if vm:
@@ -547,7 +547,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
         if not confirm:
             print("This will DELETE VMs. Run with confirm=True to proceed.")
             return
-        
+
         async with ProxmoxSDK(...) as proxmox:
             for vmid in vm_ids:
                 print(f"Deleting VM {vmid}...")
@@ -569,10 +569,10 @@ Real-world examples for common Proxmox operations including backups, clustering,
     ```python
     import asyncio
     from proxmox_openapi import ProxmoxSDK, ResourceException
-    
+
     async def create_vm_with_retries(node, vmid, name, max_retries=3):
         """Create VM with automatic retry on failure."""
-        
+
         for attempt in range(1, max_retries + 1):
             try:
                 async with ProxmoxSDK(...) as proxmox:
@@ -585,7 +585,7 @@ Real-world examples for common Proxmox operations including backups, clustering,
                     )
                     print(f"✓ VM created on attempt {attempt}")
                     return result
-            
+
             except ResourceException as e:
                 if attempt < max_retries:
                     wait_time = 2 ** attempt  # Exponential backoff

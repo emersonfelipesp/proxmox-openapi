@@ -6,6 +6,7 @@ A modern, pvesh-like command-line interface for Proxmox VE, PMG, and PBS.
 
 - **Multi-backend support**: HTTPS, SSH, local pvesh, or mock
 - **Intuitive commands**: `get`, `create`, `set`, `delete`, `ls`, `usage`, `help`
+- **Interactive TUI**: command-driven Textual interface for production and mock workflows
 - **Flexible authentication**: Password, API token, or interactive
 - **Multiple output formats**: JSON, YAML, table, or text
 - **Configuration profiles**: Save multiple Proxmox endpoints
@@ -20,6 +21,12 @@ pip install proxmox-openapi[cli]
 # With all optional dependencies
 pip install proxmox-openapi[all]
 ```
+
+CLI entry points installed by the package:
+
+- `proxmox`
+- `proxmox-cli`
+- `pbx`
 
 ## Quick Start
 
@@ -55,6 +62,25 @@ proxmox usage /nodes/pve1/qemu/100
 
 # Get help on an endpoint
 proxmox help /nodes/pve1/qemu
+
+# Launch TUI (production mode)
+pbx tui
+
+# Launch TUI against mock backend
+pbx tui mock
+```
+
+### TUI
+
+```bash
+# Production mode (default)
+pbx tui
+
+# Mock mode
+pbx tui mock
+
+# Set initial path
+pbx tui --path /cluster/status
 ```
 
 ### Output Formats

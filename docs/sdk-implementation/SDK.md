@@ -328,7 +328,7 @@ These are strategy objects consumed by `sdk/backends/https.py`.
 class TicketAuth:
     """
     Async auth handler for username/password flow.
-    
+
     - Authenticates via POST /access/ticket
     - Stores PVE/PMG/PBSAuthCookie and CSRFPreventionToken
     - Supports TOTP/OTP two-factor challenge
@@ -345,7 +345,7 @@ class TicketAuth:
 
 ```
 POST /access/ticket {username, password}
-  → if data["NeedTFA"]: 
+  → if data["NeedTFA"]:
       POST /access/ticket {username, password=otp_code, tfa-challenge=challenge}
   → store ticket + CSRFPreventionToken
 ```
@@ -356,11 +356,11 @@ POST /access/ticket {username, password}
 class TokenAuth:
     """
     Stateless auth handler for API token flow.
-    
+
     Token format:
       PVE/PMG: PVEAPIToken={user}!{token_name}={token_value}
       PBS:     PBSAPIToken={user}!{token_name}:{token_value}
-    
+
     The separator difference (= vs :) is resolved from SERVICES registry.
     """
 
@@ -381,10 +381,10 @@ The centerpiece of the SDK's user-facing API.
 class ProxmoxResource:
     """
     Provides dynamic Proxmox API navigation via attribute access.
-    
+
     Each attribute access or call returns a new ProxmoxResource
     with an extended URL path. HTTP methods execute the request.
-    
+
     Navigation styles supported:
         proxmox.nodes.get()
         proxmox.nodes('pve1').qemu.get()
@@ -461,7 +461,7 @@ The main user-facing class. No FastAPI dependency.
 class ProxmoxSDK:
     """
     Entry point for the Proxmox OpenAPI SDK.
-    
+
     Usage (async):
         async with ProxmoxSDK(
             host="pve.example.com",
@@ -472,16 +472,16 @@ class ProxmoxSDK:
         ) as proxmox:
             nodes = await proxmox.nodes.get()
             await proxmox.nodes("pve1").qemu.post(vmid=100, name="test")
-    
+
     Usage (sync convenience wrapper — see Phase 6):
         proxmox = ProxmoxSDK.sync(host=..., user=..., password=...)
         nodes = proxmox.nodes.get()
-    
+
     Multi-service:
         pve = ProxmoxSDK(host="pve.example.com", user="admin@pam", ...)
         pmg = ProxmoxSDK(host="mail.example.com", user="admin@pmg", ..., service="PMG")
         pbs = ProxmoxSDK(host="backup.example.com", user="admin@pbs", ..., service="PBS")
-    
+
     Token auth:
         proxmox = ProxmoxSDK(
             host="pve.example.com",
@@ -490,11 +490,11 @@ class ProxmoxSDK:
             token_value="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
             service="PVE",
         )
-    
+
     Mock mode (no real Proxmox):
         proxmox = ProxmoxSDK.mock(schema_version="latest")
         nodes = await proxmox.nodes.get()  # returns mock data
-    
+
     SSH backend:
         proxmox = ProxmoxSDK(
             host="pve.example.com",
@@ -503,7 +503,7 @@ class ProxmoxSDK:
             backend="ssh_paramiko",
             service="PVE",
         )
-    
+
     Local backend (on Proxmox host):
         proxmox = ProxmoxSDK(backend="local", service="PVE")
     """
@@ -575,7 +575,7 @@ Users who don't want async can use the sync wrapper. It is a thin layer over the
 class SyncProxmoxSDK:
     """
     Synchronous wrapper around ProxmoxSDK for scripts that cannot use async/await.
-    
+
     Usage:
         proxmox = SyncProxmoxSDK(
             host="pve.example.com",
@@ -584,7 +584,7 @@ class SyncProxmoxSDK:
         )
         nodes = proxmox.nodes.get()
         proxmox.close()
-    
+
     Context manager:
         with SyncProxmoxSDK(...) as proxmox:
             nodes = proxmox.nodes.get()
@@ -603,7 +603,7 @@ class SyncProxmoxSDK:
 class Tasks:
     """
     Utility class for Proxmox task (UPID) management.
-    
+
     Usage:
         task_id = await proxmox.nodes("pve1").qemu(100).status.start.post()
         status = await Tasks.blocking_status(proxmox, task_id, timeout=300, polling_interval=2)
@@ -626,9 +626,9 @@ class Tasks:
     def decode_upid(upid: str) -> dict[str, Any]:
         """
         Parse UPID string into components.
-        
+
         Format: UPID:{node}:{pid}:{pstart}:{starttime}:{type}:{id}:{user}:{comment}
-        
+
         Returns:
             {
                 "upid": str,
@@ -662,17 +662,17 @@ class Tasks:
 class Files:
     """
     High-level file operations against Proxmox storage.
-    
+
     Usage:
         files = Files(proxmox, node="pve1", storage="local")
-        
+
         # Upload local ISO
         status = await files.upload_local_file_to_storage(
             "/path/to/debian.iso",
             do_checksum_check=True,
             blocking_status=True,
         )
-        
+
         # Download from URL to Proxmox storage
         status = await files.download_file_to_storage(
             "https://cdimage.debian.org/debian-12.0.0-amd64-netinst.iso",
@@ -681,10 +681,10 @@ class Files:
     """
 
     CHECKSUM_ALGORITHMS = ["sha512", "sha256", "sha224", "sha384", "md5", "sha1"]
-    
+
     # Checksum discovery strategies (same as proxmoxer):
     #   1. {url}.{algo}           e.g. file.iso.sha512
-    #   2. {url}.{ALGO}           e.g. file.iso.SHA512  
+    #   2. {url}.{ALGO}           e.g. file.iso.SHA512
     #   3. {base_url}/SHA512SUMS  (containing filename)
     #   4. {base_url}/sha512sums  (containing filename)
 
@@ -722,10 +722,10 @@ Expose the existing in-memory mock store (`proxmox_openapi/mock/state.py`) as an
 class MockBackend:
     """
     In-memory mock backend — wraps the existing mock store.
-    
+
     No network required. Reads schema from generated OpenAPI files.
     Supports full CRUD on mock data (same as the mock FastAPI server).
-    
+
     Usage:
         proxmox = ProxmoxSDK.mock(schema_version="latest")
         nodes = await proxmox.nodes.get()       # returns mock data
@@ -856,14 +856,14 @@ except ImportError as exc:
 
 ### `proxmox_openapi/proxmox/client.py`
 
-**Current role:** Full async HTTP client, raises `fastapi.HTTPException`.  
+**Current role:** Full async HTTP client, raises `fastapi.HTTPException`.
 **Post-refactor role:** Thin adapter — delegates to `sdk/backends/https.py`, translates `ResourceException` → `HTTPException` for the FastAPI layer.
 
 ```python
 # After refactor:
 class ProxmoxClient:
     """FastAPI adapter over the SDK HTTPS backend."""
-    
+
     def __init__(self, config: ProxmoxConfig) -> None:
         from proxmox_openapi.sdk.backends.https import HttpsBackend
         self._backend = HttpsBackend.from_config(config)
@@ -900,12 +900,12 @@ async def main():
     ) as proxmox:
         nodes = await proxmox.nodes.get()
         print(nodes)
-        
+
         # Create VM
         await proxmox.nodes("pve1").qemu.post(
             vmid=101, name="test-vm", memory=2048, cores=2
         )
-        
+
         # Wait for task
         from proxmox_openapi import Tasks
         task_id = await proxmox.nodes("pve1").qemu(101).status.start.post()

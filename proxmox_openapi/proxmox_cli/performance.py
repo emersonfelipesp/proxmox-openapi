@@ -44,7 +44,7 @@ class PerformanceMetrics:
 class Benchmark:
     """Benchmarking utility for performance testing."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """Initialize benchmark.
 
         Args:

@@ -192,7 +192,7 @@ jobs:
           import asyncio
           import os
           from proxmox_openapi import ProxmoxSDK
-          
+
           async def main():
               async with ProxmoxSDK(
                   host=os.getenv('PROXMOX_HOST'),
@@ -206,7 +206,7 @@ jobs:
                       memory=2048,
                   )
                   print(f'VM created: {result}')
-          
+
           asyncio.run(main())
           "
 ```
@@ -344,7 +344,7 @@ class ProxmoxPlugin:
         self.host = host
         self.user = user
         self.key_file = key_file
-    
+
     async def get_vms(self):
         async with ProxmoxSDK(
             host=self.host,
@@ -353,7 +353,7 @@ class ProxmoxPlugin:
             backend="ssh_paramiko",
         ) as proxmox:
             return await proxmox.nodes.get()
-    
+
     def get_vms_sync(self):
         return asyncio.run(self.get_vms())
 
@@ -394,7 +394,7 @@ from proxmox_openapi import ProxmoxSDK
 async def monitor_nodes():
     async with ProxmoxSDK(backend="local", service="PVE") as proxmox:
         nodes = await proxmox.nodes.get()
-        
+
         for node in nodes:
             status = await proxmox.nodes(node["node"]).status.get()
             print(f"Node {node['node']}: {status['status']}")
@@ -447,10 +447,10 @@ from proxmox_openapi import ProxmoxSDK
 async def with_dynamic_totp():
     # Your TOTP secret (from setup QR code)
     totp_secret = "JBSWY3DPEBLW64TMMQE4GDXR3A4WCQPQ"
-    
+
     totp = pyotp.TOTP(totp_secret)
     current_code = totp.now()
-    
+
     async with ProxmoxSDK(
         host="pve.example.com",
         user="admin@pam",
@@ -586,13 +586,13 @@ async def rotate_token():
     ) as proxmox:
         # Delete old token
         await proxmox.access.users("automation@pve").tokens("old-token").delete()
-        
+
         # Create new token
         new_token = await proxmox.access.users("automation@pve").tokens.post(
             tokenid="my-token-v2",
             comment="Rotated quarterly",
         )
-        
+
         print(f"New token secret: {new_token['value']}")
         # Save to secrets manager
 ```

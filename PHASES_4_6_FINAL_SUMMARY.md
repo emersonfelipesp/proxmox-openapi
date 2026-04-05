@@ -73,7 +73,7 @@ Total: 7/7 validation tests passed
 # Core commands (7)
 proxmox get /nodes
 proxmox create /path -d key=value
-proxmox set /path -d key=value  
+proxmox set /path -d key=value
 proxmox delete /path
 proxmox ls /nodes
 proxmox usage /path
@@ -244,8 +244,8 @@ proxmox config-add myproxmox --host proxmox.example.com --user admin@pam
 
 ---
 
-**Project**: Proxmox CLI (pvesh-like interface)  
-**Completion Date**: 2024  
-**Python Version**: >=3.11  
-**Status**: Production Ready for PyPI Distribution  
+**Project**: Proxmox CLI (pvesh-like interface)
+**Completion Date**: 2024
+**Python Version**: >=3.11
+**Status**: Production Ready for PyPI Distribution
 **Total Development**: 6 Phases, 50+ Features, 2000+ LOC

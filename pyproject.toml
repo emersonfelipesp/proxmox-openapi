@@ -25,6 +25,7 @@ ssh = [
 cli = [
     "typer[all]>=0.12.3",
     "rich>=13.0.0",
+    "textual>=0.79.1",
     "pyyaml>=6.0",
 ]
 all = [
@@ -32,6 +33,7 @@ all = [
     "openssh-wrapper>=0.4",
     "typer[all]>=0.12.3",
     "rich>=13.0.0",
+    "textual>=0.79.1",
     "pyyaml>=6.0",
 ]
 test = [
@@ -62,6 +64,7 @@ dev = [
 [project.scripts]
 proxmox = "proxmox_openapi.proxmox_cli.cli:cli_main"
 proxmox-cli = "proxmox_openapi.proxmox_cli.cli:cli_main"
+pbx = "proxmox_openapi.proxmox_cli.cli:cli_main"
 proxmox-openapi-codegen = "proxmox_openapi.proxmox_codegen.cli:main"
 proxmox-openapi-mock = "proxmox_openapi.mock_main:run"
 

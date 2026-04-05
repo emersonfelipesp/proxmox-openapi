@@ -215,14 +215,14 @@ def register_generated_proxmox_mock_routes(
     """Register all mock routes from pre-generated schema."""
     # Load schema
     schema = load_proxmox_schema(version)
-    
+
     # Create in-memory state
     state = MockState()
-    
+
     # Load custom data if provided
     if mock_data_path:
         load_custom_mock_data(state, mock_data_path)
-    
+
     # Generate routes for each endpoint
     for path, methods in schema["paths"].items():
         for method, operation in methods.items():
@@ -236,7 +236,7 @@ aiohttp-based client with authentication and validation:
 ```python
 class ProxmoxClient:
     """Client for real Proxmox VE API."""
-    
+
     async def request(
         self,
         method: str,
@@ -247,10 +247,10 @@ class ProxmoxClient:
         """Make authenticated request to Proxmox API."""
         # Build URL
         url = f"{self.config.url}/api2/json{path}"
-        
+
         # Add auth headers
         headers = await self._get_auth_headers()
-        
+
         # Make request
         async with self.session.request(
             method, url, headers=headers, params=params, json=json
@@ -273,7 +273,7 @@ def load_proxmox_schema(version: str = "latest") -> dict:
         / version
         / "openapi.json"
     )
-    
+
     with open(schema_path) as f:
         return json.load(f)
 ```
@@ -355,7 +355,7 @@ def test_version_endpoint():
     """Test /version endpoint."""
     client = TestClient(app)
     response = client.get("/version")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert "version" in data
@@ -364,15 +364,15 @@ def test_version_endpoint():
 async def test_proxmox_client_auth(mock_proxmox_server):
     """Test ProxmoxClient authentication."""
     from proxmox_openapi.proxmox import ProxmoxClient, ProxmoxConfig
-    
+
     config = ProxmoxConfig(
         url=mock_proxmox_server.url,
         api_token="test-token",
     )
-    
+
     client = ProxmoxClient(config)
     result = await client.request("GET", "/version")
-    
+
     assert result["version"] == "8.1"
 ```
 
@@ -438,10 +438,10 @@ from proxmox_openapi.schema import load_proxmox_schema
 def create_app(version: str = "latest") -> FastAPI:
     """
     Create and configure FastAPI application.
-    
+
     Args:
         version: Proxmox API version to load.
-        
+
     Returns:
         Configured FastAPI app instance.
     """

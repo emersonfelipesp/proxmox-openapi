@@ -222,7 +222,7 @@ proxmox --help
 # List nodes
 proxmox get /nodes
 
-# Get specific node status  
+# Get specific node status
 proxmox get /nodes/pve1/status
 
 # List VMs on a node

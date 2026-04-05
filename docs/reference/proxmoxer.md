@@ -18,7 +18,7 @@
 Proxmoxer supports multiple Proxmox products:
 
 1. **PVE** (Proxmox Virtual Environment) - Full support
-2. **PMG** (Proxmox Mail Gateway) - Full support  
+2. **PMG** (Proxmox Mail Gateway) - Full support
 3. **PBS** (Proxmox Backup Server) - HTTPS backend only
 
 ### Design Philosophy
@@ -92,8 +92,8 @@ def get_tokens(self)  # Returns auth/csrf tokens for https backend
 from proxmoxer import ProxmoxAPI
 
 # HTTPS backend (default)
-proxmox = ProxmoxAPI('proxmox.example.com', 
-                     user='admin@pam', 
+proxmox = ProxmoxAPI('proxmox.example.com',
+                     user='admin@pam',
                      password='secret',
                      verify_ssl=False)
 
@@ -845,10 +845,10 @@ proxmox = ProxmoxAPI('pve.example.com',
 def __getattr__(self, item):
     if item.startswith("_"):
         raise AttributeError(item)
-    
+
     kwargs = self._store.copy()
     kwargs["base_url"] = self.url_join(self._store["base_url"], item)
-    
+
     return ProxmoxResource(**kwargs)
 ```
 
@@ -1140,8 +1140,8 @@ Total: ~1,383 lines of Python code
 ```python
 from proxmoxer import ProxmoxAPI
 
-proxmox = ProxmoxAPI('pve.example.com', 
-                     user='admin@pam', 
+proxmox = ProxmoxAPI('pve.example.com',
+                     user='admin@pam',
                      password='secret',
                      verify_ssl=False)
 
@@ -1149,11 +1149,11 @@ proxmox = ProxmoxAPI('pve.example.com',
 for node in proxmox.nodes.get():
     node_name = node['node']
     print(f"\nNode: {node_name}")
-    
+
     # QEMU VMs
     for vm in proxmox.nodes(node_name).qemu.get():
         print(f"  VM {vm['vmid']}: {vm['name']} - {vm['status']}")
-    
+
     # LXC Containers
     for ct in proxmox.nodes(node_name).lxc.get():
         print(f"  CT {ct['vmid']}: {ct['name']} - {ct['status']}")
@@ -1187,16 +1187,16 @@ try:
         boot='order=scsi0;ide2'
     )
     print(f"VM {vmid} created successfully")
-    
+
     # Start VM
     task_id = proxmox.nodes(node).qemu(vmid).status.start.post()
     print(f"Start task: {task_id}")
-    
+
     # Wait for start to complete
     from proxmoxer.tools import Tasks
     result = Tasks.blocking_status(proxmox, task_id)
     print(f"VM started: {result}")
-    
+
 except ResourceException as e:
     print(f"Error: {e}")
 ```
@@ -1234,7 +1234,7 @@ backups = proxmox.nodes(node).storage('backup-storage').content.get(
 for backup in backups:
     if f'/{vmid}/' in backup['volid']:
         print(f"Backup: {backup['volid']}")
-        
+
         # Restore from backup
         restore_task = proxmox.nodes(node).qemu.post(
             vmid=101,  # New VM ID
@@ -1266,9 +1266,9 @@ def shutdown_vm(vmid):
 
 # Shutdown multiple VMs in parallel
 with ThreadPoolExecutor(max_workers=5) as executor:
-    futures = {executor.submit(shutdown_vm, vmid): vmid 
+    futures = {executor.submit(shutdown_vm, vmid): vmid
                for vmid in vm_ids}
-    
+
     for future in as_completed(futures):
         vmid, task, error = future.result()
         if error:
@@ -1294,7 +1294,7 @@ for storage in proxmox.nodes(node).storage.get():
     print(f"Storage: {storage['storage']}")
     print(f"  Type: {storage['type']}")
     print(f"  Content: {storage['content']}")
-    
+
     # Get storage status
     status = proxmox.nodes(node).storage(storage['storage']).status.get()
     print(f"  Used: {status['used']} / {status['total']}")
@@ -1498,10 +1498,10 @@ try:
                          user='admin@pam',
                          password='secret',
                          verify_ssl=False)
-    
+
     status = get_vm_status(proxmox, 'pve1', 100)
     logger.info(f"VM status: {status['status']}")
-    
+
 except AuthenticationError:
     logger.error("Check credentials")
 except ResourceException as e:
@@ -1571,7 +1571,7 @@ except ResourceException as e:
    # Use proxmox-openapi models for validation
    from proxmox_openapi.models import VMConfig
    from proxmoxer import ProxmoxAPI
-   
+
    config = VMConfig(name="test", memory=4096, cores=2)
    proxmox = ProxmoxAPI(...)
    proxmox.nodes('pve1').qemu.post(**config.dict())
@@ -1673,14 +1673,14 @@ except ResourceException as e:
 
 **Proxmoxer** is a mature, battle-tested Python library providing:
 
-✅ **Simple, Pythonic API** for Proxmox REST API access  
-✅ **Multiple backends** (HTTPS, SSH, local) with unified interface  
-✅ **Dynamic resource navigation** - works with any API endpoint  
-✅ **Multi-service support** - PVE, PMG, and PBS  
-✅ **Comprehensive authentication** - password, tokens, 2FA  
-✅ **Production-ready** - 10+ years of development, high test coverage  
-✅ **Minimal dependencies** - core library is pure Python  
-✅ **Active maintenance** - regular updates and security fixes  
+✅ **Simple, Pythonic API** for Proxmox REST API access
+✅ **Multiple backends** (HTTPS, SSH, local) with unified interface
+✅ **Dynamic resource navigation** - works with any API endpoint
+✅ **Multi-service support** - PVE, PMG, and PBS
+✅ **Comprehensive authentication** - password, tokens, 2FA
+✅ **Production-ready** - 10+ years of development, high test coverage
+✅ **Minimal dependencies** - core library is pure Python
+✅ **Active maintenance** - regular updates and security fixes
 
 **Best suited for:**
 - Scripts and automation

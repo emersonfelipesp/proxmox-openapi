@@ -31,7 +31,7 @@
 
 **Core Modules (8 new)**:
 1. batch.py - 100+ lines
-2. cache.py - 120+ lines  
+2. cache.py - 120+ lines
 3. completion.py - 80+ lines
 4. config_commands.py - 150+ lines
 5. performance.py - 100+ lines

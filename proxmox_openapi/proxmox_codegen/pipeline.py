@@ -40,6 +40,7 @@ def _check_playwright_available() -> bool:
 
 
 def _normalized_viewer_url(url: str) -> str:
+    """Normalize a Proxmox viewer URL for comparisons."""
     parsed = urlparse(url.strip())
     path = parsed.path or "/"
     if path.endswith("index.html"):
@@ -60,6 +61,7 @@ def _normalized_viewer_url(url: str) -> str:
 
 
 def _viewer_apidoc_js_url(source_url: str) -> str:
+    """Build the apidoc.js URL for a viewer source URL."""
     normalized = _normalized_viewer_url(source_url)
     parsed = urlparse(normalized)
     apidoc_path = f"{parsed.path.rstrip('/')}/apidoc.js"
@@ -67,6 +69,7 @@ def _viewer_apidoc_js_url(source_url: str) -> str:
 
 
 def _validate_source_for_version_tag(source_url: str, version_tag: str) -> None:
+    """Reject non-official viewer URLs when using the reserved latest tag."""
     if version_tag != LATEST_VERSION_TAG:
         return
     if _normalized_viewer_url(source_url) != _normalized_viewer_url(PROXMOX_API_VIEWER_URL):

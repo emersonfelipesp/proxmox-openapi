@@ -388,8 +388,8 @@ Apache License 2.0
 
 ---
 
-**Version**: 0.1.0  
-**Released**: 2024  
-**Status**: Production Ready  
-**Python**: >=3.11  
+**Version**: 0.1.0
+**Released**: 2024
+**Status**: Production Ready
+**Python**: >=3.11
 **License**: Apache 2.0

@@ -153,14 +153,14 @@ async def main():
         # List nodes
         nodes = await proxmox.nodes.get()
         print(f"Nodes: {nodes}")
-        
+
         # Create a VM
         vm = await proxmox.nodes("pve").qemu.post(
             vmid=100,
             name="my-vm"
         )
         print(f"Created: {vm}")
-        
+
         # Retrieve VM
         retrieved = await proxmox.nodes("pve").qemu(100).get()
         print(f"Retrieved: {retrieved}")
@@ -178,7 +178,7 @@ with ProxmoxSDK.sync_mock() as proxmox:
     # All calls block
     nodes = proxmox.nodes.get()
     print(f"Nodes: {nodes}")
-    
+
     # Create a VM
     vm = proxmox.nodes("pve").qemu.post(
         vmid=100,

@@ -14,7 +14,7 @@ from proxmox_openapi.proxmox_cli.exceptions import ProxmoxCLIError
 class Cache:
     """Simple cache implementation for API responses."""
 
-    def __init__(self, cache_dir: Optional[Path] = None, ttl: int = 300):
+    def __init__(self, cache_dir: Optional[Path] = None, ttl: int = 300) -> None:
         """Initialize cache.
 
         Args:
@@ -110,7 +110,7 @@ class CacheableSDKBridge:
     Wraps ProxmoxSDKBridge and caches read-only operations.
     """
 
-    def __init__(self, bridge: Any, cache: Optional[Cache] = None):
+    def __init__(self, bridge: Any, cache: Optional[Cache] = None) -> None:
         """Initialize caching bridge.
 
         Args:

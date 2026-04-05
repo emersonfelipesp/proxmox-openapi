@@ -18,10 +18,53 @@ except ImportError:
 from .exceptions import OutputError
 
 
+def resolve_output_format(
+    output: str | None = None,
+    *,
+    json_output: bool = False,
+    yaml_output: bool = False,
+    markdown_output: bool = False,
+    fallback: str = "human",
+) -> str:
+    """Resolve the final output format from explicit options and shorthand flags."""
+    shorthand_formats = [
+        name
+        for enabled, name in (
+            (json_output, "json"),
+            (yaml_output, "yaml"),
+            (markdown_output, "markdown"),
+        )
+        if enabled
+    ]
+
+    if len(shorthand_formats) > 1:
+        raise OutputError("Use only one of --json, --yaml, or --markdown")
+
+    if output and shorthand_formats:
+        raise OutputError("Use either --output or --json/--yaml/--markdown, not both")
+
+    selected = shorthand_formats[0] if shorthand_formats else (output or fallback)
+    normalized = selected.lower().strip()
+    aliases = {
+        "yml": "yaml",
+        "md": "markdown",
+    }
+    normalized = aliases.get(normalized, normalized)
+
+    if normalized == "auto":
+        # Keep backward compatibility while enforcing a structured readable default.
+        return "human"
+
+    if normalized not in OutputFormatter.FORMATS:
+        raise OutputError(f"Unsupported output format: {normalized}")
+
+    return normalized
+
+
 class OutputFormatter:
     """Formats and outputs CLI results in various formats."""
 
-    FORMATS = {"json", "yaml", "table", "text", "raw"}
+    FORMATS = {"human", "json", "yaml", "markdown", "table", "text", "raw", "auto"}
     AUTO_THRESHOLD = 5  # Number of items to auto-detect as table
 
     def __init__(self, format: str = "auto", colors: bool = True) -> None:
@@ -56,20 +99,23 @@ class OutputFormatter:
         """
         try:
             # Determine format if auto
-            if self.format == "auto":
+            fmt = resolve_output_format(self.format, fallback="human")
+            if fmt == "auto":
                 fmt = self._detect_format(data)
-            else:
-                fmt = self.format
 
             # Format based on selected format
             if fmt == "json":
                 return self._format_json(data)
             elif fmt == "yaml":
                 return self._format_yaml(data)
+            elif fmt == "markdown":
+                return self._format_markdown(data)
             elif fmt == "table":
                 return self._format_table(data, columns=columns)
             elif fmt == "text":
                 return self._format_text(data)
+            elif fmt == "human":
+                return self._format_human(data, columns=columns)
             elif fmt == "raw":
                 return str(data)
             else:
@@ -128,6 +174,26 @@ class OutputFormatter:
         else:
             return "text"
 
+    def _format_human(self, data: Any, columns: list[str] | None = None) -> str:
+        """Format data as structured human-readable output."""
+        if isinstance(data, list) and data and all(isinstance(item, dict) for item in data):
+            return self._format_table(data, columns=columns)
+
+        if isinstance(data, dict):
+            # Flat dictionaries are easier to scan as key/value lines.
+            if all(not isinstance(v, (dict, list)) for v in data.values()):
+                return self._format_text(data)
+            return self._format_yaml(data)
+
+        if isinstance(data, list):
+            if not data:
+                return "No results"
+            if all(not isinstance(item, (dict, list)) for item in data):
+                return "\n".join(f"- {item}" for item in data)
+            return self._format_yaml(data)
+
+        return self._format_text(data)
+
     def _format_json(self, data: Any) -> str:
         """Format data as JSON.
 
@@ -165,6 +231,55 @@ class OutputFormatter:
             syntax = Syntax(output, "yaml", theme="monokai", line_numbers=False)
             return syntax
         return output
+
+    def _format_markdown(self, data: Any) -> str:
+        """Format JSON-like data as Markdown derived from parsed response objects."""
+        if isinstance(data, dict):
+            if not data:
+                return "_No results_"
+            if all(not isinstance(v, (dict, list)) for v in data.values()):
+                rows = ["| key | value |", "| --- | --- |"]
+                rows.extend(f"| {k} | {v} |" for k, v in data.items())
+                return "\n".join(rows)
+            return f"```json\n{self._format_json(data)}\n```"
+
+        if isinstance(data, list):
+            if not data:
+                return "_No results_"
+
+            if all(isinstance(item, dict) for item in data):
+                return self._format_markdown_table(data)
+
+            if all(not isinstance(item, (dict, list)) for item in data):
+                return "\n".join(f"- {item}" for item in data)
+
+            return f"```json\n{self._format_json(data)}\n```"
+
+        return str(data)
+
+    def _format_markdown_table(self, data: list[dict[str, Any]]) -> str:
+        """Format a list of dictionaries as a markdown table."""
+        column_names: list[str] = []
+        seen: set[str] = set()
+
+        for row in data:
+            for key in row.keys():
+                if key not in seen:
+                    seen.add(key)
+                    column_names.append(key)
+
+        if not column_names:
+            return "_No results_"
+
+        header = "| " + " | ".join(column_names) + " |"
+        separator = "| " + " | ".join("---" for _ in column_names) + " |"
+        lines = [header, separator]
+
+        for row in data:
+            values = [str(row.get(name, "")) for name in column_names]
+            lines.append("| " + " | ".join(values) + " |")
+
+        return "\n".join(lines)
 
     def _format_table(self, data: Any, columns: list[str] | None = None) -> str:
         """Format data as a table.

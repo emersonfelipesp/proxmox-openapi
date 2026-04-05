@@ -11,16 +11,16 @@ proxmox config-add --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-add [OPTIONS] NAME                                       
-                                                                                
- Add a new configuration profile.                                               
-                                                                                
- Example:                                                                       
- proxmox config-add staging --host proxmox-staging.example.com --user admin@pam 
- proxmox config-add prod --backend https --host proxmox.example.com             
- --token-name api-token                                                         
-                                                                                
+
+ Usage: proxmox config-add [OPTIONS] NAME
+
+ Add a new configuration profile.
+
+ Example:
+ proxmox config-add staging --host proxmox-staging.example.com --user admin@pam
+ proxmox config-add prod --backend https --host proxmox.example.com
+ --token-name api-token
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name [required]                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯

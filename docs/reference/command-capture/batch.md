@@ -11,28 +11,28 @@ proxmox batch --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox batch [OPTIONS] FILE                                            
-                                                                                
- Execute batch operations from a JSON file.                                     
-                                                                                
- Batch file format:                                                             
- ```json                                                                        
- {                                                                              
-   "operations": [                                                              
-     {"action": "get", "path": "/nodes"},                                       
-     {"action": "create", "path": "/nodes/pve1/qemu/100", "params": {"vmid":    
- 100}},                                                                         
-     {"action": "set", "path": "/nodes/pve1/qemu/100", "params": {"cores": 4}}  
-   ]                                                                            
- }                                                                              
- ```                                                                            
-                                                                                
- Example:                                                                       
-     proxmox batch operations.json                                              
-     proxmox batch operations.json --dry-run                                    
-     proxmox batch operations.json --continue-on-error                          
-                                                                                
+
+ Usage: proxmox batch [OPTIONS] FILE
+
+ Execute batch operations from a JSON file.
+
+ Batch file format:
+ ```json
+ {
+   "operations": [
+     {"action": "get", "path": "/nodes"},
+     {"action": "create", "path": "/nodes/pve1/qemu/100", "params": {"vmid":
+ 100}},
+     {"action": "set", "path": "/nodes/pve1/qemu/100", "params": {"cores": 4}}
+   ]
+ }
+ ```
+
+ Example:
+     proxmox batch operations.json
+     proxmox batch operations.json --dry-run
+     proxmox batch operations.json --continue-on-error
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    file      TEXT  JSON file with batch operations [required]              │
 ╰──────────────────────────────────────────────────────────────────────────────╯

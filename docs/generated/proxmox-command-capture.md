@@ -33,11 +33,11 @@ proxmox --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox [OPTIONS] COMMAND [ARGS]...                                     
-                                                                                
- Proxmox VE, PMG, and PBS CLI - A pvesh-like interface for Proxmox API          
-                                                                                
+
+ Usage: proxmox [OPTIONS] COMMAND [ARGS]...
+
+ Proxmox VE, PMG, and PBS CLI - A pvesh-like interface for Proxmox API
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --version                                    Show version and exit           │
 │ --verbose             -v                     Enable verbose logging          │
@@ -96,28 +96,28 @@ proxmox batch --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox batch [OPTIONS] FILE                                            
-                                                                                
- Execute batch operations from a JSON file.                                     
-                                                                                
- Batch file format:                                                             
- ```json                                                                        
- {                                                                              
-   "operations": [                                                              
-     {"action": "get", "path": "/nodes"},                                       
-     {"action": "create", "path": "/nodes/pve1/qemu/100", "params": {"vmid":    
- 100}},                                                                         
-     {"action": "set", "path": "/nodes/pve1/qemu/100", "params": {"cores": 4}}  
-   ]                                                                            
- }                                                                              
- ```                                                                            
-                                                                                
- Example:                                                                       
-     proxmox batch operations.json                                              
-     proxmox batch operations.json --dry-run                                    
-     proxmox batch operations.json --continue-on-error                          
-                                                                                
+
+ Usage: proxmox batch [OPTIONS] FILE
+
+ Execute batch operations from a JSON file.
+
+ Batch file format:
+ ```json
+ {
+   "operations": [
+     {"action": "get", "path": "/nodes"},
+     {"action": "create", "path": "/nodes/pve1/qemu/100", "params": {"vmid":
+ 100}},
+     {"action": "set", "path": "/nodes/pve1/qemu/100", "params": {"cores": 4}}
+   ]
+ }
+ ```
+
+ Example:
+     proxmox batch operations.json
+     proxmox batch operations.json --dry-run
+     proxmox batch operations.json --continue-on-error
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    file      TEXT  JSON file with batch operations [required]              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -157,16 +157,16 @@ proxmox benchmark --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox benchmark [OPTIONS]                                             
-                                                                                
- Benchmark API performance.                                                     
-                                                                                
- Example:                                                                       
- proxmox benchmark --path /nodes                                                
- proxmox benchmark --path /nodes --iterations 10                                
- proxmox benchmark --backend https --path /nodes/pve1/qemu                      
-                                                                                
+
+ Usage: proxmox benchmark [OPTIONS]
+
+ Benchmark API performance.
+
+ Example:
+ proxmox benchmark --path /nodes
+ proxmox benchmark --path /nodes --iterations 10
+ proxmox benchmark --backend https --path /nodes/pve1/qemu
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --iterations          INTEGER  Number of iterations to run [default: 5]      │
 │ --path                TEXT     API path to benchmark [default: /nodes]       │
@@ -202,18 +202,18 @@ proxmox completion-install --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox completion-install [OPTIONS]                                    
-                                                                                
- Install shell completion for proxmox CLI.                                      
-                                                                                
- Examples:                                                                      
- # Bash                                                                         
- proxmox completion-install --shell bash >> ~/.bashrc                           
-                                                                                
- # Zsh                                                                          
- proxmox completion-install --shell zsh >> ~/.zshrc                             
-                                                                                
+
+ Usage: proxmox completion-install [OPTIONS]
+
+ Install shell completion for proxmox CLI.
+
+ Examples:
+ # Bash
+ proxmox completion-install --shell bash >> ~/.bashrc
+
+ # Zsh
+ proxmox completion-install --shell zsh >> ~/.zshrc
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --shell        TEXT  Shell type (bash or zsh) [default: bash]                │
 │ --help               Show this message and exit.                             │
@@ -242,16 +242,16 @@ proxmox config-add --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-add [OPTIONS] NAME                                       
-                                                                                
- Add a new configuration profile.                                               
-                                                                                
- Example:                                                                       
- proxmox config-add staging --host proxmox-staging.example.com --user admin@pam 
- proxmox config-add prod --backend https --host proxmox.example.com             
- --token-name api-token                                                         
-                                                                                
+
+ Usage: proxmox config-add [OPTIONS] NAME
+
+ Add a new configuration profile.
+
+ Example:
+ proxmox config-add staging --host proxmox-staging.example.com --user admin@pam
+ proxmox config-add prod --backend https --host proxmox.example.com
+ --token-name api-token
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name [required]                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -294,14 +294,14 @@ proxmox config-list --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-list [OPTIONS]                                           
-                                                                                
- List all available configuration profiles.                                     
-                                                                                
- Example:                                                                       
- proxmox config-list                                                            
-                                                                                
+
+ Usage: proxmox config-list [OPTIONS]
+
+ List all available configuration profiles.
+
+ Example:
+ proxmox config-list
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --output    -o      TEXT  Output format (human, json, yaml, markdown, table, │
 │                           text, raw)                                         │
@@ -334,15 +334,15 @@ proxmox config-remove --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-remove [OPTIONS] NAME                                    
-                                                                                
- Remove a configuration profile.                                                
-                                                                                
- Example:                                                                       
- proxmox config-remove staging                                                  
- proxmox config-remove staging --force                                          
-                                                                                
+
+ Usage: proxmox config-remove [OPTIONS] NAME
+
+ Remove a configuration profile.
+
+ Example:
+ proxmox config-remove staging
+ proxmox config-remove staging --force
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name [required]                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -379,14 +379,14 @@ proxmox config-set-default --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-set-default [OPTIONS] NAME                               
-                                                                                
- Set the default profile.                                                       
-                                                                                
- Example:                                                                       
- proxmox config-set-default staging                                             
-                                                                                
+
+ Usage: proxmox config-set-default [OPTIONS] NAME
+
+ Set the default profile.
+
+ Example:
+ proxmox config-set-default staging
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name to set as default [required]               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -422,15 +422,15 @@ proxmox config-show --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-show [OPTIONS] [PROFILE]                                 
-                                                                                
- Show configuration for a specific profile.                                     
-                                                                                
- Example:                                                                       
- proxmox config-show default                                                    
- proxmox config-show staging                                                    
-                                                                                
+
+ Usage: proxmox config-show [OPTIONS] [PROFILE]
+
+ Show configuration for a specific profile.
+
+ Example:
+ proxmox config-show default
+ proxmox config-show staging
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   profile      [PROFILE]  Profile name [default: default]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -466,16 +466,16 @@ proxmox create --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox create [OPTIONS] PATH                                           
-                                                                                
- Create resources in the Proxmox API.                                           
-                                                                                
- Examples:                                                                      
- proxmox create /nodes/pve1/qemu/100 --vmid 100 --name test-vm                  
- proxmox create /nodes/pve1/qemu/100 -d vmid=100 -d name=test-vm                
- proxmox create /nodes/pve1/qemu/100 -f params.json                             
-                                                                                
+
+ Usage: proxmox create [OPTIONS] PATH
+
+ Create resources in the Proxmox API.
+
+ Examples:
+ proxmox create /nodes/pve1/qemu/100 --vmid 100 --name test-vm
+ proxmox create /nodes/pve1/qemu/100 -d vmid=100 -d name=test-vm
+ proxmox create /nodes/pve1/qemu/100 -f params.json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path where to create [required]                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -513,15 +513,15 @@ proxmox delete --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox delete [OPTIONS] PATH                                           
-                                                                                
- Delete resources from the Proxmox API.                                         
-                                                                                
- Examples:                                                                      
- proxmox delete /nodes/pve1/qemu/100                                            
- proxmox delete /nodes/pve1/qemu/100 --force                                    
-                                                                                
+
+ Usage: proxmox delete [OPTIONS] PATH
+
+ Delete resources from the Proxmox API.
+
+ Examples:
+ proxmox delete /nodes/pve1/qemu/100
+ proxmox delete /nodes/pve1/qemu/100 --force
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to delete [required]                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -558,11 +558,11 @@ proxmox docs --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox docs [OPTIONS] COMMAND [ARGS]...                                
-                                                                                
- Generate CLI documentation artifacts for MkDocs.                               
-                                                                                
+
+ Usage: proxmox docs [OPTIONS] COMMAND [ARGS]...
+
+ Generate CLI documentation artifacts for MkDocs.
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -592,11 +592,11 @@ proxmox docs generate-capture --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox docs generate-capture [OPTIONS]                                 
-                                                                                
- Capture proxmox CLI command input/output recursively from the command tree.    
-                                                                                
+
+ Usage: proxmox docs generate-capture [OPTIONS]
+
+ Capture proxmox CLI command input/output recursively from the command tree.
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --output     -o      PATH     Markdown output path (default:                 │
 │                               <repo>/docs/generated/proxmox-command-capture… │
@@ -634,16 +634,16 @@ proxmox get --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox get [OPTIONS] PATH                                              
-                                                                                
- Retrieve resources from the Proxmox API.                                       
-                                                                                
- Examples:                                                                      
- proxmox get /nodes                                                             
- proxmox get /nodes/pve1/status                                                 
- proxmox get /nodes/pve1/qemu --output json                                     
-                                                                                
+
+ Usage: proxmox get [OPTIONS] PATH
+
+ Retrieve resources from the Proxmox API.
+
+ Examples:
+ proxmox get /nodes
+ proxmox get /nodes/pve1/status
+ proxmox get /nodes/pve1/qemu --output json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to retrieve [required]                         │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -680,17 +680,17 @@ proxmox help-cmd --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox help-cmd [OPTIONS] [PATH]                                       
-                                                                                
- Show help for API endpoints.                                                   
-                                                                                
- Examples:                                                                      
- proxmox help                                                                   
- proxmox help /nodes                                                            
- proxmox help /nodes/pve1/qemu                                                  
- proxmox help --search qemu                                                     
-                                                                                
+
+ Usage: proxmox help-cmd [OPTIONS] [PATH]
+
+ Show help for API endpoints.
+
+ Examples:
+ proxmox help
+ proxmox help /nodes
+ proxmox help /nodes/pve1/qemu
+ proxmox help --search qemu
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   path      [PATH]  API path to get help for                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -727,17 +727,17 @@ proxmox ls --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox ls [OPTIONS] PATH                                               
-                                                                                
- List child resources at a given path.                                          
-                                                                                
- Examples:                                                                      
- proxmox ls /nodes                                                              
- proxmox ls /nodes/pve1/qemu                                                    
- proxmox ls /nodes/pve1/qemu --columns vmid,name,status                         
- proxmox ls /nodes/pve1/qemu --sort name                                        
-                                                                                
+
+ Usage: proxmox ls [OPTIONS] PATH
+
+ List child resources at a given path.
+
+ Examples:
+ proxmox ls /nodes
+ proxmox ls /nodes/pve1/qemu
+ proxmox ls /nodes/pve1/qemu --columns vmid,name,status
+ proxmox ls /nodes/pve1/qemu --sort name
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to list [required]                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -775,15 +775,15 @@ proxmox perf-test --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox perf-test [OPTIONS] [OPERATION]                                 
-                                                                                
- Run performance tests.                                                         
-                                                                                
- Example:                                                                       
- proxmox perf-test get --iterations 20                                          
- proxmox perf-test list                                                         
-                                                                                
+
+ Usage: proxmox perf-test [OPTIONS] [OPERATION]
+
+ Run performance tests.
+
+ Example:
+ proxmox perf-test get --iterations 20
+ proxmox perf-test list
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   operation      [OPERATION]  Operation type (get/create/list)               │
 │                               [default: get]                                 │
@@ -821,16 +821,16 @@ proxmox set-cmd --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox set-cmd [OPTIONS] PATH                                          
-                                                                                
- Update resources in the Proxmox API.                                           
-                                                                                
- Examples:                                                                      
- proxmox set /nodes/pve1 -d description=Node1                                   
- proxmox set /nodes/pve1 -d description=Node1 -d features=snapshot,nesting      
- proxmox set /nodes/pve1 -f updates.json                                        
-                                                                                
+
+ Usage: proxmox set-cmd [OPTIONS] PATH
+
+ Update resources in the Proxmox API.
+
+ Examples:
+ proxmox set /nodes/pve1 -d description=Node1
+ proxmox set /nodes/pve1 -d description=Node1 -d features=snapshot,nesting
+ proxmox set /nodes/pve1 -f updates.json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to update [required]                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -868,17 +868,17 @@ proxmox tui --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox tui [OPTIONS] [MODE]:[mock]                                     
-                                                                                
- Launch interactive Proxmox TUI.                                                
-                                                                                
- Examples:                                                                      
- proxmox tui                                                                    
- proxmox tui mock                                                               
- pbx tui                                                                        
- pbx tui mock                                                                   
-                                                                                
+
+ Usage: proxmox tui [OPTIONS] [MODE]:[mock]
+
+ Launch interactive Proxmox TUI.
+
+ Examples:
+ proxmox tui
+ proxmox tui mock
+ pbx tui
+ pbx tui mock
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   mode      [MODE]:[mock]  Optional mode. Use 'mock' to run TUI against      │
 │                            in-memory mock backend.                           │
@@ -911,16 +911,16 @@ proxmox usage --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox usage [OPTIONS] PATH                                            
-                                                                                
- Show API schema and usage information for an endpoint.                         
-                                                                                
- Examples:                                                                      
- proxmox usage /nodes/pve1/qemu/100                                             
- proxmox usage /nodes/pve1/qemu/100 --command GET                               
- proxmox usage /nodes/pve1/qemu/100 --command POST --returns                    
-                                                                                
+
+ Usage: proxmox usage [OPTIONS] PATH
+
+ Show API schema and usage information for an endpoint.
+
+ Examples:
+ proxmox usage /nodes/pve1/qemu/100
+ proxmox usage /nodes/pve1/qemu/100 --command GET
+ proxmox usage /nodes/pve1/qemu/100 --command POST --returns
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to get usage for [required]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯

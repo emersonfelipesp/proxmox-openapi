@@ -11,17 +11,17 @@ proxmox tui --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox tui [OPTIONS] [MODE]:[mock]                                     
-                                                                                
- Launch interactive Proxmox TUI.                                                
-                                                                                
- Examples:                                                                      
- proxmox tui                                                                    
- proxmox tui mock                                                               
- pbx tui                                                                        
- pbx tui mock                                                                   
-                                                                                
+
+ Usage: proxmox tui [OPTIONS] [MODE]:[mock]
+
+ Launch interactive Proxmox TUI.
+
+ Examples:
+ proxmox tui
+ proxmox tui mock
+ pbx tui
+ pbx tui mock
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   mode      [MODE]:[mock]  Optional mode. Use 'mock' to run TUI against      │
 │                            in-memory mock backend.                           │

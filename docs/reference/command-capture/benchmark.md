@@ -11,16 +11,16 @@ proxmox benchmark --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox benchmark [OPTIONS]                                             
-                                                                                
- Benchmark API performance.                                                     
-                                                                                
- Example:                                                                       
- proxmox benchmark --path /nodes                                                
- proxmox benchmark --path /nodes --iterations 10                                
- proxmox benchmark --backend https --path /nodes/pve1/qemu                      
-                                                                                
+
+ Usage: proxmox benchmark [OPTIONS]
+
+ Benchmark API performance.
+
+ Example:
+ proxmox benchmark --path /nodes
+ proxmox benchmark --path /nodes --iterations 10
+ proxmox benchmark --backend https --path /nodes/pve1/qemu
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --iterations          INTEGER  Number of iterations to run [default: 5]      │
 │ --path                TEXT     API path to benchmark [default: /nodes]       │

@@ -11,11 +11,11 @@ proxmox docs --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox docs [OPTIONS] COMMAND [ARGS]...                                
-                                                                                
- Generate CLI documentation artifacts for MkDocs.                               
-                                                                                
+
+ Usage: proxmox docs [OPTIONS] COMMAND [ARGS]...
+
+ Generate CLI documentation artifacts for MkDocs.
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --help          Show this message and exit.                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -45,11 +45,11 @@ proxmox docs generate-capture --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox docs generate-capture [OPTIONS]                                 
-                                                                                
- Capture proxmox CLI command input/output recursively from the command tree.    
-                                                                                
+
+ Usage: proxmox docs generate-capture [OPTIONS]
+
+ Capture proxmox CLI command input/output recursively from the command tree.
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --output     -o      PATH     Markdown output path (default:                 │
 │                               <repo>/docs/generated/proxmox-command-capture… │

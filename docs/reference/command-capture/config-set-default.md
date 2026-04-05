@@ -11,14 +11,14 @@ proxmox config-set-default --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-set-default [OPTIONS] NAME                               
-                                                                                
- Set the default profile.                                                       
-                                                                                
- Example:                                                                       
- proxmox config-set-default staging                                             
-                                                                                
+
+ Usage: proxmox config-set-default [OPTIONS] NAME
+
+ Set the default profile.
+
+ Example:
+ proxmox config-set-default staging
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name to set as default [required]               │
 ╰──────────────────────────────────────────────────────────────────────────────╯

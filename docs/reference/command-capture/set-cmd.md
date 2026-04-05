@@ -11,16 +11,16 @@ proxmox set-cmd --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox set-cmd [OPTIONS] PATH                                          
-                                                                                
- Update resources in the Proxmox API.                                           
-                                                                                
- Examples:                                                                      
- proxmox set /nodes/pve1 -d description=Node1                                   
- proxmox set /nodes/pve1 -d description=Node1 -d features=snapshot,nesting      
- proxmox set /nodes/pve1 -f updates.json                                        
-                                                                                
+
+ Usage: proxmox set-cmd [OPTIONS] PATH
+
+ Update resources in the Proxmox API.
+
+ Examples:
+ proxmox set /nodes/pve1 -d description=Node1
+ proxmox set /nodes/pve1 -d description=Node1 -d features=snapshot,nesting
+ proxmox set /nodes/pve1 -f updates.json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to update [required]                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯

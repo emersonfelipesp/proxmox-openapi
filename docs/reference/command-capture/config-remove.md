@@ -11,15 +11,15 @@ proxmox config-remove --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-remove [OPTIONS] NAME                                    
-                                                                                
- Remove a configuration profile.                                                
-                                                                                
- Example:                                                                       
- proxmox config-remove staging                                                  
- proxmox config-remove staging --force                                          
-                                                                                
+
+ Usage: proxmox config-remove [OPTIONS] NAME
+
+ Remove a configuration profile.
+
+ Example:
+ proxmox config-remove staging
+ proxmox config-remove staging --force
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    name      TEXT  Profile name [required]                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯

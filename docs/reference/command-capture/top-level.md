@@ -11,11 +11,11 @@ proxmox --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox [OPTIONS] COMMAND [ARGS]...                                     
-                                                                                
- Proxmox VE, PMG, and PBS CLI - A pvesh-like interface for Proxmox API          
-                                                                                
+
+ Usage: proxmox [OPTIONS] COMMAND [ARGS]...
+
+ Proxmox VE, PMG, and PBS CLI - A pvesh-like interface for Proxmox API
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --version                                    Show version and exit           │
 │ --verbose             -v                     Enable verbose logging          │

@@ -11,14 +11,14 @@ proxmox config-list --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-list [OPTIONS]                                           
-                                                                                
- List all available configuration profiles.                                     
-                                                                                
- Example:                                                                       
- proxmox config-list                                                            
-                                                                                
+
+ Usage: proxmox config-list [OPTIONS]
+
+ List all available configuration profiles.
+
+ Example:
+ proxmox config-list
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --output    -o      TEXT  Output format (human, json, yaml, markdown, table, │
 │                           text, raw)                                         │

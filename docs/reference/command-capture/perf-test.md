@@ -11,15 +11,15 @@ proxmox perf-test --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox perf-test [OPTIONS] [OPERATION]                                 
-                                                                                
- Run performance tests.                                                         
-                                                                                
- Example:                                                                       
- proxmox perf-test get --iterations 20                                          
- proxmox perf-test list                                                         
-                                                                                
+
+ Usage: proxmox perf-test [OPTIONS] [OPERATION]
+
+ Run performance tests.
+
+ Example:
+ proxmox perf-test get --iterations 20
+ proxmox perf-test list
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   operation      [OPERATION]  Operation type (get/create/list)               │
 │                               [default: get]                                 │

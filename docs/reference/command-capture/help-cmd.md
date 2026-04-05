@@ -11,17 +11,17 @@ proxmox help-cmd --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox help-cmd [OPTIONS] [PATH]                                       
-                                                                                
- Show help for API endpoints.                                                   
-                                                                                
- Examples:                                                                      
- proxmox help                                                                   
- proxmox help /nodes                                                            
- proxmox help /nodes/pve1/qemu                                                  
- proxmox help --search qemu                                                     
-                                                                                
+
+ Usage: proxmox help-cmd [OPTIONS] [PATH]
+
+ Show help for API endpoints.
+
+ Examples:
+ proxmox help
+ proxmox help /nodes
+ proxmox help /nodes/pve1/qemu
+ proxmox help --search qemu
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   path      [PATH]  API path to get help for                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯

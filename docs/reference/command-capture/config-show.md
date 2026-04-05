@@ -11,15 +11,15 @@ proxmox config-show --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox config-show [OPTIONS] [PROFILE]                                 
-                                                                                
- Show configuration for a specific profile.                                     
-                                                                                
- Example:                                                                       
- proxmox config-show default                                                    
- proxmox config-show staging                                                    
-                                                                                
+
+ Usage: proxmox config-show [OPTIONS] [PROFILE]
+
+ Show configuration for a specific profile.
+
+ Example:
+ proxmox config-show default
+ proxmox config-show staging
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │   profile      [PROFILE]  Profile name [default: default]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯

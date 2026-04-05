@@ -11,16 +11,16 @@ proxmox usage --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox usage [OPTIONS] PATH                                            
-                                                                                
- Show API schema and usage information for an endpoint.                         
-                                                                                
- Examples:                                                                      
- proxmox usage /nodes/pve1/qemu/100                                             
- proxmox usage /nodes/pve1/qemu/100 --command GET                               
- proxmox usage /nodes/pve1/qemu/100 --command POST --returns                    
-                                                                                
+
+ Usage: proxmox usage [OPTIONS] PATH
+
+ Show API schema and usage information for an endpoint.
+
+ Examples:
+ proxmox usage /nodes/pve1/qemu/100
+ proxmox usage /nodes/pve1/qemu/100 --command GET
+ proxmox usage /nodes/pve1/qemu/100 --command POST --returns
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to get usage for [required]                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯

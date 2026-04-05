@@ -11,16 +11,16 @@ proxmox get --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox get [OPTIONS] PATH                                              
-                                                                                
- Retrieve resources from the Proxmox API.                                       
-                                                                                
- Examples:                                                                      
- proxmox get /nodes                                                             
- proxmox get /nodes/pve1/status                                                 
- proxmox get /nodes/pve1/qemu --output json                                     
-                                                                                
+
+ Usage: proxmox get [OPTIONS] PATH
+
+ Retrieve resources from the Proxmox API.
+
+ Examples:
+ proxmox get /nodes
+ proxmox get /nodes/pve1/status
+ proxmox get /nodes/pve1/qemu --output json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to retrieve [required]                         │
 ╰──────────────────────────────────────────────────────────────────────────────╯

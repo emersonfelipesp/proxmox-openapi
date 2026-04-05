@@ -11,15 +11,15 @@ proxmox delete --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox delete [OPTIONS] PATH                                           
-                                                                                
- Delete resources from the Proxmox API.                                         
-                                                                                
- Examples:                                                                      
- proxmox delete /nodes/pve1/qemu/100                                            
- proxmox delete /nodes/pve1/qemu/100 --force                                    
-                                                                                
+
+ Usage: proxmox delete [OPTIONS] PATH
+
+ Delete resources from the Proxmox API.
+
+ Examples:
+ proxmox delete /nodes/pve1/qemu/100
+ proxmox delete /nodes/pve1/qemu/100 --force
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to delete [required]                           │
 ╰──────────────────────────────────────────────────────────────────────────────╯

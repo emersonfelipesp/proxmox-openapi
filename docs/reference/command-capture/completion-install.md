@@ -11,18 +11,18 @@ proxmox completion-install --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox completion-install [OPTIONS]                                    
-                                                                                
- Install shell completion for proxmox CLI.                                      
-                                                                                
- Examples:                                                                      
- # Bash                                                                         
- proxmox completion-install --shell bash >> ~/.bashrc                           
-                                                                                
- # Zsh                                                                          
- proxmox completion-install --shell zsh >> ~/.zshrc                             
-                                                                                
+
+ Usage: proxmox completion-install [OPTIONS]
+
+ Install shell completion for proxmox CLI.
+
+ Examples:
+ # Bash
+ proxmox completion-install --shell bash >> ~/.bashrc
+
+ # Zsh
+ proxmox completion-install --shell zsh >> ~/.zshrc
+
 ╭─ Options ────────────────────────────────────────────────────────────────────╮
 │ --shell        TEXT  Shell type (bash or zsh) [default: bash]                │
 │ --help               Show this message and exit.                             │

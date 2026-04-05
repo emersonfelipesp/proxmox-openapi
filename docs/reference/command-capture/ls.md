@@ -11,17 +11,17 @@ proxmox ls --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox ls [OPTIONS] PATH                                               
-                                                                                
- List child resources at a given path.                                          
-                                                                                
- Examples:                                                                      
- proxmox ls /nodes                                                              
- proxmox ls /nodes/pve1/qemu                                                    
- proxmox ls /nodes/pve1/qemu --columns vmid,name,status                         
- proxmox ls /nodes/pve1/qemu --sort name                                        
-                                                                                
+
+ Usage: proxmox ls [OPTIONS] PATH
+
+ List child resources at a given path.
+
+ Examples:
+ proxmox ls /nodes
+ proxmox ls /nodes/pve1/qemu
+ proxmox ls /nodes/pve1/qemu --columns vmid,name,status
+ proxmox ls /nodes/pve1/qemu --sort name
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path to list [required]                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯

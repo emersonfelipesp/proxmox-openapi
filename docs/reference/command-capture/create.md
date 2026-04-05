@@ -11,16 +11,16 @@ proxmox create --help
 **Output:**
 
 ```text
-                                                                                
- Usage: proxmox create [OPTIONS] PATH                                           
-                                                                                
- Create resources in the Proxmox API.                                           
-                                                                                
- Examples:                                                                      
- proxmox create /nodes/pve1/qemu/100 --vmid 100 --name test-vm                  
- proxmox create /nodes/pve1/qemu/100 -d vmid=100 -d name=test-vm                
- proxmox create /nodes/pve1/qemu/100 -f params.json                             
-                                                                                
+
+ Usage: proxmox create [OPTIONS] PATH
+
+ Create resources in the Proxmox API.
+
+ Examples:
+ proxmox create /nodes/pve1/qemu/100 --vmid 100 --name test-vm
+ proxmox create /nodes/pve1/qemu/100 -d vmid=100 -d name=test-vm
+ proxmox create /nodes/pve1/qemu/100 -f params.json
+
 ╭─ Arguments ──────────────────────────────────────────────────────────────────╮
 │ *    path      TEXT  API path where to create [required]                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯

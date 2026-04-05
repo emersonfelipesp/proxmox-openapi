@@ -10,7 +10,7 @@ import typer
 from ..app import app
 from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter, resolve_output_format
+from ..output import OutputFormatter, get_context_options, resolve_output_format
 from ..sdk_bridge import ProxmoxSDKBridge
 from ..utils import validate_api_path
 
@@ -50,8 +50,7 @@ def delete(
                 raise typer.Exit()
 
         # Get context
-        ctx = typer.get_app_context()
-        ctx_obj = ctx.obj or {}
+        ctx_obj = get_context_options()
 
         # Validate path
         path = validate_api_path(path)

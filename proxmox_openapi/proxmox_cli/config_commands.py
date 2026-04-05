@@ -8,7 +8,11 @@ import typer
 
 from proxmox_openapi.proxmox_cli.app import app
 from proxmox_openapi.proxmox_cli.config import BackendConfig, ConfigManager
-from proxmox_openapi.proxmox_cli.output import OutputFormatter, resolve_output_format
+from proxmox_openapi.proxmox_cli.output import (
+    OutputFormatter,
+    get_context_options,
+    resolve_output_format,
+)
 
 
 def _build_formatter(
@@ -19,8 +23,7 @@ def _build_formatter(
     markdown_output: bool,
 ) -> OutputFormatter:
     """Build formatter from command options and inherited global CLI output settings."""
-    ctx = typer.get_app_context()
-    ctx_obj = ctx.obj or {}
+    ctx_obj = get_context_options()
     output_fmt = resolve_output_format(
         output,
         json_output=json_output,

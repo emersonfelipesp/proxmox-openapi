@@ -11,6 +11,11 @@ import typer
 from proxmox_openapi.proxmox_cli.app import app
 from proxmox_openapi.proxmox_cli.config import ConfigManager
 from proxmox_openapi.proxmox_cli.exceptions import ParameterError
+from proxmox_openapi.proxmox_cli.output import (
+    OutputFormatter,
+    get_context_options,
+    resolve_output_format,
+)
 from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 
 
@@ -20,6 +25,19 @@ def batch(
     dry_run: bool = typer.Option(False, help="Show what would be executed"),
     continue_on_error: bool = typer.Option(False, help="Continue if operation fails"),
     backend: Optional[str] = typer.Option(None, help="Backend to use"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Execute batch operations from a JSON file.
 
@@ -54,6 +72,16 @@ def batch(
             raise typer.Exit(code=1)
 
         # Initialize SDK bridge
+        ctx_obj = get_context_options()
+        output_fmt = resolve_output_format(
+            output,
+            json_output=json_output,
+            yaml_output=yaml_output,
+            markdown_output=markdown_output,
+            fallback=ctx_obj.get("output_format", "human"),
+        )
+        formatter = OutputFormatter(format=output_fmt, colors=True)
+
         config_mgr = ConfigManager()
         config = config_mgr.get_profile("default")
         if backend:
@@ -62,17 +90,13 @@ def batch(
         bridge = ProxmoxSDKBridge.create(config)
 
         results: list[dict[str, Any]] = []
-        typer.echo(f"Processing {len(operations)} operations...")
 
         for i, op in enumerate(operations, 1):
             action = op.get("action")
             path = op.get("path")
             params = op.get("params", {})
 
-            typer.echo(f"\n[{i}/{len(operations)}] {action.upper()} {path}")
-
             if dry_run:
-                typer.echo("  [DRY RUN - skipped]")
                 results.append({"op": i, "action": action, "status": "dry-run"})
                 continue
 
@@ -80,15 +104,13 @@ def batch(
                 if action == "get":
                     result = bridge.get(path)
                 elif action == "create":
-                    result = bridge.post(path, **params)
+                    result = bridge.post(path, params)
                 elif action == "set":
-                    result = bridge.put(path, **params)
+                    result = bridge.put(path, params)
                 elif action == "delete":
                     result = bridge.delete(path)
                 else:
                     raise ParameterError(f"Unknown action: {action}")
-
-                typer.echo("  ✓ Success")
                 results.append(
                     {
                         "op": i,
@@ -99,7 +121,6 @@ def batch(
                     }
                 )
             except Exception as e:
-                typer.echo(f"  ✗ Failed: {e}", err=True)
                 if not continue_on_error:
                     raise typer.Exit(code=1)
                 results.append(
@@ -117,10 +138,19 @@ def batch(
         error_count = sum(1 for r in results if r.get("status") == "error")
         dry_run_count = sum(1 for r in results if r.get("status") == "dry-run")
 
-        typer.echo("\n" + "=" * 50)
-        typer.echo(f"Summary: {success_count} succeeded, {error_count} failed")
-        if dry_run:
-            typer.echo(f"(Dry run mode: {dry_run_count} would execute)")
+        payload = {
+            "file": str(batch_file),
+            "dry_run": dry_run,
+            "continue_on_error": continue_on_error,
+            "operations_total": len(operations),
+            "summary": {
+                "succeeded": success_count,
+                "failed": error_count,
+                "dry_run": dry_run_count,
+            },
+            "results": results,
+        }
+        formatter.print_output(payload)
 
     except Exception as e:
         typer.echo(f"Batch operation failed: {e}", err=True)

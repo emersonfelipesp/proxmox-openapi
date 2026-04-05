@@ -18,6 +18,19 @@ except ImportError:
 from .exceptions import OutputError
 
 
+def get_context_options() -> dict[str, Any]:
+    """Return Typer/Click context options if running inside a command callback."""
+    try:
+        import click
+
+        ctx = click.get_current_context(silent=True)
+        if ctx and isinstance(ctx.obj, dict):
+            return ctx.obj
+    except Exception:
+        pass
+    return {}
+
+
 def resolve_output_format(
     output: str | None = None,
     *,
@@ -241,7 +254,7 @@ class OutputFormatter:
                 rows = ["| key | value |", "| --- | --- |"]
                 rows.extend(f"| {k} | {v} |" for k, v in data.items())
                 return "\n".join(rows)
-            return f"```json\n{self._format_json(data)}\n```"
+            return f"```json\n{json.dumps(data, indent=2, default=str)}\n```"
 
         if isinstance(data, list):
             if not data:
@@ -253,7 +266,7 @@ class OutputFormatter:
             if all(not isinstance(item, (dict, list)) for item in data):
                 return "\n".join(f"- {item}" for item in data)
 
-            return f"```json\n{self._format_json(data)}\n```"
+            return f"```json\n{json.dumps(data, indent=2, default=str)}\n```"
 
         return str(data)
 
@@ -302,7 +315,7 @@ class OutputFormatter:
         if not isinstance(first_item, dict):
             return self._format_json(data)
 
-        if not RICH_AVAILABLE:
+        if not RICH_AVAILABLE or not self.colors:
             return self._format_text_table(data, columns=columns)
 
         # Create rich table

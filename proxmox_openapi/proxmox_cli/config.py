@@ -35,7 +35,7 @@ class BackendConfig:
 class GlobalConfig:
     """Global CLI configuration."""
 
-    output_format: str = "auto"
+    output_format: str = "human"
     table_mode: str = "grid"
     colors: bool = True
     completion_shell: str | None = None
@@ -130,7 +130,7 @@ class ConfigManager:
         global_cfg = data.get("global", {})
         if isinstance(global_cfg, dict):
             self.global_config = GlobalConfig(
-                output_format=global_cfg.get("output_format", "auto"),
+                output_format=global_cfg.get("output_format", "human"),
                 table_mode=global_cfg.get("table_mode", "grid"),
                 colors=global_cfg.get("colors", True),
                 completion_shell=global_cfg.get("completion_shell"),
@@ -163,7 +163,31 @@ class ConfigManager:
 
         return self.profiles[name]
 
-    def save_config(self, config_path: str | Path) -> None:
+    def list_profiles(self) -> list[BackendConfig]:
+        """List available profiles."""
+        return list(self.profiles.values())
+
+    def add_profile(self, name: str, config: BackendConfig) -> None:
+        """Add or replace a profile."""
+        config.name = name
+        self.profiles[name] = config
+
+    def remove_profile(self, name: str) -> None:
+        """Remove a profile by name."""
+        if name not in self.profiles:
+            raise ConfigError(f"Profile '{name}' not found in configuration")
+        del self.profiles[name]
+
+        if self.default_profile == name:
+            self.default_profile = "default"
+
+    def set_default_profile(self, name: str) -> None:
+        """Set default profile by name."""
+        if name != "default" and name not in self.profiles:
+            raise ConfigError(f"Profile '{name}' not found in configuration")
+        self.default_profile = name
+
+    def save_config(self, config_path: str | Path | None = None) -> None:
         """Save current configuration to file.
 
         Args:
@@ -172,7 +196,7 @@ class ConfigManager:
         Raises:
             ConfigError: If save fails
         """
-        path = Path(config_path)
+        path = Path(config_path) if config_path else self.DEFAULT_CONFIG_PATHS[0]
         path.parent.mkdir(parents=True, exist_ok=True)
 
         data = {

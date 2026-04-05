@@ -129,7 +129,10 @@ class ProxmoxTuiApp(App[None]):
 
         parts = command.split(maxsplit=1)
         if len(parts) == 1:
-            return ("get", validate_api_path(parts[0] if parts[0].startswith("/") else f"/{parts[0]}"))
+            return (
+                "get",
+                validate_api_path(parts[0] if parts[0].startswith("/") else f"/{parts[0]}"),
+            )
 
         method = parts[0].lower()
         path = validate_api_path(parts[1])

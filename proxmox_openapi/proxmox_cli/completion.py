@@ -28,7 +28,7 @@ _proxmox_completion() {
     local commands="get create set-cmd delete ls usage help-cmd"
 
     # Get global options
-    local global_opts="--version --verbose --quiet --config --backend --host --user --password --token-value --port --service --output"
+    local global_opts="--version --verbose --quiet --config --backend --host --user --password --token-value --port --service --output --json --yaml --markdown"
 
     case "${prev}" in
         --backend)
@@ -40,7 +40,7 @@ _proxmox_completion() {
             return 0
             ;;
         --output|-o)
-            COMPREPLY=( $(compgen -W "json yaml table text auto" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "human json yaml markdown table text raw" -- ${cur}) )
             return 0
             ;;
     esac
@@ -95,7 +95,10 @@ _proxmox() {
         '--token-value=[API token value]:token:'
         '--port=[API port]:port:'
         '(-S --service)--service=[Proxmox service type]:service:(PVE PMG PBS)'
-        '(-o --output)--output=[Output format]:format:(json yaml table text auto)'
+        '(-o --output)--output=[Output format]:format:(human json yaml markdown table text raw)'
+        '--json[Shortcut for --output json]'
+        '--yaml[Shortcut for --output yaml]'
+        '--markdown[Shortcut for --output markdown]'
     )
 
     _arguments $global_opts '*::command:->cmd' && return

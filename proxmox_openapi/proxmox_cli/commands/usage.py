@@ -8,7 +8,7 @@ from typing import Optional
 import typer
 
 from ..app import app
-from ..output import OutputFormatter, resolve_output_format
+from ..output import OutputFormatter, get_context_options, resolve_output_format
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,7 @@ def usage(
         proxmox usage /nodes/pve1/qemu/100 --command GET
         proxmox usage /nodes/pve1/qemu/100 --command POST --returns
     """
-    ctx = typer.get_app_context()
-    ctx_obj = ctx.obj or {}
+    ctx_obj = get_context_options()
     output_fmt = resolve_output_format(
         output,
         json_output=json_output,

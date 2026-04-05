@@ -11,6 +11,11 @@ import typer
 
 from proxmox_openapi.proxmox_cli.app import app
 from proxmox_openapi.proxmox_cli.config import ConfigManager
+from proxmox_openapi.proxmox_cli.output import (
+    OutputFormatter,
+    get_context_options,
+    resolve_output_format,
+)
 from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 
 
@@ -96,6 +101,19 @@ def benchmark(
     iterations: int = typer.Option(5, help="Number of iterations to run"),
     path: str = typer.Option("/nodes", help="API path to benchmark"),
     backend: Optional[str] = typer.Option(None, help="Backend to use"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Benchmark API performance.
 
@@ -105,6 +123,16 @@ def benchmark(
         proxmox benchmark --backend https --path /nodes/pve1/qemu
     """
     try:
+        ctx_obj = get_context_options()
+        output_fmt = resolve_output_format(
+            output,
+            json_output=json_output,
+            yaml_output=yaml_output,
+            markdown_output=markdown_output,
+            fallback=ctx_obj.get("output_format", "human"),
+        )
+        formatter = OutputFormatter(format=output_fmt, colors=True)
+
         config_mgr = ConfigManager()
         config = config_mgr.get_profile("default")
         if backend:
@@ -112,16 +140,22 @@ def benchmark(
 
         bridge = ProxmoxSDKBridge.create(config)
 
-        typer.echo(f"Benchmarking GET {path} ({iterations} iterations)...")
-
         def get_operation() -> None:
             bridge.get(path)
 
         bench = Benchmark(f"GET {path}")
         metrics = bench.run(get_operation, iterations)
 
-        typer.echo(str(metrics))
-        typer.echo("\nBenchmark complete!")
+        payload = {
+            "operation": metrics.operation,
+            "iterations": metrics.iterations,
+            "total_time_seconds": metrics.total_time,
+            "min_time_seconds": metrics.min_time,
+            "max_time_seconds": metrics.max_time,
+            "avg_time_seconds": metrics.avg_time,
+            "median_time_seconds": metrics.median_time,
+        }
+        formatter.print_output(payload)
 
     except Exception as e:
         typer.echo(f"Benchmark failed: {e}", err=True)
@@ -132,6 +166,19 @@ def benchmark(
 def perf_test(
     operation: str = typer.Argument("get", help="Operation type (get/create/list)"),
     iterations: int = typer.Option(10, help="Number of iterations"),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output format (human, json, yaml, markdown, table, text, raw)",
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Shortcut for --output json"),
+    yaml_output: bool = typer.Option(False, "--yaml", help="Shortcut for --output yaml"),
+    markdown_output: bool = typer.Option(
+        False,
+        "--markdown",
+        help="Shortcut for --output markdown",
+    ),
 ) -> None:
     """Run performance tests.
 
@@ -140,14 +187,13 @@ def perf_test(
         proxmox perf-test list
     """
     if operation == "get":
-        typer.invoke(
-            benchmark,
-            [
-                "--path",
-                "/nodes",
-                "--iterations",
-                str(iterations),
-            ],
+        benchmark(
+            iterations=iterations,
+            path="/nodes",
+            output=output,
+            json_output=json_output,
+            yaml_output=yaml_output,
+            markdown_output=markdown_output,
         )
     else:
         typer.echo(f"Performance test for '{operation}' not yet implemented")

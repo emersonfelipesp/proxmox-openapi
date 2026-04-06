@@ -40,10 +40,10 @@ WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" \
     PORT=8000 \
     PYTHONUNBUFFERED=1 \
-    APP_MODULE=proxmox_openapi.main:create_app
+    APP_MODULE=proxmox_openapi.main:app
 
 # The code in proxmox_openapi uses main:create_app
-# It looks like previously APP_MODULE=proxmox_openapi.mock_main:app
+# We use main:app (which is app = create_app()) to avoid factory issues.
 
 COPY --from=builder --chown=appuser:appgroup /app/.venv /app/.venv
 
@@ -59,7 +59,7 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-8000}/health || exit 1
 
-CMD ["sh", "-c", "exec uvicorn ${APP_MODULE} --factory --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn ${APP_MODULE} --host 0.0.0.0 --port ${PORT:-8000}"]
 
 # nginx image: nginx terminates HTTPS with mkcert certs, proxies to uvicorn on 127.0.0.1:8001.
 # Extra SANs: MKCERT_EXTRA_NAMES. Persist CA: CAROOT + volume.

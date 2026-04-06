@@ -19,6 +19,13 @@ on:
         type: string
         required: false
         default: publish
+      release:
+        description: >-
+          true — Release mode: push version tag + latest.
+          false (default) — Dev mode: push dev tag only.
+        type: boolean
+        required: false
+        default: false
   workflow_dispatch:
     inputs:
       source_ref:
@@ -350,8 +357,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}
-            emersonfelipesp/proxmox-openapi:latest
+            ${{ inputs.release && format('emersonfelipesp/proxmox-openapi:{0}', env.IMAGE_TAG) || '' }}
+            ${{ inputs.release && 'emersonfelipesp/proxmox-openapi:latest' || '' }}
+            emersonfelipesp/proxmox-openapi:dev
             emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}
           cache-from: type=gha,scope=raw
           cache-to: type=gha,mode=max,scope=raw
@@ -359,7 +367,11 @@ jobs:
       - name: Smoke-test pushed raw images
         run: |
           set -eux
-          for TAG in "${{ env.IMAGE_TAG }}" latest "sha-${{ steps.source.outputs.sha }}"; do
+          TAGS="${{ env.IMAGE_TAG }} dev sha-${{ steps.source.outputs.sha }}"
+          if ${{ inputs.release }}; then
+            TAGS="$TAGS latest"
+          fi
+          for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
             docker rm -f "$NAME" 2>/dev/null || true
             docker run -d --name "$NAME" \
@@ -489,8 +501,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx
-            emersonfelipesp/proxmox-openapi:latest-nginx
+            ${{ inputs.release && format('emersonfelipesp/proxmox-openapi:{0}-nginx', env.IMAGE_TAG) || '' }}
+            ${{ inputs.release && 'emersonfelipesp/proxmox-openapi:latest-nginx' || '' }}
+            emersonfelipesp/proxmox-openapi:dev-nginx
             emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}-nginx
           cache-from: type=gha,scope=nginx
           cache-to: type=gha,mode=max,scope=nginx
@@ -498,7 +511,11 @@ jobs:
       - name: Smoke-test pushed nginx images
         run: |
           set -eux
-          for TAG in "${{ env.IMAGE_TAG }}-nginx" latest-nginx "sha-${{ steps.source.outputs.sha }}-nginx"; do
+          TAGS="${{ env.IMAGE_TAG }}-nginx dev-nginx sha-${{ steps.source.outputs.sha }}-nginx"
+          if ${{ inputs.release }}; then
+            TAGS="$TAGS latest-nginx"
+          fi
+          for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
             docker rm -f "$NAME" 2>/dev/null || true
             docker run -d --name "$NAME" \
@@ -628,8 +645,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian
-            emersonfelipesp/proxmox-openapi:latest-granian
+            ${{ inputs.release && format('emersonfelipesp/proxmox-openapi:{0}-granian', env.IMAGE_TAG) || '' }}
+            ${{ inputs.release && 'emersonfelipesp/proxmox-openapi:latest-granian' || '' }}
+            emersonfelipesp/proxmox-openapi:dev-granian
             emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}-granian
           cache-from: type=gha,scope=granian
           cache-to: type=gha,mode=max,scope=granian
@@ -637,7 +655,11 @@ jobs:
       - name: Smoke-test pushed granian images
         run: |
           set -eux
-          for TAG in "${{ env.IMAGE_TAG }}-granian" latest-granian "sha-${{ steps.source.outputs.sha }}-granian"; do
+          TAGS="${{ env.IMAGE_TAG }}-granian dev-granian sha-${{ steps.source.outputs.sha }}-granian"
+          if ${{ inputs.release }}; then
+            TAGS="$TAGS latest-granian"
+          fi
+          for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
             docker rm -f "$NAME" 2>/dev/null || true
             docker run -d --name "$NAME" \

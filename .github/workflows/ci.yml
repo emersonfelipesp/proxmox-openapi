@@ -77,13 +77,18 @@ jobs:
           name: proxmox-openapi-coverage
           path: coverage.xml
 
-  # Publish Docker images only from main branch pushes and version tags.
+  # Publish Docker images:
+  # - Dev images on main/testing branch push/PR (dev tag)
+  # - Production images on GitHub Release (version tag + latest)
   docker-images:
     name: Publish Docker images (Hub)
     needs: [lint, syntax, test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: >
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/testing')) ||
+      (github.event_name == 'release' && github.event.action == 'published')
     uses: ./.github/workflows/docker-hub-publish.yml
     with:
       source_ref: ${{ github.sha }}
       mode: publish
+      release: ${{ github.event_name == 'release' }}
     secrets: inherit

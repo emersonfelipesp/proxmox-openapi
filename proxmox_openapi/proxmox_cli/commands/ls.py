@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Optional
 
 import typer
@@ -15,6 +16,29 @@ from ..sdk_bridge import ProxmoxSDKBridge
 from ..utils import validate_api_path
 
 logger = logging.getLogger(__name__)
+
+
+def _apply_filter(result: list[dict], filter_expr: str) -> list[dict]:
+    """Apply client-side filter to results.
+
+    Filter format: "field=value" or "field~contains" for substring match
+    """
+    if not filter_expr or not result:
+        return result
+
+    try:
+        if "~" in filter_expr:
+            field, pattern = filter_expr.split("~", 1)
+            return [
+                r for r in result if field in r and pattern.lower() in str(r.get(field, "")).lower()
+            ]
+        elif "=" in filter_expr:
+            field, value = filter_expr.split("=", 1)
+            return [r for r in result if r.get(field) == value]
+        else:
+            return result
+    except (ValueError, KeyError):
+        return result
 
 
 @app.command()
@@ -30,6 +54,35 @@ def ls(
         None,
         "--sort",
         help="Field to sort by",
+    ),
+    reverse: bool = typer.Option(
+        False,
+        "--reverse",
+        "-r",
+        help="Sort in reverse order",
+    ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        "-l",
+        help="Maximum number of results to return",
+    ),
+    offset: Optional[int] = typer.Option(
+        None,
+        "--offset",
+        help="Number of results to skip (for pagination)",
+    ),
+    filter: Optional[str] = typer.Option(
+        None,
+        "--filter",
+        "-f",
+        help="Filter results (field=value or field~substring)",
+    ),
+    watch: Optional[int] = typer.Option(
+        None,
+        "--watch",
+        "-w",
+        help="Refresh every N seconds (Ctrl+C to stop)",
     ),
     output: Optional[str] = typer.Option(
         None,
@@ -51,7 +104,10 @@ def ls(
         proxmox ls /nodes
         proxmox ls /nodes/pve1/qemu
         proxmox ls /nodes/pve1/qemu --columns vmid,name,status
-        proxmox ls /nodes/pve1/qemu --sort name
+        proxmox ls /nodes/pve1/qemu --sort name --reverse
+        proxmox ls /nodes/pve1/qemu --filter status=running
+        proxmox ls /nodes/pve1/qemu --limit 10 --offset 20
+        proxmox ls /nodes --watch 5
     """
     try:
         # Get context
@@ -83,13 +139,8 @@ def ls(
 
         # Create SDK bridge and execute
         bridge = ProxmoxSDKBridge.create(backend_cfg)
-        result = bridge.list_children(path)
 
-        # Sort if requested
-        if sort and isinstance(result, list) and result and isinstance(result[0], dict):
-            result = sorted(result, key=lambda x: str(x.get(sort, "")))
-
-        # Format and output
+        # Determine output format
         output_fmt = resolve_output_format(
             output,
             json_output=json_output,
@@ -103,7 +154,38 @@ def ls(
         )
 
         cols = columns.split(",") if columns else None
-        formatter.print_output(result, columns=cols)
+
+        def execute_and_print():
+            result = bridge.list_children(path)
+
+            # Filter if requested
+            if filter:
+                result = _apply_filter(result, filter)
+
+            # Sort if requested
+            if sort and isinstance(result, list) and result and isinstance(result[0], dict):
+                result = sorted(result, key=lambda x: str(x.get(sort, "")), reverse=reverse)
+
+            # Apply pagination
+            if offset:
+                result = result[offset:]
+            if limit:
+                result = result[:limit]
+
+            formatter.print_output(result, columns=cols)
+
+        # Watch mode - loop until Ctrl+C
+        if watch:
+            try:
+                while True:
+                    execute_and_print()
+                    typer.echo(f"\n--- Refreshed every {watch}s (Ctrl+C to stop) ---", err=True)
+                    time.sleep(watch)
+            except KeyboardInterrupt:
+                typer.echo("\nWatch mode stopped.", err=True)
+        else:
+            execute_and_print()
+
         bridge.close()
 
     except ProxmoxCLIError as e:

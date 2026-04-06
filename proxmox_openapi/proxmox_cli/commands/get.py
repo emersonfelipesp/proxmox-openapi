@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Optional
 
 import typer
@@ -26,6 +27,29 @@ def get(
         "-c",
         help="Comma-separated columns to display",
     ),
+    limit: Optional[int] = typer.Option(
+        None,
+        "--limit",
+        "-l",
+        help="Maximum number of results to return",
+    ),
+    offset: Optional[int] = typer.Option(
+        None,
+        "--offset",
+        help="Number of results to skip (for pagination)",
+    ),
+    filter: Optional[str] = typer.Option(
+        None,
+        "--filter",
+        "-f",
+        help="Filter results (field=value or field~substring)",
+    ),
+    watch: Optional[int] = typer.Option(
+        None,
+        "--watch",
+        "-w",
+        help="Refresh every N seconds (Ctrl+C to stop)",
+    ),
     output: Optional[str] = typer.Option(
         None,
         "--output",
@@ -46,7 +70,11 @@ def get(
         proxmox get /nodes
         proxmox get /nodes/pve1/status
         proxmox get /nodes/pve1/qemu --output json
+        proxmox get /nodes/pve1/qemu --filter status=running --limit 10
+        proxmox get /nodes --watch 5
     """
+    from .ls import _apply_filter
+
     try:
         # Get context
         ctx_obj = get_context_options()
@@ -77,9 +105,8 @@ def get(
 
         # Create SDK bridge and execute
         bridge = ProxmoxSDKBridge.create(backend_cfg)
-        result = bridge.get(path)
 
-        # Format and output
+        # Determine output format
         output_fmt = resolve_output_format(
             output,
             json_output=json_output,
@@ -93,7 +120,35 @@ def get(
         )
 
         cols = columns.split(",") if columns else None
-        formatter.print_output(result, columns=cols)
+
+        def execute_and_print():
+            result = bridge.get(path)
+
+            # Filter if requested (only works for list results)
+            if filter and isinstance(result, list):
+                result = _apply_filter(result, filter)
+
+            # Apply pagination (only works for list results)
+            if isinstance(result, list):
+                if offset:
+                    result = result[offset:]
+                if limit:
+                    result = result[:limit]
+
+            formatter.print_output(result, columns=cols)
+
+        # Watch mode - loop until Ctrl+C
+        if watch:
+            try:
+                while True:
+                    execute_and_print()
+                    typer.echo(f"\n--- Refreshed every {watch}s (Ctrl+C to stop) ---", err=True)
+                    time.sleep(watch)
+            except KeyboardInterrupt:
+                typer.echo("\nWatch mode stopped.", err=True)
+        else:
+            execute_and_print()
+
         bridge.close()
 
     except ProxmoxCLIError as e:

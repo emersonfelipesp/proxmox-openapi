@@ -19,6 +19,7 @@ from proxmox_openapi.proxmox_codegen.openapi_generator import generate_openapi_s
 from proxmox_openapi.proxmox_codegen.pydantic_generator import (
     generate_pydantic_models_from_openapi,
 )
+from proxmox_openapi.proxmox_codegen.security import validate_source_url, validate_version_tag
 from proxmox_openapi.proxmox_codegen.utils import dump_json, ensure_parent, utc_now_iso
 
 LATEST_VERSION_TAG = "latest"
@@ -70,6 +71,7 @@ def _viewer_apidoc_js_url(source_url: str) -> str:
 
 def _validate_source_for_version_tag(source_url: str, version_tag: str) -> None:
     """Reject non-official viewer URLs when using the reserved latest tag."""
+    validate_source_url(source_url)
     if version_tag != LATEST_VERSION_TAG:
         return
     if _normalized_viewer_url(source_url) != _normalized_viewer_url(PROXMOX_API_VIEWER_URL):
@@ -219,9 +221,7 @@ async def generate_proxmox_codegen_bundle_async(
 ) -> GenerationBundle:
     """Run full generation pipeline and optionally persist artifacts."""
 
-    cleaned_version_tag = version_tag.strip()
-    if not cleaned_version_tag:
-        raise ValueError("version_tag cannot be empty.")
+    cleaned_version_tag = validate_version_tag(version_tag)
     _validate_source_for_version_tag(source_url=source_url, version_tag=cleaned_version_tag)
 
     if _check_playwright_available():

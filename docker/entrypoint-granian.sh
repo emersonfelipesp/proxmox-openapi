@@ -7,8 +7,7 @@ fi
 
 CERT_DIR="${MKCERT_CERT_DIR:-/certs}"
 mkdir -p "$CERT_DIR"
-
-mkcert -install
+export CAROOT="$CERT_DIR"
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT

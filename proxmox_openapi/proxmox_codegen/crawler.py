@@ -47,8 +47,8 @@ async def crawl_proxmox_api_viewer_async(
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
-            page.goto(url, wait_until="networkidle")
-            page.wait_for_selector("nav", timeout=30000)
+            page.goto(url, wait_until="networkidle", timeout=30000)
+            page.wait_for_selector("nav", timeout=10000)
 
             nav = page.locator("nav")
             items = nav.locator("a").all()

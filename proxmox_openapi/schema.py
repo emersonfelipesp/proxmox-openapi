@@ -11,6 +11,8 @@ from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, ValidationError, field_validator
 
+from proxmox_openapi.proxmox_codegen.security import validate_version_tag
+
 DEFAULT_PROXMOX_OPENAPI_TAG = "latest"
 
 
@@ -44,6 +46,11 @@ class GeneratedOpenAPIDocument(BaseModel):
         version_tag: str = DEFAULT_PROXMOX_OPENAPI_TAG,
     ) -> Self | None:
         """Load and validate a generated OpenAPI document for a version tag."""
+        try:
+            version_tag = validate_version_tag(version_tag)
+        except ValueError:
+            return None
+
         openapi_path = _generated_dir() / version_tag / "openapi.json"
         if not openapi_path.exists():
             return None
@@ -511,6 +518,11 @@ def load_proxmox_generated_openapi(
 
 def load_pydantic_models(version_tag: str = DEFAULT_PROXMOX_OPENAPI_TAG) -> str | None:
     """Load generated Pydantic models for a specific version tag."""
+    try:
+        version_tag = validate_version_tag(version_tag)
+    except ValueError:
+        return None
+
     models_path = _generated_dir() / version_tag / "pydantic_models.py"
     if not models_path.exists():
         return None

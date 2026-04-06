@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi import __version__ as fastapi_version
 
 from proxmox_openapi import __version__
@@ -49,6 +49,48 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    from slowapi.errors import RateLimitExceeded
+    from slowapi.middleware import SlowAPIMiddleware
+    from slowapi import _rate_limit_exceeded_handler
+    import logging
+
+    from proxmox_openapi.rate_limit import limiter
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
+
+    logger = logging.getLogger("proxmox_openapi")
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request, exc):
+        if isinstance(exc, StarletteHTTPException):
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers,
+            )
+        logger.exception("Unhandled exception", exc_info=exc)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An internal server error occurred."},
+        )
+
+    cors_origins = os.environ.get("CORS_ORIGINS", "")
+    allowed_origins = [origin.strip() for origin in cors_origins.split(",")] if cors_origins else []
+    
+    if allowed_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=allowed_origins,
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allow_headers=["*"],
+        )
+
     # Track loaded Proxmox endpoints
     proxmox_route_info: dict[str, Any] = {"mode": api_mode}
 
@@ -62,8 +104,13 @@ def create_app() -> FastAPI:
             "proxmox_endpoints": proxmox_route_info.get("route_count", 0),
         }
 
-    @app.get("/health")
-    async def health() -> dict[str, str]:
+    @app.get("/health", include_in_schema=False)
+    async def health(request: Request) -> dict[str, str]:
+        # Require internal IP or authorization
+        client_host = request.client.host if request.client else None
+        if client_host not in ("127.0.0.1", "::1", "localhost", "testclient"):
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         return {"status": "ready"}
 
     @app.get("/version")

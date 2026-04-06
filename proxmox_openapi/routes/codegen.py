@@ -2,21 +2,55 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import PlainTextResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from proxmox_openapi.proxmox_codegen.pipeline import (
     LATEST_VERSION_TAG,
     generate_proxmox_codegen_bundle_async,
 )
+from proxmox_openapi.proxmox_codegen.security import (
+    SSRFProtectionError,
+    validate_source_url,
+    validate_version_tag,
+)
+from proxmox_openapi.rate_limit import limiter
 
-router = APIRouter()
+import logging
+
+audit_logger = logging.getLogger("audit")
+security = HTTPBearer(auto_error=False)
+
+
+def verify_codegen_auth(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> None:
+    """Verify that the request is authorized to perform codegen operations."""
+    api_key = os.environ.get("CODEGEN_API_KEY")
+    if not api_key:
+        audit_logger.warning("Unauthorized access attempt to /codegen: CODEGEN_API_KEY not set")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CODEGEN_API_KEY environment variable must be set to use codegen endpoints",
+        )
+
+    if not credentials or credentials.credentials != api_key:
+        audit_logger.warning("Failed authentication attempt to /codegen")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key for codegen operations",
+        )
+
+
+router = APIRouter(dependencies=[Depends(verify_codegen_auth)])
 
 
 @router.post("/generate")
+@limiter.limit("1/hour")
 async def generate_viewer_codegen_artifacts(
+    request: Request,
     persist: bool = Query(
         default=True,
         description="Persist generated artifacts under proxmox_openapi/generated/proxmox.",
@@ -55,6 +89,23 @@ async def generate_viewer_codegen_artifacts(
     ),
 ) -> dict[str, object]:
     """Run Proxmox API Viewer to OpenAPI and Pydantic generation pipeline."""
+    audit_logger.info(
+        "codegen_request",
+        extra={
+            "client_ip": request.client.host if request.client else "unknown",
+            "source_url": source_url,
+            "version_tag": version_tag,
+            "workers": workers,
+        },
+    )
+    try:
+        source_url = validate_source_url(source_url)
+        version_tag = validate_version_tag(version_tag)
+    except SSRFProtectionError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
     output_dir = None
     if persist:
         output_dir = Path(__file__).resolve().parents[2] / "generated" / "proxmox"
@@ -101,7 +152,9 @@ async def generate_viewer_codegen_artifacts(
 
 
 @router.get("/openapi")
+@limiter.limit("5/hour")
 async def proxmox_viewer_openapi(
+    request: Request,
     regenerate: bool = Query(
         default=False,
         description="Regenerate from upstream viewer before returning OpenAPI output.",
@@ -140,7 +193,9 @@ async def proxmox_viewer_openapi(
 
 
 @router.get("/pydantic", response_class=PlainTextResponse)
+@limiter.limit("5/hour")
 async def proxmox_viewer_pydantic_models(
+    request: Request,
     regenerate: bool = Query(
         default=False,
         description="Regenerate from upstream viewer before returning model source.",
@@ -152,6 +207,11 @@ async def proxmox_viewer_pydantic_models(
 ) -> str:
     """Return generated Pydantic v2 models source code for Proxmox API endpoints."""
     from proxmox_openapi.schema import load_pydantic_models
+
+    try:
+        version_tag = validate_version_tag(version_tag)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     if regenerate:
         output_dir = Path(__file__).resolve().parents[2] / "generated" / "proxmox"

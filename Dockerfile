@@ -76,16 +76,18 @@ RUN apk add --no-cache \
 
 COPY --from=builder /usr/local/bin/mkcert /usr/local/bin/mkcert
 COPY docker/nginx/proxmox-openapi-https.conf.template /etc/proxmox-openapi/nginx-https.conf.template
+COPY docker/nginx/proxmox-openapi-map.conf /etc/nginx/http.d/proxmox-openapi-map.conf
 COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/supervisor/proxmox-openapi.conf /etc/supervisor/conf.d/proxmox-openapi.conf
 COPY docker/entrypoint-nginx.sh /usr/local/bin/docker-entrypoint-nginx.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint-nginx.sh \
- && mkdir -p /certs /var/log/supervisor /var/run/supervisor /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d \
- && chown -R appuser:appgroup /certs /var/log/supervisor /var/run/supervisor /etc/proxmox-openapi /etc/supervisor /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d \
+ && mkdir -p /certs /var/log/supervisor /var/run/supervisor /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d /etc/nginx/http.d \
+ && chown -R appuser:appgroup /certs /var/log/supervisor /var/run/supervisor /etc/proxmox-openapi /etc/supervisor /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d /etc/nginx/http.d \
  && sed -i 's/user nginx;/#user nginx;/' /etc/nginx/nginx.conf \
  && sed -i 's/pid \/run\/nginx.pid;/pid \/var\/run\/nginx\/nginx.pid;/' /etc/nginx/nginx.conf \
- && chmod -R 777 /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d
+ && sed -i '/^http {/a \    include /etc/nginx/http.d/*.conf;' /etc/nginx/nginx.conf \
+ && chmod -R 777 /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d /etc/nginx/http.d
 
 ENV MKCERT_CERT_DIR=/certs
 

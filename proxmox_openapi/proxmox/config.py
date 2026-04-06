@@ -55,8 +55,9 @@ class ProxmoxConfig:
     def from_env(cls) -> ProxmoxConfig:
         """Load configuration from file and environment variables. Config file overrides env vars."""
         import json
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         # Base env vars
         env_config = {k: v for k, v in os.environ.items()}
@@ -82,7 +83,7 @@ class ProxmoxConfig:
                         file_data = yaml.safe_load(path.read_text())
                     else:
                         file_data = json.loads(path.read_text())
-                    
+
                     if isinstance(file_data, dict):
                         # Convert to uppercase PROXMOX_API_ prefixed strings to match env var logic
                         for k, v in file_data.items():
@@ -116,7 +117,7 @@ class ProxmoxConfig:
         proxies = None
         http_proxy = env_config.get("PROXMOX_API_HTTP_PROXY") or env_config.get("HTTP_PROXY") or env_config.get("http_proxy")
         https_proxy = env_config.get("PROXMOX_API_HTTPS_PROXY") or env_config.get("HTTPS_PROXY") or env_config.get("https_proxy")
-        
+
         if http_proxy or https_proxy:
             proxies = {}
             if http_proxy:

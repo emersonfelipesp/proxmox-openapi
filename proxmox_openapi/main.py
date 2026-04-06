@@ -49,13 +49,14 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
     )
 
+    import logging
+
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
-    from starlette.exceptions import HTTPException as StarletteHTTPException
+    from slowapi import _rate_limit_exceeded_handler
     from slowapi.errors import RateLimitExceeded
     from slowapi.middleware import SlowAPIMiddleware
-    from slowapi import _rate_limit_exceeded_handler
-    import logging
+    from starlette.exceptions import HTTPException as StarletteHTTPException
 
     from proxmox_openapi.rate_limit import limiter
 
@@ -81,7 +82,7 @@ def create_app() -> FastAPI:
 
     cors_origins = os.environ.get("CORS_ORIGINS", "")
     allowed_origins = [origin.strip() for origin in cors_origins.split(",")] if cors_origins else []
-    
+
     if allowed_origins:
         app.add_middleware(
             CORSMiddleware,

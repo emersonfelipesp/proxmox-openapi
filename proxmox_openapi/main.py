@@ -111,6 +111,7 @@ def create_app() -> FastAPI:
         client_host = request.client.host if request.client else None
         if client_host not in ("127.0.0.1", "::1", "localhost", "testclient"):
             from fastapi import HTTPException, status
+
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         return {"status": "ready"}
 

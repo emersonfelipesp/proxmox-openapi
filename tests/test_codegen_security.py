@@ -9,22 +9,37 @@ from proxmox_openapi.proxmox_codegen.security import (
 
 class TestSSRFProtection:
     def test_valid_urls(self):
-        assert validate_source_url("https://pve.proxmox.com/pve-docs/apidoc.html") == "https://pve.proxmox.com/pve-docs/apidoc.html"
-        assert validate_source_url("https://pmg.proxmox.com/pmg-docs/api-viewer/index.html") == "https://pmg.proxmox.com/pmg-docs/api-viewer/index.html"
+        assert (
+            validate_source_url("https://pve.proxmox.com/pve-docs/apidoc.html")
+            == "https://pve.proxmox.com/pve-docs/apidoc.html"
+        )
+        assert (
+            validate_source_url("https://pmg.proxmox.com/pmg-docs/api-viewer/index.html")
+            == "https://pmg.proxmox.com/pmg-docs/api-viewer/index.html"
+        )
 
     def test_http_blocked_by_default(self):
         with pytest.raises(SSRFProtectionError, match="Invalid URL scheme"):
             validate_source_url("http://pve.proxmox.com/pve-docs/apidoc.html")
 
     def test_http_allowed_explicitly(self):
-        assert validate_source_url("http://pve.proxmox.com/pve-docs/apidoc.html", allow_http=True) == "http://pve.proxmox.com/pve-docs/apidoc.html"
+        assert (
+            validate_source_url("http://pve.proxmox.com/pve-docs/apidoc.html", allow_http=True)
+            == "http://pve.proxmox.com/pve-docs/apidoc.html"
+        )
 
     def test_localhost_blocked(self):
-        with pytest.raises(SSRFProtectionError, match="SSRF attempt blocked: URL targets localhost"):
+        with pytest.raises(
+            SSRFProtectionError, match="SSRF attempt blocked: URL targets localhost"
+        ):
             validate_source_url("https://localhost/api")
-        with pytest.raises(SSRFProtectionError, match="SSRF attempt blocked: URL targets private IP range"):
+        with pytest.raises(
+            SSRFProtectionError, match="SSRF attempt blocked: URL targets private IP range"
+        ):
             validate_source_url("https://127.0.0.1/api")
-        with pytest.raises(SSRFProtectionError, match="SSRF attempt blocked: URL targets private IP range"):
+        with pytest.raises(
+            SSRFProtectionError, match="SSRF attempt blocked: URL targets private IP range"
+        ):
             validate_source_url("https://0.0.0.0/api")
 
     def test_private_ips_blocked(self):

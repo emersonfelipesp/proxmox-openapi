@@ -80,8 +80,7 @@ def validate_source_url(url: str, *, allow_http: bool = False) -> str:
 
     if parsed.scheme not in allowed_schemes:
         raise SSRFProtectionError(
-            f"Invalid URL scheme: {parsed.scheme!r}. "
-            f"Only {', '.join(allowed_schemes)} are allowed."
+            f"Invalid URL scheme: {parsed.scheme!r}. Only {', '.join(allowed_schemes)} are allowed."
         )
 
     # Extract hostname
@@ -144,9 +143,7 @@ def validate_source_url(url: str, *, allow_http: bool = False) -> str:
 
     for pattern in localhost_patterns:
         if re.match(pattern, hostname, re.IGNORECASE):
-            raise SSRFProtectionError(
-                f"SSRF attempt blocked: URL targets localhost: {url}"
-            )
+            raise SSRFProtectionError(f"SSRF attempt blocked: URL targets localhost: {url}")
 
     return url
 

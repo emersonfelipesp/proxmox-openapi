@@ -25,7 +25,9 @@ audit_logger = logging.getLogger("audit")
 security = HTTPBearer(auto_error=False)
 
 
-def verify_codegen_auth(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> None:
+def verify_codegen_auth(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> None:
     """Verify that the request is authorized to perform codegen operations."""
     api_key = os.environ.get("CODEGEN_API_KEY")
     if not api_key:

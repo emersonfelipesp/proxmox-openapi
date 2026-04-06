@@ -29,9 +29,7 @@ def test_codegen_generate_missing_auth_header():
 
 def test_codegen_generate_invalid_auth_header():
     with patch.dict(os.environ, {"CODEGEN_API_KEY": "secret-key"}):
-        response = client.post(
-            "/codegen/generate", headers={"Authorization": "Bearer wrong-key"}
-        )
+        response = client.post("/codegen/generate", headers={"Authorization": "Bearer wrong-key"})
         assert response.status_code == 401
         assert "Invalid or missing API key" in response.json()["detail"]
 
@@ -42,7 +40,9 @@ async def test_codegen_generate_valid_auth_header():
         # We won't actually run the generate pipeline, just test the auth bypass
         # But wait, calling /codegen/generate will try to run Playwright.
         # We can just check if auth passes by mocking the pipeline function.
-        with patch("proxmox_openapi.routes.codegen.generate_proxmox_codegen_bundle_async") as mock_generate:
+        with patch(
+            "proxmox_openapi.routes.codegen.generate_proxmox_codegen_bundle_async"
+        ) as mock_generate:
             mock_generate.return_value.capture = {}
             mock_generate.return_value.source_url = "test"
             mock_generate.return_value.version_tag = "test"

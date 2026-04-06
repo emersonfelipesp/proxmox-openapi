@@ -67,13 +67,17 @@ class ProxmoxConfig:
             path = Path(config_file)
             if path.exists():
                 import logging
+
                 logger = logging.getLogger("proxmox_openapi")
                 if path.is_symlink():
-                    logger.warning(f"Config file {config_file} is a symlink. Ensure it points to a trusted location.")
+                    logger.warning(
+                        f"Config file {config_file} is a symlink. Ensure it points to a trusted location."
+                    )
                 # Check permissions (only owner can read) to prevent symlink attacks or world-readable configs
                 st = path.stat()
                 if hasattr(st, "st_mode"):
                     import stat
+
                     if bool(st.st_mode & (stat.S_IRWXG | stat.S_IRWXO)):
                         logger.warning(
                             f"Config file {config_file} has overly permissive permissions. It should be restricted to owner."
@@ -87,11 +91,18 @@ class ProxmoxConfig:
                     if isinstance(file_data, dict):
                         # Convert to uppercase PROXMOX_API_ prefixed strings to match env var logic
                         for k, v in file_data.items():
-                            env_k = f"PROXMOX_API_{k.upper()}" if not k.startswith("PROXMOX_") else k.upper()
+                            env_k = (
+                                f"PROXMOX_API_{k.upper()}"
+                                if not k.startswith("PROXMOX_")
+                                else k.upper()
+                            )
                             env_config[env_k] = str(v)
                 except Exception as e:
                     import logging
-                    logging.getLogger("proxmox_openapi").error(f"Failed to load config file {config_file}: {e}")
+
+                    logging.getLogger("proxmox_openapi").error(
+                        f"Failed to load config file {config_file}: {e}"
+                    )
 
         api_mode = env_config.get("PROXMOX_API_MODE", "mock").lower()
         api_url = env_config.get("PROXMOX_API_URL")
@@ -115,8 +126,16 @@ class ProxmoxConfig:
         otptype = env_config.get("PROXMOX_API_OTPTYPE", "totp")
 
         proxies = None
-        http_proxy = env_config.get("PROXMOX_API_HTTP_PROXY") or env_config.get("HTTP_PROXY") or env_config.get("http_proxy")
-        https_proxy = env_config.get("PROXMOX_API_HTTPS_PROXY") or env_config.get("HTTPS_PROXY") or env_config.get("https_proxy")
+        http_proxy = (
+            env_config.get("PROXMOX_API_HTTP_PROXY")
+            or env_config.get("HTTP_PROXY")
+            or env_config.get("http_proxy")
+        )
+        https_proxy = (
+            env_config.get("PROXMOX_API_HTTPS_PROXY")
+            or env_config.get("HTTPS_PROXY")
+            or env_config.get("https_proxy")
+        )
 
         if http_proxy or https_proxy:
             proxies = {}

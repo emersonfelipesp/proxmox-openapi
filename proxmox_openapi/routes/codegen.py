@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -19,8 +20,6 @@ from proxmox_openapi.proxmox_codegen.security import (
     validate_version_tag,
 )
 from proxmox_openapi.rate_limit import limiter
-
-import logging
 
 audit_logger = logging.getLogger("audit")
 security = HTTPBearer(auto_error=False)

@@ -49,7 +49,7 @@ async def test_codegen_generate_valid_auth_header():
             mock_generate.return_value.generated_at = "test"
             mock_generate.return_value.endpoint_count = 0
             mock_generate.return_value.operation_count = 0
-            
+
             response = client.post(
                 "/codegen/generate", headers={"Authorization": "Bearer secret-key"}
             )

@@ -86,7 +86,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint-nginx.sh \
  && chown -R appuser:appgroup /certs /var/log/supervisor /var/run/supervisor /etc/proxmox-openapi /etc/supervisor /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d /etc/nginx/http.d \
  && sed -i 's/user nginx;/#user nginx;/' /etc/nginx/nginx.conf \
  && sed -i 's/pid \/run\/nginx.pid;/pid \/var\/run\/nginx\/nginx.pid;/' /etc/nginx/nginx.conf \
- && sed -i '/^http {/a \    include /etc/nginx/http.d/*.conf;' /etc/nginx/nginx.conf \
  && chmod -R 777 /var/lib/nginx /var/log/nginx /var/run/nginx /etc/nginx/conf.d /etc/nginx/http.d
 
 ENV MKCERT_CERT_DIR=/certs

@@ -1,8 +1,9 @@
 server {
-    listen __PORT__ ssl http2;
+    listen __PORT__ ssl;
+    http2 on;
     ssl_certificate __CERT__;
     ssl_certificate_key __KEY__;
-    ssl_session_cache shared:SSL:10m;
+    ssl_session_cache shared:ProxmoxSSL:10m;
     ssl_session_timeout 10m;
 
     # Restrict to modern TLS versions and strong cipher suites only.

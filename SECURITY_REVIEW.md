@@ -1,6 +1,6 @@
 # Security Review: proxmox-openapi
 
-**Date:** April 2026  
+**Date:** April 2026
 **Status:** Post-hardening review with 10 initial fixes applied
 
 ---
@@ -15,8 +15,8 @@ This document outlines remaining security vulnerabilities and issues identified 
 
 ### 1. SSRF Vulnerability in /codegen/generate Endpoint
 
-**Severity:** CRITICAL  
-**File:** `proxmox_openapi/routes/codegen.py` (lines 17-58) and `proxmox_openapi/proxmox_codegen/crawler.py` (line 54)  
+**Severity:** CRITICAL
+**File:** `proxmox_openapi/routes/codegen.py` (lines 17-58) and `proxmox_openapi/proxmox_codegen/crawler.py` (line 54)
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -47,11 +47,11 @@ import ipaddress
 def validate_source_url(url: str) -> None:
     """Validate that source_url is safe for external requests."""
     parsed = urlparse(url)
-    
+
     # Only allow HTTPS for public URLs
     if parsed.scheme not in ("https", "http"):
         raise ValueError(f"Invalid scheme: {parsed.scheme}")
-    
+
     # Reject private IP ranges
     private_ranges = [
         ipaddress.IPv4Network("10.0.0.0/8"),
@@ -60,7 +60,7 @@ def validate_source_url(url: str) -> None:
         ipaddress.IPv4Network("127.0.0.0/8"),
         ipaddress.IPv4Network("169.254.0.0/16"),  # Link-local
     ]
-    
+
     try:
         host_addr = ipaddress.IPv4Address(parsed.hostname)
         for private_range in private_ranges:
@@ -82,8 +82,8 @@ If the codegen endpoint is only used by trusted administrators in development, r
 
 ### 2. Missing SSRF Protection on Custom Version Tags
 
-**Severity:** CRITICAL  
-**File:** `proxmox_openapi/proxmox_codegen/pipeline.py` (lines 71-73)  
+**Severity:** CRITICAL
+**File:** `proxmox_openapi/proxmox_codegen/pipeline.py` (lines 71-73)
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -105,7 +105,7 @@ Apply SSRF validation to ALL source URLs regardless of version tag:
 def _validate_source_for_version_tag(source_url: str, version_tag: str) -> None:
     """Always validate source URL; enforce latest tag restriction."""
     validate_source_url(source_url)  # Always validate
-    
+
     if version_tag == LATEST_VERSION_TAG:
         if _normalized_viewer_url(source_url) != _normalized_viewer_url(PROXMOX_API_VIEWER_URL):
             raise ValueError("Version tag 'latest' is reserved for official Proxmox API viewer URL.")
@@ -117,8 +117,8 @@ def _validate_source_for_version_tag(source_url: str, version_tag: str) -> None:
 
 ### 3. Missing CORS Configuration
 
-**Severity:** HIGH  
-**File:** `proxmox_openapi/main.py`  
+**Severity:** HIGH
+**File:** `proxmox_openapi/main.py`
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -131,7 +131,7 @@ from fastapi.middleware.cors import CORSMiddleware
 def create_app() -> FastAPI:
     # ... existing code ...
     app = FastAPI(...)
-    
+
     # Add CORS middleware with restrictive defaults
     app.add_middleware(
         CORSMiddleware,
@@ -141,7 +141,7 @@ def create_app() -> FastAPI:
         allow_headers=["Content-Type", "Authorization"],
         max_age=86400,
     )
-    
+
     return app
 ```
 
@@ -154,8 +154,8 @@ CORS_ORIGINS=https://your-domain.com,https://api.your-domain.com
 
 ### 4. Directory Traversal in version_tag Parameter
 
-**Severity:** HIGH  
-**File:** `proxmox_openapi/proxmox_codegen/pipeline.py` (line 220)  
+**Severity:** HIGH
+**File:** `proxmox_openapi/proxmox_codegen/pipeline.py` (line 220)
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -179,16 +179,16 @@ def _validate_version_tag(tag: str) -> str:
     tag = tag.strip()
     if not tag:
         raise ValueError("version_tag cannot be empty")
-    
+
     # Reject path traversal patterns
     if ".." in tag or "/" in tag or "\\" in tag:
         raise ValueError("version_tag must not contain path separators or '..'")
-    
+
     # Only allow alphanumeric, dash, underscore, dot
     import re
     if not re.match(r"^[a-zA-Z0-9._-]+$", tag):
         raise ValueError("version_tag contains invalid characters")
-    
+
     return tag
 ```
 
@@ -201,8 +201,8 @@ cleaned_version_tag = _validate_version_tag(version_tag)
 
 ### 5. Unauthenticated Access to /codegen/generate Endpoint
 
-**Severity:** HIGH  
-**File:** `proxmox_openapi/routes/codegen.py`  
+**Severity:** HIGH
+**File:** `proxmox_openapi/routes/codegen.py`
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -246,8 +246,8 @@ if os.environ.get("PROXMOX_API_MODE") != "development":
 
 ### 6. No Rate Limiting on Resource-Intensive Endpoints
 
-**Severity:** MEDIUM  
-**File:** `proxmox_openapi/routes/codegen.py`, `proxmox_openapi/routes/mock.py`  
+**Severity:** MEDIUM
+**File:** `proxmox_openapi/routes/codegen.py`, `proxmox_openapi/routes/mock.py`
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -278,8 +278,8 @@ dependencies = [
 
 ### 7. Proxy Authentication Credentials in Environment Variables
 
-**Severity:** MEDIUM  
-**File:** `proxmox_openapi/sdk/backends/https.py` and proxy handling  
+**Severity:** MEDIUM
+**File:** `proxmox_openapi/sdk/backends/https.py` and proxy handling
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -299,7 +299,7 @@ And load it with proper permission checks:
 ```python
 def load_proxy_config() -> dict | None:
     proxy_config_file = Path("~/.proxmox-cli/.proxy.conf").expanduser()
-    
+
     # Check file permissions (must be 0o600)
     if proxy_config_file.exists():
         stat_info = proxy_config_file.stat()
@@ -308,7 +308,7 @@ def load_proxy_config() -> dict | None:
                 f"Proxy config file has overly permissive permissions: "
                 f"oct({stat_info.st_mode}). Should be 0o600."
             )
-    
+
     # ... load from file ...
 ```
 
@@ -316,8 +316,8 @@ def load_proxy_config() -> dict | None:
 
 ### 8. Missing Authentication on Mock Endpoints
 
-**Severity:** MEDIUM  
-**File:** `proxmox_openapi/routes/mock.py`  
+**Severity:** MEDIUM
+**File:** `proxmox_openapi/routes/mock.py`
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -339,8 +339,8 @@ async def get_mock_schema() -> dict:
 
 ### 9. Information Disclosure: Detailed Error Messages
 
-**Severity:** MEDIUM  
-**File:** Various route handlers  
+**Severity:** MEDIUM
+**File:** Various route handlers
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -361,7 +361,7 @@ from fastapi.responses import JSONResponse
 async def generic_exception_handler(request, exc):
     # Log full exception internally
     logger.exception("Unhandled exception", exc_info=exc)
-    
+
     # Return generic error to client
     return JSONResponse(
         status_code=500,
@@ -378,8 +378,8 @@ if os.environ.get("DEBUG", "false").lower() == "true":
 
 ### 10. Credentials Visible in Environment Variables
 
-**Severity:** MEDIUM  
-**File:** `proxmox_openapi/main.py` and `proxmox_openapi/proxmox/config.py`  
+**Severity:** MEDIUM
+**File:** `proxmox_openapi/main.py` and `proxmox_openapi/proxmox/config.py`
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -415,8 +415,8 @@ logger.warning("Sensitive environment variables detected. Consider using .env fi
 
 ### 11. No Timeout on Playwright Browser Operations
 
-**Severity:** LOW  
-**File:** `proxmox_openapi/proxmox_codegen/crawler.py` (line 56)  
+**Severity:** LOW
+**File:** `proxmox_openapi/proxmox_codegen/crawler.py` (line 56)
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -432,8 +432,8 @@ page.wait_for_selector("nav", timeout=10_000)  # 10 seconds
 
 ### 12. No Validation of JSON in Config Files
 
-**Severity:** LOW  
-**File:** `proxmox_openapi/proxmox_cli/config.py` (line 104)  
+**Severity:** LOW
+**File:** `proxmox_openapi/proxmox_cli/config.py` (line 104)
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -462,8 +462,8 @@ def load_config() -> ConfigManager:
 
 ### 13. Potential Symlink Attack on Config Directory
 
-**Severity:** LOW  
-**File:** `proxmox_openapi/proxmox_cli/config.py` (lines 200-220)  
+**Severity:** LOW
+**File:** `proxmox_openapi/proxmox_cli/config.py` (lines 200-220)
 **Status:** ⚠️ PARTIALLY MITIGATED
 
 **Problem:**
@@ -475,15 +475,15 @@ import os
 
 def save_config(self) -> None:
     path = self._config_path()
-    
+
     # Ensure path is not a symlink
     if path.exists() and path.is_symlink():
         raise ConfigError(f"Config file is a symlink, refusing to overwrite: {path}")
-    
+
     # Ensure parent directory is not a symlink
     if path.parent.exists() and path.parent.is_symlink():
         raise ConfigError(f"Config directory is a symlink: {path.parent}")
-    
+
     # ... rest of function ...
 ```
 
@@ -491,8 +491,8 @@ def save_config(self) -> None:
 
 ### 14. Missing Telemetry/Security Event Logging
 
-**Severity:** LOW  
-**File:** All route handlers  
+**Severity:** LOW
+**File:** All route handlers
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**
@@ -526,8 +526,8 @@ async def generate_viewer_codegen_artifacts(request: Request, ...):
 
 ### 15. No Health Check Authentication
 
-**Severity:** LOW  
-**File:** `proxmox_openapi/main.py` (lines 61-62)  
+**Severity:** LOW
+**File:** `proxmox_openapi/main.py` (lines 61-62)
 **Status:** ⚠️ NOT FIXED
 
 **Problem:**

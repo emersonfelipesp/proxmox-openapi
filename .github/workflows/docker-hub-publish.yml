@@ -1,3 +1,7 @@
+# Three Alpine-based images: raw (uvicorn), nginx (nginx+mkcert+uvicorn), granian (granian+mkcert).
+# Triggers:
+# - workflow_call: CI (main/testing) and release → always build, test, push (parallel jobs).
+# - workflow_dispatch: manual — test-only (no Hub) or full publish (parallel jobs, same as call).
 name: Docker images
 
 on:
@@ -11,7 +15,7 @@ on:
       mode:
         description: >-
           build-and-test-only — amd64 build + in-container tests, no Docker Hub.
-          publish — build, smoke-test, and push runtime + mkcert images.
+          publish — build, smoke-test, and push raw + nginx + granian images.
         type: string
         required: false
         default: publish
@@ -25,7 +29,7 @@ on:
       mode:
         description: >-
           build-and-test-only — amd64 build + in-container tests, no Docker Hub.
-          publish — same as CI/release (push runtime + mkcert, multi-arch).
+          publish — same as CI/release (push raw + nginx + granian, multi-arch).
         type: choice
         required: true
         options:
@@ -40,6 +44,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # Sequential local test (manual); no registry login or push.
   docker-manual:
     if: inputs.mode == 'build-and-test-only'
     name: Docker — build and test only (manual)
@@ -87,48 +92,159 @@ jobs:
                   f"git_ref/version mismatch: ref={git_ref!r}, expected {expected_tag!r}"
               )
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-              fh.write(f"tag={version}\n')
+              fh.write(f"tag={version}\n")
           PY
 
       - name: Keep image tag in env
         run: echo "IMAGE_TAG=${{ steps.version.outputs.tag }}" >> $GITHUB_ENV
+
+      - name: Create Docker test script
+        run: |
+          cat <<'EOF' > /tmp/docker-tests.sh
+          #!/bin/sh
+          set -eux
+          # tests/ is bind-mounted read-only; keep bytecode out of the tree
+          export PYTHONPYCACHEPREFIX=/tmp/pycache
+          mkdir -p "$PYTHONPYCACHEPREFIX"
+          uv sync --frozen --extra test --group dev
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run python -m compileall proxmox_openapi tests
+          uv run python -c "import proxmox_openapi.main"
+          uv run python -c "import proxmox_openapi.mock_main"
+          uv run pytest --cov=proxmox_openapi --cov-report=term-missing --cov-report=xml tests
+          EOF
+          chmod +x /tmp/docker-tests.sh
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker-container
 
-      - name: Build amd64 image for in-container tests
+      # --- raw image ---
+      - name: Build amd64 raw image for in-container tests
         uses: docker/build-push-action@v6
         with:
           context: .
-          target: runtime
+          target: raw
           platforms: linux/amd64
           push: false
           load: true
-          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-pre
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-raw-pre
+          cache-from: type=gha,scope=raw
+          cache-to: type=gha,mode=max,scope=raw
 
-      - name: Smoke-test runtime image startup
+      - name: Run tests in raw image
+        run: |
+          docker run --rm \
+            -w /workspace \
+            -v /tmp/docker-tests.sh:/tmp/docker-tests.sh \
+            -v "${{ github.workspace }}:/workspace" \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-raw-pre \
+            /tmp/docker-tests.sh
+
+      - name: Smoke-test raw image startup
         run: |
           set -eux
-          docker rm -f proxmox-openapi-smoke-http 2>/dev/null || true
-          docker run -d --name proxmox-openapi-smoke-http \
+          docker rm -f proxmox-openapi-smoke-raw 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-raw \
             -p 127.0.0.1:18080:8000 \
-            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-pre
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-raw-pre
           for i in $(seq 1 40); do
             if curl -fsS --max-time 5 http://127.0.0.1:18080/ >/dev/null 2>&1; then
-              docker rm -f proxmox-openapi-smoke-http
+              docker rm -f proxmox-openapi-smoke-raw
               exit 0
             fi
             sleep 2
           done
-          docker logs proxmox-openapi-smoke-http
-          docker rm -f proxmox-openapi-smoke-http
+          docker logs proxmox-openapi-smoke-raw
+          docker rm -f proxmox-openapi-smoke-raw
           exit 1
 
-  docker-runtime:
+      # --- nginx image ---
+      - name: Build amd64 nginx image for in-container tests
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: nginx
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx-pre
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+
+      - name: Run tests in nginx image
+        run: |
+          docker run --rm \
+            -w /workspace \
+            -v /tmp/docker-tests.sh:/tmp/docker-tests.sh \
+            -v "${{ github.workspace }}:/workspace" \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx-pre \
+            /tmp/docker-tests.sh
+
+      - name: Smoke-test nginx image startup
+        run: |
+          set -eux
+          docker rm -f proxmox-openapi-smoke-nginx 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-nginx \
+            -p 127.0.0.1:18443:8000 \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx-pre
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18443/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-smoke-nginx
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs proxmox-openapi-smoke-nginx
+          docker rm -f proxmox-openapi-smoke-nginx
+          exit 1
+
+      # --- granian image ---
+      - name: Build amd64 granian image for in-container tests
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: granian
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian-pre
+          cache-from: type=gha,scope=granian
+          cache-to: type=gha,mode=max,scope=granian
+
+      - name: Run tests in granian image
+        run: |
+          docker run --rm \
+            -w /workspace \
+            -v /tmp/docker-tests.sh:/tmp/docker-tests.sh \
+            -v "${{ github.workspace }}:/workspace" \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian-pre \
+            /tmp/docker-tests.sh
+
+      - name: Smoke-test granian image startup
+        run: |
+          set -eux
+          docker rm -f proxmox-openapi-smoke-granian 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-granian \
+            -p 127.0.0.1:18444:8000 \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian-pre
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18444/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-smoke-granian
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs proxmox-openapi-smoke-granian
+          docker rm -f proxmox-openapi-smoke-granian
+          exit 1
+
+  # Parallel publish jobs — one per image variant.
+  docker-raw:
     if: inputs.mode == 'publish'
-    name: Docker Hub — runtime (nginx + uvicorn)
+    name: Docker Hub — raw (uvicorn only, HTTP)
     runs-on: ubuntu-latest
     steps:
       - name: Resolve checkout ref
@@ -190,25 +306,57 @@ jobs:
                   f"git ref / pyproject mismatch: ref={git_ref!r}, expected {expected_tag!r}"
               )
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-              fh.write(f'tag={version}\n')
+              fh.write(f"tag={version}\n")
           PY
 
       - name: Keep image tag in env
         run: echo "IMAGE_TAG=${{ steps.version.outputs.tag }}" >> $GITHUB_ENV
 
-      - name: Build and push Docker image (runtime)
+      - name: Build amd64 raw image for pre-release tests
         uses: docker/build-push-action@v6
         with:
           context: .
-          target: runtime
+          target: raw
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-raw-pre
+          cache-from: type=gha,scope=raw
+          cache-to: type=gha,mode=max,scope=raw
+
+      - name: Smoke-test raw image before push
+        run: |
+          set -eux
+          docker rm -f proxmox-openapi-smoke-raw 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-raw \
+            -p 127.0.0.1:18080:8000 \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-raw-pre
+          for i in $(seq 1 40); do
+            if curl -fsS --max-time 5 http://127.0.0.1:18080/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-smoke-raw
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs proxmox-openapi-smoke-raw
+          docker rm -f proxmox-openapi-smoke-raw
+          exit 1
+
+      - name: Build and push raw Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: raw
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}
             emersonfelipesp/proxmox-openapi:latest
             emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}
+          cache-from: type=gha,scope=raw
+          cache-to: type=gha,mode=max,scope=raw
 
-      - name: Smoke-test pushed runtime images
+      - name: Smoke-test pushed raw images
         run: |
           set -eux
           for TAG in "${{ env.IMAGE_TAG }}" latest "sha-${{ steps.source.outputs.sha }}"; do
@@ -220,6 +368,284 @@ jobs:
             ok=0
             for i in $(seq 1 40); do
               if curl -fsS --max-time 5 http://127.0.0.1:18080/ >/dev/null 2>&1; then
+                ok=1
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ok" -ne 1 ]; then
+              docker logs "$NAME"
+              docker rm -f "$NAME"
+              exit 1
+            fi
+            docker rm -f "$NAME"
+          done
+
+  docker-nginx:
+    if: inputs.mode == 'publish'
+    name: Docker Hub — nginx (nginx + mkcert HTTPS + uvicorn)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve checkout ref
+        id: checkout_source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REF: ${{ inputs.source_ref != '' && inputs.source_ref || github.sha }}
+        run: |
+          set -euo pipefail
+          encoded_ref="$(python3 - <<'PY'
+          import os
+          from urllib.parse import quote
+
+          print(quote(os.environ["SOURCE_REF"], safe=""))
+          PY
+          )"
+          sha="$(gh api "repos/${{ github.repository }}/commits/$encoded_ref" --jq .sha)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.checkout_source.outputs.sha }}
+
+      - name: Resolve source revision
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Resolve image version from pyproject
+        id: version
+        env:
+          GIT_REF: ${{ inputs.source_ref != '' && inputs.source_ref || github.ref_name }}
+        run: |
+          python3 <<'PY'
+          import os
+          import pathlib
+          import tomllib
+
+          data = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
+          version = data["project"]["version"]
+          expected_tag = f"v{version}"
+          git_ref = os.environ["GIT_REF"].strip()
+          if git_ref.startswith("v") and git_ref != expected_tag:
+              raise SystemExit(
+                  f"git ref / pyproject mismatch: ref={git_ref!r}, expected {expected_tag!r}"
+              )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"tag={version}\n")
+          PY
+
+      - name: Keep image tag in env
+        run: echo "IMAGE_TAG=${{ steps.version.outputs.tag }}" >> $GITHUB_ENV
+
+      - name: Build amd64 nginx image for pre-release tests
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: nginx
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx-pre
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+
+      - name: Smoke-test nginx image before push
+        run: |
+          set -eux
+          docker rm -f proxmox-openapi-smoke-nginx 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-nginx \
+            -p 127.0.0.1:18443:8000 \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx-pre
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18443/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-smoke-nginx
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs proxmox-openapi-smoke-nginx
+          docker rm -f proxmox-openapi-smoke-nginx
+          exit 1
+
+      - name: Build and push nginx Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: nginx
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-nginx
+            emersonfelipesp/proxmox-openapi:latest-nginx
+            emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}-nginx
+          cache-from: type=gha,scope=nginx
+          cache-to: type=gha,mode=max,scope=nginx
+
+      - name: Smoke-test pushed nginx images
+        run: |
+          set -eux
+          for TAG in "${{ env.IMAGE_TAG }}-nginx" latest-nginx "sha-${{ steps.source.outputs.sha }}-nginx"; do
+            NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
+            docker rm -f "$NAME" 2>/dev/null || true
+            docker run -d --name "$NAME" \
+              -p 127.0.0.1:18443:8000 \
+              emersonfelipesp/proxmox-openapi:"$TAG"
+            ok=0
+            for i in $(seq 1 40); do
+              if curl -kfsS --max-time 5 https://127.0.0.1:18443/ >/dev/null 2>&1; then
+                ok=1
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ok" -ne 1 ]; then
+              docker logs "$NAME"
+              docker rm -f "$NAME"
+              exit 1
+            fi
+            docker rm -f "$NAME"
+          done
+
+  docker-granian:
+    if: inputs.mode == 'publish'
+    name: Docker Hub — granian (granian + mkcert HTTPS)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve checkout ref
+        id: checkout_source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REF: ${{ inputs.source_ref != '' && inputs.source_ref || github.sha }}
+        run: |
+          set -euo pipefail
+          encoded_ref="$(python3 - <<'PY'
+          import os
+          from urllib.parse import quote
+
+          print(quote(os.environ["SOURCE_REF"], safe=""))
+          PY
+          )"
+          sha="$(gh api "repos/${{ github.repository }}/commits/$encoded_ref" --jq .sha)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.checkout_source.outputs.sha }}
+
+      - name: Resolve source revision
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Resolve image version from pyproject
+        id: version
+        env:
+          GIT_REF: ${{ inputs.source_ref != '' && inputs.source_ref || github.ref_name }}
+        run: |
+          python3 <<'PY'
+          import os
+          import pathlib
+          import tomllib
+
+          data = tomllib.loads(pathlib.Path("pyproject.toml").read_text(encoding="utf-8"))
+          version = data["project"]["version"]
+          expected_tag = f"v{version}"
+          git_ref = os.environ["GIT_REF"].strip()
+          if git_ref.startswith("v") and git_ref != expected_tag:
+              raise SystemExit(
+                  f"git ref / pyproject mismatch: ref={git_ref!r}, expected {expected_tag!r}"
+              )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"tag={version}\n")
+          PY
+
+      - name: Keep image tag in env
+        run: echo "IMAGE_TAG=${{ steps.version.outputs.tag }}" >> $GITHUB_ENV
+
+      - name: Build amd64 granian image for pre-release tests
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: granian
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian-pre
+          cache-from: type=gha,scope=granian
+          cache-to: type=gha,mode=max,scope=granian
+
+      - name: Smoke-test granian image before push
+        run: |
+          set -eux
+          docker rm -f proxmox-openapi-smoke-granian 2>/dev/null || true
+          docker run -d --name proxmox-openapi-smoke-granian \
+            -p 127.0.0.1:18444:8000 \
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian-pre
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18444/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-smoke-granian
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs proxmox-openapi-smoke-granian
+          docker rm -f proxmox-openapi-smoke-granian
+          exit 1
+
+      - name: Build and push granian Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: granian
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            emersonfelipesp/proxmox-openapi:${{ env.IMAGE_TAG }}-granian
+            emersonfelipesp/proxmox-openapi:latest-granian
+            emersonfelipesp/proxmox-openapi:sha-${{ steps.source.outputs.sha }}-granian
+          cache-from: type=gha,scope=granian
+          cache-to: type=gha,mode=max,scope=granian
+
+      - name: Smoke-test pushed granian images
+        run: |
+          set -eux
+          for TAG in "${{ env.IMAGE_TAG }}-granian" latest-granian "sha-${{ steps.source.outputs.sha }}-granian"; do
+            NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
+            docker rm -f "$NAME" 2>/dev/null || true
+            docker run -d --name "$NAME" \
+              -p 127.0.0.1:18444:8000 \
+              emersonfelipesp/proxmox-openapi:"$TAG"
+            ok=0
+            for i in $(seq 1 40); do
+              if curl -kfsS --max-time 5 https://127.0.0.1:18444/ >/dev/null 2>&1; then
                 ok=1
                 break
               fi

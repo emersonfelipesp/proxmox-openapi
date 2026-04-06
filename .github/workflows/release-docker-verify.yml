@@ -1,0 +1,85 @@
+name: Release Docker verification
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  verify-image:
+    name: verify Docker images on release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Pull release and latest images
+        run: |
+          REL="${{ github.event.release.tag_name }}"
+          TAG="${REL#v}"
+          docker pull emersonfelipesp/proxmox-openapi:"$TAG"
+          docker pull emersonfelipesp/proxmox-openapi:latest
+          docker pull emersonfelipesp/proxmox-openapi:"${TAG}-nginx"
+          docker pull emersonfelipesp/proxmox-openapi:latest-nginx
+          docker pull emersonfelipesp/proxmox-openapi:"${TAG}-granian"
+          docker pull emersonfelipesp/proxmox-openapi:latest-granian
+
+      - name: Smoke-test published startup
+        run: |
+          set -eux
+          REL="${{ github.event.release.tag_name }}"
+          TAG="${REL#v}"
+
+          # raw (HTTP)
+          docker rm -f proxmox-openapi-release-raw 2>/dev/null || true
+          docker run -d --name proxmox-openapi-release-raw \
+            -p 127.0.0.1:18080:8000 \
+            emersonfelipesp/proxmox-openapi:"$TAG"
+          for i in $(seq 1 40); do
+            if curl -fsS --max-time 5 http://127.0.0.1:18080/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-release-raw
+              break
+            fi
+            sleep 2
+            if [ "$i" -eq 40 ]; then
+              docker logs proxmox-openapi-release-raw
+              docker rm -f proxmox-openapi-release-raw
+              exit 1
+            fi
+          done
+
+          # nginx (HTTPS)
+          docker rm -f proxmox-openapi-release-nginx 2>/dev/null || true
+          docker run -d --name proxmox-openapi-release-nginx \
+            -p 127.0.0.1:18443:8000 \
+            emersonfelipesp/proxmox-openapi:"${TAG}-nginx"
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18443/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-release-nginx
+              break
+            fi
+            sleep 2
+            if [ "$i" -eq 40 ]; then
+              docker logs proxmox-openapi-release-nginx
+              docker rm -f proxmox-openapi-release-nginx
+              exit 1
+            fi
+          done
+
+          # granian (HTTPS)
+          docker rm -f proxmox-openapi-release-granian 2>/dev/null || true
+          docker run -d --name proxmox-openapi-release-granian \
+            -p 127.0.0.1:18444:8000 \
+            emersonfelipesp/proxmox-openapi:"${TAG}-granian"
+          for i in $(seq 1 40); do
+            if curl -kfsS --max-time 5 https://127.0.0.1:18444/ >/dev/null 2>&1; then
+              docker rm -f proxmox-openapi-release-granian
+              break
+            fi
+            sleep 2
+            if [ "$i" -eq 40 ]; then
+              docker logs proxmox-openapi-release-granian
+              docker rm -f proxmox-openapi-release-granian
+              exit 1
+            fi
+          done

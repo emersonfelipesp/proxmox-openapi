@@ -24,25 +24,10 @@ list=$(sort -u "$tmp" | tr '\n' ' ')
 mkcert -cert-file "$CERT_DIR/cert.pem" -key-file "$CERT_DIR/key.pem" $list
 
 chmod 644 "$CERT_DIR/cert.pem" 2>/dev/null || true
-chgrp www-data "$CERT_DIR/key.pem" 2>/dev/null || true
+chgrp nginx "$CERT_DIR/key.pem" 2>/dev/null || true
 chmod 640 "$CERT_DIR/key.pem" 2>/dev/null || true
 
 PORT="${PORT:-8000}"
-
-# Check if the port is already in use
-if command -v ss >/dev/null 2>&1; then
-    if ss -tuln 2>/dev/null | grep -q ":${PORT} "; then
-        echo "ERROR: Port ${PORT} is already in use. Please use another port by setting the PORT environment variable." >&2
-        echo "Example: docker run -e PORT=8001 ..." >&2
-        exit 1
-    fi
-elif command -v netstat >/dev/null 2>&1; then
-    if netstat -tuln 2>/dev/null | grep -q ":${PORT} "; then
-        echo "ERROR: Port ${PORT} is already in use. Please use another port by setting the PORT environment variable." >&2
-        echo "Example: docker run -e PORT=8001 ..." >&2
-        exit 1
-    fi
-fi
 
 CERT_ESC=$(echo "$CERT_DIR/cert.pem" | sed 's/[\/&]/\\&/g')
 KEY_ESC=$(echo "$CERT_DIR/key.pem" | sed 's/[\/&]/\\&/g')

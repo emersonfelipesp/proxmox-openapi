@@ -124,12 +124,87 @@ ruff format --check .
 
 ## Docker
 
-```bash
-# Build the image
-docker build -t proxmox-openapi .
+All images are **Alpine-based** (smaller footprint), built from this repository with **uv** and **`uv.lock`** in a multi-stage Dockerfile. Three variants are published to Docker Hub:
 
-# Run the container
-docker run -p 8000:8000 proxmox-openapi
+| Variant | Tags | Description |
+|---------|------|-------------|
+| **Raw** (default) | `latest`, `<version>` | Pure uvicorn, HTTP only. Smallest image. |
+| **Nginx** | `latest-nginx`, `<version>-nginx` | nginx terminates HTTPS via mkcert; proxies to uvicorn. |
+| **Granian** | `latest-granian`, `<version>-granian` | [Granian](https://github.com/emmett-framework/granian) (Rust ASGI server) with native TLS via mkcert. No nginx. |
+
+> **Upgrade note:** before v0.0.2, only runtime+mkcert images existed. From v0.0.2+, `latest` is the raw uvicorn image. Pull `latest-nginx` for HTTPS with nginx.
+
+### Raw image (default)
+
+Plain uvicorn on HTTP — the simplest option for local dev or when you put your own proxy in front.
+
+```bash
+docker pull emersonfelipesp/proxmox-openapi:latest
+docker run -d -p 8000:8000 --name proxmox-openapi emersonfelipesp/proxmox-openapi:latest
+```
+
+Build from source:
+
+```bash
+docker build -t proxmox-openapi:raw .
+docker run -d -p 8000:8000 proxmox-openapi:raw
+```
+
+### Nginx image (nginx + mkcert HTTPS + uvicorn)
+
+**nginx** terminates HTTPS on `PORT` (default **8000**) using certificates from [mkcert](https://github.com/FiloSottile/mkcert) and proxies to **uvicorn** on `127.0.0.1:8001`. **supervisord** manages both processes.
+
+```bash
+docker pull emersonfelipesp/proxmox-openapi:latest-nginx
+docker run -d -p 8443:8000 --name proxmox-openapi-nginx \
+  emersonfelipesp/proxmox-openapi:latest-nginx
+```
+
+Build from source:
+
+```bash
+docker build --target nginx -t proxmox-openapi:nginx .
+docker run -d -p 8443:8000 proxmox-openapi:nginx
+```
+
+### Granian image (granian + mkcert HTTPS)
+
+[Granian](https://github.com/emmett-framework/granian) is a Rust-based ASGI server with native HTTP/2, WebSocket, and TLS support. This variant eliminates nginx and supervisord — a single granian process handles everything.
+
+```bash
+docker pull emersonfelipesp/proxmox-openapi:latest-granian
+docker run -d -p 8443:8000 --name proxmox-openapi-granian \
+  emersonfelipesp/proxmox-openapi:latest-granian
+```
+
+Build from source:
+
+```bash
+docker build --target granian -t proxmox-openapi:granian .
+docker run -d -p 8443:8000 proxmox-openapi:granian
+```
+
+### mkcert environment variables (nginx and granian images)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `8000` | Port the server listens on |
+| `MKCERT_CERT_DIR` | `/certs` | Directory where certs are stored |
+| `MKCERT_EXTRA_NAMES` | — | Extra SANs (commas or spaces), e.g. `proxmox-api.lan,10.0.0.5` |
+| `CAROOT` | — | Mount a volume here to persist the local CA across container restarts |
+| `APP_MODULE` | `proxmox_openapi.mock_main:app` | ASGI app to run (change to `proxmox_openapi.main:app` for real mode) |
+
+```bash
+docker run -d -p 8443:8000 --name proxmox-openapi-tls \
+  -e MKCERT_EXTRA_NAMES='myhost.local,192.168.1.10' \
+  -e APP_MODULE='proxmox_openapi.main:app' \
+  emersonfelipesp/proxmox-openapi:latest-nginx
+```
+
+To run a shell instead of starting the server, pass a command (the entrypoint delegates to it):
+
+```bash
+docker run --rm emersonfelipesp/proxmox-openapi:latest-nginx sh
 ```
 
 ## License

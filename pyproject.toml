@@ -7,7 +7,7 @@ include = ["proxmox_openapi*"]
 
 [project]
 name = "proxmox-openapi"
-version = "0.0.1"
+version = "0.0.2"
 description = "pvesh-like CLI for Proxmox API with multi-backend support, performance profiling, and advanced configuration management"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -50,6 +50,9 @@ playwright = [
 docs = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.6",
+]
+granian = [
+    "granian>=2.7.0",
 ]
 
 [dependency-groups]

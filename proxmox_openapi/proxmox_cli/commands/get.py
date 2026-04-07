@@ -68,26 +68,26 @@ def get(
 
     Fetches data from API endpoints with optional filtering, pagination,
     watching/monitoring, and flexible output formatting.
-    
+
     Examples:
         # List all nodes
         proxmox get /nodes
-        
+
         # Get specific node info
         proxmox get /nodes/pve1/status
-        
+
         # Get VMs on a node
         proxmox get /nodes/pve1/qemu --output json
-        
+
         # Filter results
         proxmox get /nodes/pve1/qemu --filter status=running --limit 10
-        
+
         # Watch resource for changes (refresh every 5 seconds)
         proxmox get /nodes/pve1/status --watch 5
-        
+
         # Get storage list with YAML output
         proxmox get /storage --yaml
-        
+
         # Select specific columns
         proxmox get /nodes/pve1/qemu --columns vmid,name,status --output table
     """

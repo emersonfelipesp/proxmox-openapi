@@ -51,20 +51,20 @@ def set_cmd(
     Sends a PUT request to modify an existing resource. Parameters can be
     passed via -d/--data flags or a JSON file. Some fields can be unset
     using empty values or delete prefixes.
-    
+
     Examples:
         # Update node description
         proxmox set /nodes/pve1 -d description="Production Node 1"
-        
+
         # Update with multiple parameters
         proxmox set /nodes/pve1 -d features=snapshot,nesting -d cpu=host
-        
+
         # Update from JSON file
         proxmox set /nodes/pve1 -f node-update.json
-        
+
         # Update VM configuration
         proxmox set /nodes/pve/qemu/100 -d memory=8192 -d cores=4
-        
+
         # Update user profile
         proxmox set /access/users/user@pam -d firstname="John" -d lastname="Doe"
     """

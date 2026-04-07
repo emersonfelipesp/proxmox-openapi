@@ -63,29 +63,29 @@ def tui(
     Opens a full-screen terminal UI for browsing Proxmox API resources
     hierarchically and performing operations. Supports both real backends
     (HTTPS, SSH, local) and mock mode for testing/learning.
-    
+
     MODE:
         - Omit or use 'mock' to connect to in-memory mock backend
         - Otherwise connects using configured backend credentials
-    
+
     Key controls:
         - Arrow keys: Navigate resources
         - Enter: Drill into path or edit
-        - q: Quit   
+        - q: Quit
         - j/k: Jump between entries
         - s: Search
         - /: Filter
-    
+
     Examples:
         # Launch with configured Proxmox backend
         proxmox tui
-        
+
         # Launch against mock backend (no credentials needed)
         proxmox tui mock
-        
+
         # Start at specific path
         proxmox tui -p /nodes/pve1/qemu
-        
+
         # For PMG/PBS:
         pbx tui          # Proxmox Mail Gateway
         pbs tui          # Proxmox Backup Server

@@ -12,10 +12,10 @@ from proxmox_openapi.schema import GeneratedOpenAPIDocument, ProxmoxSchemaValue
 
 def schema_fingerprint(openapi_document: dict[str, object]) -> str:
     """Return a stable fingerprint for the loaded OpenAPI document.
-    
+
     Args:
         openapi_document: OpenAPI v3 specification as dict
-        
+
     Returns:
         SHA256 hex digest of normalized OpenAPI paths
     """
@@ -24,13 +24,13 @@ def schema_fingerprint(openapi_document: dict[str, object]) -> str:
 
 def resolved_schema(schema: dict[str, Any] | None) -> dict[str, Any]:
     """Resolve the most useful inline schema representation for mock generation.
-    
+
     Handles oneOf, allOf, and nested schemas by extracting the first/primary
     schema variant suitable for generating mock data.
-    
+
     Args:
         schema: JSON schema dict (possibly with oneOf/allOf)
-        
+
     Returns:
         Single resolved schema dict suitable for mock data generation
     """
@@ -39,13 +39,13 @@ def resolved_schema(schema: dict[str, Any] | None) -> dict[str, Any]:
 
 def schema_kind(schema: dict[str, Any] | None) -> str:
     """Classify the resolved schema into a small set of storage kinds.
-    
+
     Maps JSON schema type to storage classification for mock state management
     (e.g., 'list', 'object', 'scalar').
-    
+
     Args:
         schema: JSON schema dict
-        
+
     Returns:
         Classification string: 'list', 'object', 'scalar', or 'unknown'
     """
@@ -54,12 +54,12 @@ def schema_kind(schema: dict[str, Any] | None) -> str:
 
 def _seed_int(seed: str, *, modulus: int, offset: int = 0) -> int:
     """Deterministically generate an integer from a string seed.
-    
+
     Args:
         seed: String to hash (API path typically)
         modulus: Maximum range (result = hash % modulus)
         offset: Value to add to result
-        
+
     Returns:
         Deterministic integer in range [offset, offset+modulus)
     """
@@ -69,10 +69,10 @@ def _seed_int(seed: str, *, modulus: int, offset: int = 0) -> int:
 
 def _field_hint(field_name: str | None) -> str:
     """Extract lowercase, stripped version of field name for heuristic matching.
-    
+
     Args:
         field_name: Field name (possibly with underscores, mixed case)
-        
+
     Returns:
         Lowercased, stripped field hint for semantic value matching
     """
@@ -81,15 +81,15 @@ def _field_hint(field_name: str | None) -> str:
 
 def _select_enum_value(enum: list[Any], *, field_name: str | None) -> Any:
     """Select the best mock value from an enum list.
-    
+
     Uses field name heuristics to prefer semantically meaningful values
     (e.g., 'running' for status fields, 'qemu' for type fields).
     Falls back to first enum value if no preferences match.
-    
+
     Args:
         enum: List of allowed enum values
         field_name: Field name (used for heuristic matching)
-        
+
     Returns:
         Deep copy of selected enum value, or None if enum is empty
     """
@@ -111,7 +111,7 @@ def _select_enum_value(enum: list[Any], *, field_name: str | None) -> Any:
 
 def _semantic_string_value(*, field_name: str | None, seed: str) -> str | None:
     """Generate a semantically appropriate string mock value for a field.
-    
+
     Uses field name heuristics to generate realistic example data:
     - node/hostname fields → pve-node-01, pve-node-02, etc.
     - vmid/name fields → vm-app-01, vm-app-02, etc.
@@ -119,11 +119,11 @@ def _semantic_string_value(*, field_name: str | None, seed: str) -> str | None:
     - MAC address fields → 52:XX:XX:XX:XX:XX with hashed octets
     - URL fields → https://example.local
     etc.
-    
+
     Args:
         field_name: Field name for heuristic matching
         seed: Base seed string (typically API path) for determinism
-        
+
     Returns:
         Plausible example string, or None if no heuristic matches
     """
@@ -188,7 +188,7 @@ def _semantic_string_value(*, field_name: str | None, seed: str) -> str | None:
 
 def _semantic_integer_value(*, field_name: str | None, seed: str) -> int | None:
     """Generate a semantically appropriate integer mock value for a field.
-    
+
     Uses field name heuristics to generate realistic numeric data:
     - vmid → 100-899 (deterministic from seed)
     - CPU fields (cpus, cores) → 4, 8, 16
@@ -197,11 +197,11 @@ def _semantic_integer_value(*, field_name: str | None, seed: str) -> int | None:
     - Timestamps → realistic Unix times
     - Capacity fields (used, free, total) → realistic disk usage patterns
     etc.
-    
+
     Args:
         field_name: Field name for heuristic matching
         seed: Base seed string for deterministic values
-        
+
     Returns:
         Plausible example integer, or None if no heuristic matches
     """

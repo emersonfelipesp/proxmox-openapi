@@ -39,20 +39,20 @@ def delete(
 
     Sends a DELETE request to remove a resource. By default, prompts for
     confirmation unless --force is used.
-    
+
     Examples:
         # Delete with confirmation prompt
         proxmox delete /nodes/pve/qemu/100
-        
+
         # Delete without confirmation (useful in scripts/automation)
         proxmox delete /nodes/pve/qemu/100 --force
-        
+
         # Delete with JSON output
         proxmox delete /nodes/pve/qemu/100 --force --json
-        
+
         # Delete storage resource
         proxmox delete /storage/backup-nfs --force
-        
+
         # Silently delete in automation (exit code indicates success)
         proxmox delete /nodes/pve/qemu/100 --force 2>/dev/null
     """

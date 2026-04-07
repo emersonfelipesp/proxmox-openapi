@@ -79,7 +79,7 @@ class OutputFormatter:
 
     FORMATS: set[str] = {"human", "json", "yaml", "markdown", "table", "text", "raw", "auto"}
     """Supported output format identifiers."""
-    
+
     AUTO_THRESHOLD: int = 5  # Number of items to auto-detect as table
     """Minimum item count to auto-detect output as table format."""
 

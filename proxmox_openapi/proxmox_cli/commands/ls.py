@@ -102,33 +102,33 @@ def ls(
 
     Fetches a collection from the API endpoint and displays the results
     with optional sorting, filtering, pagination, and format selection.
-    
+
     Filtering syntax:
         - field=value      : Exact match
         - field~substring  : Case-insensitive substring match
-    
+
     Examples:
         # List all nodes
         proxmox ls /nodes
-        
+
         # List VMs on a node
         proxmox ls /nodes/pve1/qemu
-        
+
         # List with specific columns
         proxmox ls /nodes/pve1/qemu --columns vmid,name,status
-        
+
         # Sort and limit results
         proxmox ls /nodes/pve1/qemu --sort name --reverse --limit 10
-        
+
         # Filter running VMs and display as table
         proxmox ls /nodes/pve1/qemu --filter status=running --output table
-        
+
         # Pagination (skip first 20, get 10)
         proxmox ls /nodes/pve1/qemu --offset 20 --limit 10
-        
+
         # Watch mode (refresh every 5 seconds)
         proxmox ls /nodes/pve1/qemu --watch 5
-        
+
         # Get storage list as JSON
         proxmox ls /storage --json
     """

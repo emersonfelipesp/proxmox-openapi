@@ -51,17 +51,17 @@ def create(
     Sends a POST request to create a resource. Parameters can be passed via:
     - -d/--data flags: repeatable key=value pairs
     - -f/--json-file: JSON file with bulk parameters
-    
+
     Examples:
         # Create VM via individual parameters
         proxmox create /nodes/pve/qemu -d vmid=100 -d name=web-vm
-        
+
         # Create VM from JSON file
         proxmox create /nodes/pve/qemu -f vm.json
-        
+
         # Create with JSON output
         proxmox create /nodes/pve/qemu -d vmid=100 -d name=web-vm --json
-        
+
         # Create storage with multiple parameters
         proxmox create /nodes/pve/storage \\
             -d storage=nfs-backup -d type=nfs \\

@@ -12,6 +12,7 @@ from proxmox_openapi.mock.schema_helpers import (
 )
 from proxmox_openapi.mock.state import shared_mock_store
 from proxmox_openapi.schema import DEFAULT_PROXMOX_OPENAPI_TAG, load_proxmox_generated_openapi
+from proxmox_openapi.sdk.backends.base import AbstractBackend
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def _response_schema(operation: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
 
-class MockBackend:
+class MockBackend(AbstractBackend):
     """In-memory mock backend that generates responses from the OpenAPI schema.
 
     Does not start a FastAPI server.  All data lives in the process-local

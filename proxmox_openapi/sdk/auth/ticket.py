@@ -113,6 +113,15 @@ class TicketAuth:
             self._csrf_token = csrf
             self._acquired_at = time.monotonic()
 
+    async def ensure_ready(
+        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+    ) -> None:
+        """Authenticate or renew the ticket as needed before a request."""
+        if not self.is_authenticated:
+            await self.authenticate(session, ticket_url, ssl=ssl)
+        else:
+            await self.maybe_renew(session, ticket_url, ssl=ssl)
+
     def build_headers(self, method: str) -> dict[str, str]:
         """Return request headers for the given HTTP method."""
         headers: dict[str, str] = {}

@@ -13,11 +13,12 @@ from urllib.parse import urlsplit, urlunsplit
 
 import aiohttp
 
+from proxmox_openapi.sdk.auth.base import AuthStrategy
+from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.exceptions import ResourceException
 
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.auth.ticket import TicketAuth
-    from proxmox_openapi.sdk.auth.token import TokenAuth
     from proxmox_openapi.sdk.services import ServiceConfig
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ def _build_ssl_context(verify_ssl: bool, cert: str | None) -> ssl.SSLContext | b
     return ctx
 
 
-class HttpsBackend:
+class HttpsBackend(AbstractBackend):
     """Async HTTPS backend — the primary way to connect to a real Proxmox service.
 
     Supports:
@@ -115,7 +116,7 @@ class HttpsBackend:
         *,
         host: str,
         service_config: ServiceConfig,
-        auth: TicketAuth | TokenAuth,
+        auth: AuthStrategy,
         port: int | None = None,
         path_prefix: str = "",
         verify_ssl: bool = True,
@@ -305,13 +306,7 @@ class HttpsBackend:
         return self._session
 
     async def _ensure_authenticated(self, session: aiohttp.ClientSession) -> None:
-        from proxmox_openapi.sdk.auth.ticket import TicketAuth
-
-        if isinstance(self._auth, TicketAuth):
-            if not self._auth.is_authenticated:
-                await self._auth.authenticate(session, self._ticket_url, ssl=self._ssl)
-            else:
-                await self._auth.maybe_renew(session, self._ticket_url, ssl=self._ssl)
+        await self._auth.ensure_ready(session, self._ticket_url, ssl=self._ssl)
 
     def _url_for(self, path: str) -> str:
         """Build full URL from a path, respecting path prefix."""

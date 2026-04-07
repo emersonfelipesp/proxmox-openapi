@@ -7,6 +7,53 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+def _load_config_file(config_file: str, logger: Any) -> dict[str, str]:
+    """Load and parse a JSON or YAML config file, returning PROXMOX_API_ prefixed key dict."""
+    import json
+    import stat
+    from pathlib import Path
+
+    result: dict[str, str] = {}
+    path = Path(config_file)
+    if not path.exists():
+        return result
+
+    if path.is_symlink():
+        logger.warning(
+            f"Config file {config_file} is a symlink. Ensure it points to a trusted location."
+        )
+    st = path.stat()
+    if hasattr(st, "st_mode") and bool(st.st_mode & (stat.S_IRWXG | stat.S_IRWXO)):
+        logger.warning(
+            f"Config file {config_file} has overly permissive permissions. "
+            "It should be restricted to owner."
+        )
+
+    try:
+        if path.suffix in (".yaml", ".yml"):
+            import yaml  # deferred: only loaded when a YAML config file is present
+
+            file_data = yaml.safe_load(path.read_text())
+        else:
+            file_data = json.loads(path.read_text())
+
+        if isinstance(file_data, dict):
+            for k, v in file_data.items():
+                env_k = f"PROXMOX_API_{k.upper()}" if not k.startswith("PROXMOX_") else k.upper()
+                result[env_k] = str(v)
+    except Exception as e:
+        logger.error(f"Failed to load config file {config_file}: {e}")
+
+    return result
+
+
+def _clear_sensitive_env() -> None:
+    """Overwrite sensitive credentials in os.environ to prevent accidental re-reads."""
+    for key in ("PROXMOX_API_TOKEN_SECRET", "PROXMOX_API_PASSWORD", "PROXMOX_API_OTP"):
+        if key in os.environ:
+            os.environ[key] = "********"
+
+
 @dataclass(frozen=True)
 class ProxmoxConfig:
     """Configuration for Proxmox API client.
@@ -54,9 +101,7 @@ class ProxmoxConfig:
     @classmethod
     def from_env(cls) -> ProxmoxConfig:
         """Load configuration from file and environment variables. Config file overrides env vars."""
-        import json
         import logging
-        from pathlib import Path
 
         _logger = logging.getLogger("proxmox_openapi")
 
@@ -87,40 +132,7 @@ class ProxmoxConfig:
 
         config_file = os.environ.get("PROXMOX_CONFIG_FILE")
         if config_file:
-            path = Path(config_file)
-            if path.exists():
-                if path.is_symlink():
-                    _logger.warning(
-                        f"Config file {config_file} is a symlink. Ensure it points to a trusted location."
-                    )
-                # Check permissions (only owner can read) to prevent symlink attacks or world-readable configs
-                st = path.stat()
-                if hasattr(st, "st_mode"):
-                    import stat
-
-                    if bool(st.st_mode & (stat.S_IRWXG | stat.S_IRWXO)):
-                        _logger.warning(
-                            f"Config file {config_file} has overly permissive permissions. It should be restricted to owner."
-                        )
-                try:
-                    if path.suffix in (".yaml", ".yml"):
-                        import yaml  # deferred: only loaded when a YAML config file is present
-
-                        file_data = yaml.safe_load(path.read_text())
-                    else:
-                        file_data = json.loads(path.read_text())
-
-                    if isinstance(file_data, dict):
-                        # Convert to uppercase PROXMOX_API_ prefixed strings to match env var logic
-                        for k, v in file_data.items():
-                            env_k = (
-                                f"PROXMOX_API_{k.upper()}"
-                                if not k.startswith("PROXMOX_")
-                                else k.upper()
-                            )
-                            env_config[env_k] = str(v)
-                except Exception as e:
-                    _logger.error(f"Failed to load config file {config_file}: {e}")
+            env_config.update(_load_config_file(config_file, _logger))
 
         api_mode = env_config.get("PROXMOX_API_MODE", "mock").lower()
         api_url = env_config.get("PROXMOX_API_URL")
@@ -131,10 +143,7 @@ class ProxmoxConfig:
         verify_ssl_str = env_config.get("PROXMOX_API_VERIFY_SSL", "true").lower()
         verify_ssl = verify_ssl_str in ("true", "1", "yes")
 
-        # Clear sensitive data from os.environ
-        for key in ["PROXMOX_API_TOKEN_SECRET", "PROXMOX_API_PASSWORD", "PROXMOX_API_OTP"]:
-            if key in os.environ:
-                os.environ[key] = "********"
+        _clear_sensitive_env()
 
         service = env_config.get("PROXMOX_API_SERVICE", "PVE").upper()
         backend = env_config.get("PROXMOX_API_BACKEND", "https").lower()

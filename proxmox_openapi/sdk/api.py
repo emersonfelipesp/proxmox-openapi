@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.sync import SyncProxmoxSDK
 
+from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.resource import ProxmoxResource
 from proxmox_openapi.sdk.services import SERVICES, ServiceConfig
 
@@ -69,6 +70,7 @@ class ProxmoxSDK:
         self,
         host: str | None = None,
         *,
+        _backend: AbstractBackend | None = None,
         user: str | None = None,
         password: str | None = None,
         token_name: str | None = None,
@@ -93,6 +95,14 @@ class ProxmoxSDK:
         if service_upper not in SERVICES:
             raise ValueError(f"Unknown service '{service}'. Supported: {list(SERVICES.keys())}")
         svc: ServiceConfig = SERVICES[service_upper]
+
+        if _backend is not None:
+            # Caller-supplied backend — skip factory entirely (e.g. for testing).
+            self._service_config = svc
+            self._backend_name = "custom"
+            self._backend = _backend
+            self._root = ProxmoxResource(path=svc.api_path_prefix, backend=self._backend)
+            return
 
         if backend not in svc.supported_backends:
             raise ValueError(
@@ -181,13 +191,7 @@ class ProxmoxSDK:
         Raises:
             RuntimeError: If not using HTTPS + ticket auth.
         """
-        from proxmox_openapi.sdk.backends.https import HttpsBackend
-
-        if isinstance(self._backend, HttpsBackend):
-            return await self._backend.get_tokens()
-        raise RuntimeError(
-            "get_tokens() is only available for the HTTPS backend with password auth"
-        )
+        return await self._backend.get_tokens()
 
     # ------------------------------------------------------------------
     # Class-method constructors

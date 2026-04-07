@@ -13,27 +13,15 @@ from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 from proxmox_openapi.proxmox_cli.tui_runner import launch_tui
 from proxmox_openapi.proxmox_cli.utils import validate_api_path
 
+from ._common import apply_cli_overrides
+
 
 def _build_backend_config(ctx_obj: dict[str, Any], *, use_mock: bool) -> BackendConfig:
     """Build a backend config from profile and CLI global flags."""
     config_mgr = ConfigManager()
     config_mgr.load_config(ctx_obj.get("config"))
     backend_cfg = config_mgr.get_profile()
-
-    if ctx_obj.get("backend"):
-        backend_cfg.backend = ctx_obj["backend"]
-    if ctx_obj.get("host"):
-        backend_cfg.host = ctx_obj["host"]
-    if ctx_obj.get("user"):
-        backend_cfg.user = ctx_obj["user"]
-    if ctx_obj.get("password"):
-        backend_cfg.password = ctx_obj["password"]
-    if ctx_obj.get("token_value"):
-        backend_cfg.token_value = ctx_obj["token_value"]
-    if ctx_obj.get("port"):
-        backend_cfg.port = ctx_obj["port"]
-    if ctx_obj.get("service"):
-        backend_cfg.service = ctx_obj["service"]
+    apply_cli_overrides(backend_cfg, ctx_obj)
 
     if use_mock:
         backend_cfg.backend = "mock"

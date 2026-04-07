@@ -1,13 +1,13 @@
-"""Abstract backend protocol for the Proxmox SDK."""
+"""Abstract backend base class for the Proxmox SDK."""
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from abc import ABC, abstractmethod
+from typing import Any
 
 
-@runtime_checkable
-class AbstractBackend(Protocol):
-    """Protocol that all SDK backends must implement.
+class AbstractBackend(ABC):
+    """Abstract base class that all SDK backends must subclass.
 
     Backends are responsible for executing API calls — they know how to reach
     the Proxmox service (HTTPS, SSH, local pvesh, or in-memory mock) and
@@ -15,6 +15,7 @@ class AbstractBackend(Protocol):
     ``request()`` and never interacts with the transport directly.
     """
 
+    @abstractmethod
     async def request(
         self,
         method: str,
@@ -38,11 +39,23 @@ class AbstractBackend(Protocol):
             ResourceException: API returned HTTP >= 400.
             AuthenticationError: Authentication failed.
         """
-        ...
 
+    @abstractmethod
     async def close(self) -> None:
         """Release held resources (sessions, connections, threads)."""
-        ...
+
+    async def get_tokens(self) -> tuple[str, str]:
+        """Return (ticket, csrf_token) for HTTPS ticket-auth backends.
+
+        The default implementation raises :class:`RuntimeError`.
+        Override in backends that support ticket authentication.
+
+        Raises:
+            RuntimeError: Always, unless overridden.
+        """
+        raise RuntimeError(
+            "get_tokens() is only available for the HTTPS backend with password auth"
+        )
 
 
 __all__ = ["AbstractBackend"]

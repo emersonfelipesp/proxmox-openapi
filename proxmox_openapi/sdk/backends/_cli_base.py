@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.exceptions import ResourceException
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ class CliResponse:
         return self.content.decode("utf-8", errors="replace")
 
 
-class CommandBaseBackend:
+class CommandBaseBackend(AbstractBackend):
     """Mixin providing pvesh/pmgsh command building and response parsing.
 
     Subclasses must implement ``_execute_command(command: list[str]) -> CliResponse``.

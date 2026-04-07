@@ -242,27 +242,6 @@ class ProxmoxSDKBridge:
         # ls is typically a GET on the path
         return self.get(path)
 
-    def get_schema(self, path: str, method: str | None = None) -> dict[str, Any]:
-        """Get schema/usage information for an endpoint.
-
-        Args:
-            path: API path
-            method: Optional HTTP method to inspect
-
-        Returns:
-            Schema information
-
-        Raises:
-            BackendError: If schema retrieval fails
-        """
-        # This would require access to the OpenAPI schema
-        # For now, return basic info
-        return {
-            "path": path,
-            "method": method or "GET",
-            "description": "API endpoint",
-        }
-
     def close(self) -> None:
         """Close SDK connections if needed."""
         # SDK close if applicable

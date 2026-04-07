@@ -132,6 +132,9 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
 
+      - name: Run ty type checks
+        run: uv run ty check proxmox_openapi tests --output-format concise
+
       - name: Compile package
         run: uv run python -m compileall proxmox_openapi
 

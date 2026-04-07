@@ -16,3 +16,11 @@ repos:
       - id: ruff
       - id: ruff-format
         args: [--check]
+
+  - repo: local
+    hooks:
+      - id: ty-check
+        name: ty-check
+        entry: uv run ty check proxmox_openapi tests --output-format concise
+        language: system
+        pass_filenames: false

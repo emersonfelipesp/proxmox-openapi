@@ -30,6 +30,9 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check .
 
+      - name: Run ty type checks
+        run: uv run ty check proxmox_openapi tests --output-format concise
+
   syntax:
     runs-on: ubuntu-latest
     steps:

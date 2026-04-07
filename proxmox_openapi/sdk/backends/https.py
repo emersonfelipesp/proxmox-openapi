@@ -303,9 +303,9 @@ class HttpsBackend:
 
         if isinstance(self._auth, TicketAuth):
             if not self._auth.is_authenticated:
-                await self._auth.authenticate(session, self._ticket_url)
+                await self._auth.authenticate(session, self._ticket_url, ssl=self._ssl)
             else:
-                await self._auth.maybe_renew(session, self._ticket_url)
+                await self._auth.maybe_renew(session, self._ticket_url, ssl=self._ssl)
 
     def _url_for(self, path: str) -> str:
         """Build full URL from a path, respecting path prefix."""

@@ -29,7 +29,7 @@ openssl pkcs8 -topk8 -nocrypt \
 chmod 600 "$CERT_DIR/key-pkcs8.pem"
 
 PORT="${PORT:-8000}"
-APP_MODULE="${APP_MODULE:-proxmox_openapi.mock_main:app}"
+APP_MODULE="${APP_MODULE:-proxmox_openapi.main:app}"
 
 exec /app/.venv/bin/granian \
   --interface asgi \

@@ -33,6 +33,6 @@ KEY_ESC=$(echo "$CERT_DIR/key.pem" | sed 's/[\/&]/\\&/g')
 sed -e "s/__PORT__/${PORT}/g" \
     -e "s|__CERT__|${CERT_ESC}|g" \
     -e "s|__KEY__|${KEY_ESC}|g" \
-  /etc/proxmox-openapi/nginx-https.conf.template > /etc/nginx/conf.d/proxmox-openapi.conf
+  /etc/proxmox-openapi/nginx-https.conf.template > /etc/nginx/http.d/proxmox-openapi.conf
 
 exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

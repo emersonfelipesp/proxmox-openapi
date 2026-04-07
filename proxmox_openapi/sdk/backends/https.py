@@ -211,8 +211,29 @@ class HttpsBackend:
 
     async def close(self) -> None:
         """Close the underlying aiohttp session."""
-        if self._session and not self._session.closed:
+        if self._session is None or self._session.closed:
+            self._session = None
+            self._session_loop = None
+            return
+
+        current_loop = asyncio.get_running_loop()
+        if self._session_loop is None or self._session_loop is current_loop:
             await self._session.close()
+        else:
+            logger.debug(
+                "close() called from different loop than session creation; "
+                "scheduling close on original loop"
+            )
+            try:
+                if self._session_loop.is_running():
+
+                    def _schedule_close() -> None:
+                        asyncio.create_task(self._session.close())
+
+                    self._session_loop.call_soon_threadsafe(_schedule_close)
+            except Exception:
+                logger.debug("Failed to schedule session close on original loop", exc_info=True)
+
         self._session = None
         self._session_loop = None
 

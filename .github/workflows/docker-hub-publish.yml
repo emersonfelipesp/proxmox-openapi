@@ -367,9 +367,10 @@ jobs:
       - name: Smoke-test pushed raw images
         run: |
           set -eux
-          TAGS="${{ env.IMAGE_TAG }} dev sha-${{ steps.source.outputs.sha }}"
           if ${{ inputs.release }}; then
-            TAGS="$TAGS latest"
+            TAGS="${{ env.IMAGE_TAG }} latest dev sha-${{ steps.source.outputs.sha }}"
+          else
+            TAGS="dev sha-${{ steps.source.outputs.sha }}"
           fi
           for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
@@ -511,9 +512,10 @@ jobs:
       - name: Smoke-test pushed nginx images
         run: |
           set -eux
-          TAGS="${{ env.IMAGE_TAG }}-nginx dev-nginx sha-${{ steps.source.outputs.sha }}-nginx"
           if ${{ inputs.release }}; then
-            TAGS="$TAGS latest-nginx"
+            TAGS="${{ env.IMAGE_TAG }}-nginx latest-nginx dev-nginx sha-${{ steps.source.outputs.sha }}-nginx"
+          else
+            TAGS="dev-nginx sha-${{ steps.source.outputs.sha }}-nginx"
           fi
           for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')
@@ -655,9 +657,10 @@ jobs:
       - name: Smoke-test pushed granian images
         run: |
           set -eux
-          TAGS="${{ env.IMAGE_TAG }}-granian dev-granian sha-${{ steps.source.outputs.sha }}-granian"
           if ${{ inputs.release }}; then
-            TAGS="$TAGS latest-granian"
+            TAGS="${{ env.IMAGE_TAG }}-granian latest-granian dev-granian sha-${{ steps.source.outputs.sha }}-granian"
+          else
+            TAGS="dev-granian sha-${{ steps.source.outputs.sha }}-granian"
           fi
           for TAG in $TAGS; do
             NAME=$(printf 'proxmox-openapi-smoke-%s' "$TAG" | tr '.:' '-')

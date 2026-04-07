@@ -77,8 +77,11 @@ def resolve_output_format(
 class OutputFormatter:
     """Formats and outputs CLI results in various formats."""
 
-    FORMATS = {"human", "json", "yaml", "markdown", "table", "text", "raw", "auto"}
-    AUTO_THRESHOLD = 5  # Number of items to auto-detect as table
+    FORMATS: set[str] = {"human", "json", "yaml", "markdown", "table", "text", "raw", "auto"}
+    """Supported output format identifiers."""
+    
+    AUTO_THRESHOLD: int = 5  # Number of items to auto-detect as table
+    """Minimum item count to auto-detect output as table format."""
 
     def __init__(self, format: str = "auto", colors: bool = True) -> None:
         """Initialize OutputFormatter.

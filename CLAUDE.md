@@ -108,6 +108,36 @@ uv run python -c "from proxmox_openapi.proxmox_cli.cli import cli"
 pytest
 ```
 
+## Security Controls
+
+See [docs/security.md](docs/security.md) for the full reference. Key patterns to follow:
+
+- **SSRF protection** — All user-supplied URLs must be passed through `validate_source_url()` in `proxmox_codegen/security.py` before any outbound request. Non-Proxmox domains are blocked by default (`allow_any_domain=False`). Private IPv4, private IPv6, IPv4-mapped IPv6 (`::ffff:`), and 6to4 addresses are all blocked.
+- **Codegen auth** — `POST /codegen/generate` and related endpoints require a `Bearer` token via `CODEGEN_API_KEY`. Rate-limited to 1 req/hour.
+- **CORS** — Disabled by default. Enable via `CORS_ORIGINS`. Allowed headers are restricted to `Content-Type`, `Authorization`, `X-Requested-With`. Wildcards are never used.
+- **Health endpoint** — Returns `404` for non-localhost callers. `testclient` is only added to the allowlist when `TESTING=1`.
+- **SSH backends** — `SshParamikoBackend` defaults to `WarningPolicy` (not `AutoAddPolicy`). All SSH commands use `shlex.join()`/`shlex.quote()` to prevent shell injection. Temp files use `secrets.token_hex(8)`.
+- **Log sanitization** — `SensitiveDataFilter` in `logger.py` redacts credentials (`password=`, `token_value=`, `PVEAuthCookie=`, `CSRFPreventionToken=`, `Authorization=`) from all log output.
+- **Credential clearing** — `PROXMOX_API_TOKEN_SECRET`, `PROXMOX_API_PASSWORD`, `PROXMOX_API_OTP` are overwritten with `"********"` in `os.environ` after being read.
+- **Config symlink protection** — `save_config()` refuses to write if the config file or its parent directory is a symlink.
+- **SSL context** — `TicketAuth` receives the same `ssl` context as the main HTTPS backend, so `verify_ssl=False` applies consistently to both auth and API requests.
+
+## Performance Patterns
+
+See [docs/performance.md](docs/performance.md) for the full reference. Key patterns to be aware of:
+
+- **Lazy package imports** — `proxmox_openapi/__init__.py` uses `__getattr__` to defer app construction. `import proxmox_openapi` alone does not build any FastAPI app.
+- **Route registration** — `_build_direct_child_index()` in `mock/routes.py` builds a `{parent→child}` index in one O(P) pass before the registration loop, avoiding O(P²) re-scanning.
+- **Schema fingerprint** — `ProxmoxSchemaValue.fingerprint` is a `@cached_property`; the JSON hash is computed once per object.
+- **Shared read locks** — Mock state reads use `LOCK_SH` (shared); only writes use `LOCK_EX`. Concurrent GETs no longer block each other.
+- **Deleted-item set** — Mock `state["deleted"]` is materialised as a Python `set` during each request for O(1) membership checks; serialised back to `list` on write.
+- **URL construction** — `HttpsBackend` caches `(scheme, netloc, base_path)` in `__init__`; `_url_for()` uses `posixpath.join` with cached components instead of calling `urlsplit` on every request.
+- **Path joining fast path** — `_url_join()` in `resource.py` skips `urlsplit`/`urlunsplit` for plain paths (no `://`).
+- **None filtering fast path** — `_filter_none()` in `resource.py` returns the original dict unchanged when no `None` values are present.
+- **Task polling** — `Tasks.blocking_status()` uses exponential backoff (1s→2s→4s→8s→16s→30s cap) with `time.monotonic()` for accurate timeout tracking.
+- **Config loading** — `ProxmoxConfig.from_env()` reads only the ~20 specific env keys it needs. `yaml` is only imported when a YAML config file is present.
+- **Regex pre-compilation** — `_RE_NAME_HINT` in `schema.py` is compiled once at module load.
+
 ## Commit and Push Policy
 
 Before every `git commit` and every `git push`, run:

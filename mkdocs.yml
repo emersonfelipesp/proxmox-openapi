@@ -63,6 +63,8 @@ nav:
   - Development:
       - Contributing: development.md
       - Architecture: architecture.md
+      - Security: security.md
+      - Performance: performance.md
   - Reference:
       - CLI Command Captures: reference/command-capture/index.md
       - pvesh: reference/PVESH.md

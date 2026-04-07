@@ -1,6 +1,6 @@
 """Proxmox OpenAPI — schema-driven FastAPI package and standalone Python SDK."""
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # FastAPI app exports (unchanged)
 from proxmox_openapi.main import app

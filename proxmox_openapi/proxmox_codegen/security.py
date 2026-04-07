@@ -40,12 +40,16 @@ ALLOWED_DOMAINS = [
 ]
 
 
-def validate_source_url(url: str, *, allow_http: bool = False) -> str:
+def validate_source_url(
+    url: str, *, allow_http: bool = False, allow_any_domain: bool = False
+) -> str:
     """Validate that a source URL is safe for external requests (SSRF protection).
 
     Args:
         url: The URL to validate
         allow_http: Whether to allow HTTP (default: False, HTTPS only)
+        allow_any_domain: Whether to allow domains outside the Proxmox allowlist
+            (default: False, non-Proxmox domains are rejected)
 
     Returns:
         The validated URL (normalized)
@@ -59,7 +63,8 @@ def validate_source_url(url: str, *, allow_http: bool = False) -> str:
         3. Must not target localhost/loopback
         4. Must not target link-local addresses (AWS metadata, etc.)
         5. Must not use file:// or other dangerous schemes
-        6. Domain should be in the official Proxmox allowlist (warning if not)
+        6. Domain must be in the official Proxmox allowlist (unless allow_any_domain=True)
+        7. IPv4-mapped IPv6 addresses (::ffff:x.x.x.x) are checked against private IPv4 ranges
     """
     if not url or not isinstance(url, str):
         raise SSRFProtectionError("URL must be a non-empty string")
@@ -110,8 +115,31 @@ def validate_source_url(url: str, *, allow_http: bool = False) -> str:
                     raise SSRFProtectionError(
                         f"SSRF attempt blocked: URL targets private IPv6 range {private_range}: {url}"
                     )
+            # Check IPv4-mapped (::ffff:x.x.x.x) and 6to4 (2002::/16) addresses —
+            # these embed an IPv4 address that must also be checked against private ranges.
+            embedded_ipv4 = ip_addr.ipv4_mapped or ip_addr.sixtofour
+            if embedded_ipv4 is not None:
+                for private_range in PRIVATE_IP_RANGES:
+                    if embedded_ipv4 in private_range:
+                        raise SSRFProtectionError(
+                            f"SSRF attempt blocked: URL targets private IP via IPv6-mapped "
+                            f"address ({ip_addr} → {embedded_ipv4}): {url}"
+                        )
     else:
         # Not an IP address, it's a domain name - validate domain
+
+        # Check localhost/loopback domain patterns first (always blocked)
+        localhost_patterns = [
+            r"^localhost$",
+            r"^127\.",
+            r"^0\.0\.0\.0$",
+            r"^::1$",
+            r"^0:0:0:0:0:0:0:1$",
+        ]
+        for pattern in localhost_patterns:
+            if re.match(pattern, hostname, re.IGNORECASE):
+                raise SSRFProtectionError(f"SSRF attempt blocked: URL targets localhost: {url}")
+
         # Check against allowed domains
         hostname_lower = hostname.lower()
 
@@ -122,28 +150,19 @@ def validate_source_url(url: str, *, allow_http: bool = False) -> str:
         )
 
         if not is_allowed:
-            # Not in allowlist - this is a warning, not a hard block
-            # Allow it but log a warning
+            if not allow_any_domain:
+                raise SSRFProtectionError(
+                    f"Domain {hostname!r} is not in the allowed domains list: "
+                    f"{', '.join(ALLOWED_DOMAINS)}. "
+                    f"Pass allow_any_domain=True to permit non-Proxmox domains."
+                )
             import logging
 
             logger = logging.getLogger(__name__)
             logger.warning(
                 f"Source URL domain {hostname!r} is not in the official Proxmox allowlist. "
-                f"Allowed domains: {', '.join(ALLOWED_DOMAINS)}. Proceeding anyway."
+                f"Allowed domains: {', '.join(ALLOWED_DOMAINS)}. Proceeding (allow_any_domain=True)."
             )
-
-    # Additional safety checks for localhost patterns in domain names
-    localhost_patterns = [
-        r"^localhost$",
-        r"^127\.",
-        r"^0\.0\.0\.0$",
-        r"^::1$",
-        r"^0:0:0:0:0:0:0:1$",
-    ]
-
-    for pattern in localhost_patterns:
-        if re.match(pattern, hostname, re.IGNORECASE):
-            raise SSRFProtectionError(f"SSRF attempt blocked: URL targets localhost: {url}")
 
     return url
 

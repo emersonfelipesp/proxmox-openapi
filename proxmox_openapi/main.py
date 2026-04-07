@@ -89,7 +89,7 @@ def create_app() -> FastAPI:
             allow_origins=allowed_origins,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allow_headers=["*"],
+            allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
         )
 
     # Track loaded Proxmox endpoints
@@ -109,7 +109,11 @@ def create_app() -> FastAPI:
     async def health(request: Request) -> dict[str, str]:
         # Require internal IP or authorization
         client_host = request.client.host if request.client else None
-        if client_host not in ("127.0.0.1", "::1", "localhost", "testclient"):
+        allowed_health_hosts = {"127.0.0.1", "::1", "localhost"}
+        # Allow Starlette's TestClient host only in test environments
+        if os.environ.get("TESTING", "").lower() in ("1", "true"):
+            allowed_health_hosts.add("testclient")
+        if client_host not in allowed_health_hosts:
             from fastapi import HTTPException, status
 
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

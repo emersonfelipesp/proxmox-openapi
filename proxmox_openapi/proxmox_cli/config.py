@@ -213,6 +213,20 @@ class ConfigManager:
             ConfigError: If save fails
         """
         path = Path(config_path) if config_path else self.DEFAULT_CONFIG_PATHS[0]
+
+        # Symlink protection: refuse to write through symlinks to prevent
+        # an attacker pre-creating a symlink that redirects config writes.
+        if path.is_symlink():
+            raise ConfigError(
+                f"Refusing to write config: {path} is a symbolic link. "
+                "Remove the symlink and try again."
+            )
+        if path.parent.exists() and path.parent.is_symlink():
+            raise ConfigError(
+                f"Refusing to write config: parent directory {path.parent} is a symbolic link. "
+                "Remove the symlink and try again."
+            )
+
         path.parent.mkdir(parents=True, exist_ok=True)
         # Restrict the config directory to the owner only so credential files
         # written inside are not accidentally exposed.

@@ -55,10 +55,10 @@ def _generate_object_model(
         return _generate_root_model(model_name, {"type": "object"}, docstring=docstring)
 
     lines = [f"class {model_name}(BaseModel):"]
-    
+
     # Add docstring if provided
     if docstring:
-        safe_docstring = docstring.replace('"""', '').strip()
+        safe_docstring = docstring.replace('"""', "").strip()
         lines.append(f'    """Model for {safe_docstring}."""')
 
     for prop_name, prop_schema in sorted(properties.items()):
@@ -92,14 +92,14 @@ def _generate_root_model(
     lines = [
         f"class {model_name}(RootModel[{field_type}]):",
     ]
-    
+
     # Add docstring if provided
     if docstring:
-        safe_docstring = docstring.replace('"""', '').strip()
+        safe_docstring = docstring.replace('"""', "").strip()
         lines.append(f'    """Model for {safe_docstring}."""')
-    
+
     lines.append(f"    root: {field_type} = Field(...{description_expr})")
-    
+
     return "\n".join(lines)
 
 
@@ -125,11 +125,7 @@ def _generate_model_from_schema(
             "\n".join(
                 [
                     f"class {model_name}(RootModel[list[{item_model_name}]]):",
-                    *(
-                        [f'    """List of items. {list_docstring}."""']
-                        if list_docstring
-                        else []
-                    ),
+                    *([f'    """List of items. {list_docstring}."""'] if list_docstring else []),
                     f"    root: list[{item_model_name}] = Field(...{description_expr})",
                 ]
             ),
@@ -199,18 +195,24 @@ def generate_pydantic_models_from_openapi(openapi: dict[str, object]) -> str:  #
 
             operation_id = operation.get("operationId") or f"{method}_{path}"
             base_name = pascal_case(operation_id)
-            
+
             # Extract operation documentation
             operation_summary = operation.get("summary", "")
             operation_desc = operation.get("description", "")
-            operation_doc = f"{operation_summary}. {operation_desc}".strip() if operation_summary or operation_desc else None
+            operation_doc = (
+                f"{operation_summary}. {operation_desc}".strip()
+                if operation_summary or operation_desc
+                else None
+            )
 
             req_schema = _request_schema_for_operation(path=path, operation=operation)
             if isinstance(req_schema, dict):
                 req_model_name = f"{base_name}Request"
                 if req_model_name not in seen_models:
                     req_docstring = f"{operation_doc} request" if operation_doc else None
-                    model_blocks = _generate_model_from_schema(req_model_name, req_schema, docstring=req_docstring)
+                    model_blocks = _generate_model_from_schema(
+                        req_model_name, req_schema, docstring=req_docstring
+                    )
                     seen_models.add(req_model_name)
                     if len(model_blocks) > 1:
                         seen_models.add(f"{req_model_name}Item")
@@ -229,7 +231,9 @@ def generate_pydantic_models_from_openapi(openapi: dict[str, object]) -> str:  #
                 resp_model_name = f"{base_name}Response"
                 if resp_model_name not in seen_models:
                     resp_docstring = f"{operation_doc} response" if operation_doc else None
-                    model_blocks = _generate_model_from_schema(resp_model_name, resp_schema, docstring=resp_docstring)
+                    model_blocks = _generate_model_from_schema(
+                        resp_model_name, resp_schema, docstring=resp_docstring
+                    )
                     seen_models.add(resp_model_name)
                     if len(model_blocks) > 1:
                         seen_models.add(f"{resp_model_name}Item")

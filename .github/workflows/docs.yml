@@ -35,7 +35,7 @@ jobs:
 
       - name: Sync documentation dependencies
         run: |
-          uv sync --frozen --extra cli --group docs
+          uv sync --frozen --extra cli --extra docs
 
       - name: Docgen pre-check (must pass before deploy)
         run: |

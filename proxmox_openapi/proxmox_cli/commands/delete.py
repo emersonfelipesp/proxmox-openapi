@@ -8,11 +8,10 @@ from typing import Optional
 import typer
 
 from ..app import app
-from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter, get_context_options, resolve_output_format
-from ..sdk_bridge import ProxmoxSDKBridge
+from ..output import get_context_options
 from ..utils import validate_api_path
+from ._common import create_formatter, prepare_command
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +36,24 @@ def delete(
 ) -> None:
     """Delete resources from the Proxmox API.
 
+    Sends a DELETE request to remove a resource. By default, prompts for
+    confirmation unless --force is used.
+
     Examples:
-        proxmox delete /nodes/pve1/qemu/100
-        proxmox delete /nodes/pve1/qemu/100 --force
+        # Delete with confirmation prompt
+        proxmox delete /nodes/pve/qemu/100
+
+        # Delete without confirmation (useful in scripts/automation)
+        proxmox delete /nodes/pve/qemu/100 --force
+
+        # Delete with JSON output
+        proxmox delete /nodes/pve/qemu/100 --force --json
+
+        # Delete storage resource
+        proxmox delete /storage/backup-nfs --force
+
+        # Silently delete in automation (exit code indicates success)
+        proxmox delete /nodes/pve/qemu/100 --force 2>/dev/null
     """
     try:
         # Confirm deletion unless forced
@@ -55,42 +69,17 @@ def delete(
         # Validate path
         path = validate_api_path(path)
 
-        # Load configuration
-        config_mgr = ConfigManager()
-        config_mgr.load_config(ctx_obj.get("config"))
-        backend_cfg = config_mgr.get_profile()
-
-        # Override with CLI options
-        if ctx_obj.get("backend"):
-            backend_cfg.backend = ctx_obj["backend"]
-        if ctx_obj.get("host"):
-            backend_cfg.host = ctx_obj["host"]
-        if ctx_obj.get("user"):
-            backend_cfg.user = ctx_obj["user"]
-        if ctx_obj.get("password"):
-            backend_cfg.password = ctx_obj["password"]
-        if ctx_obj.get("token_value"):
-            backend_cfg.token_value = ctx_obj["token_value"]
-        if ctx_obj.get("port"):
-            backend_cfg.port = ctx_obj["port"]
-        if ctx_obj.get("service"):
-            backend_cfg.service = ctx_obj["service"]
-
-        # Create SDK bridge and execute
-        bridge = ProxmoxSDKBridge.create(backend_cfg)
+        # Load config, apply overrides, create bridge
+        config_mgr, bridge = prepare_command(ctx_obj)
         result = bridge.delete(path)
 
-        # Format and output
-        output_fmt = resolve_output_format(
+        formatter = create_formatter(
+            config_mgr,
             output,
             json_output=json_output,
             yaml_output=yaml_output,
             markdown_output=markdown_output,
-            fallback=ctx_obj.get("output_format", "human"),
-        )
-        formatter = OutputFormatter(
-            format=output_fmt,
-            colors=config_mgr.global_config.colors,
+            ctx_obj=ctx_obj,
         )
 
         payload = {

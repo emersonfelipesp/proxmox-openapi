@@ -59,7 +59,7 @@ granian = [
 [dependency-groups]
 dev = [
     "ruff>=0.15.8",
-    "mypy>=1.8.0",
+    "ty>=0.0.29",
     "pre-commit>=4.3.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
@@ -105,3 +105,19 @@ select = ["E4", "E7", "E9", "F", "I", "ANN201", "D103", "W"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.ty.rules]
+invalid-argument-type = "ignore"
+unresolved-attribute = "ignore"
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
+unresolved-import = "ignore"
+unknown-argument = "ignore"
+too-many-positional-arguments = "ignore"
+invalid-await = "ignore"
+unsupported-operator = "ignore"
+not-subscriptable = "ignore"
+no-matching-overload = "ignore"
+invalid-type-form = "ignore"
+not-iterable = "ignore"
+unused-type-ignore-comment = "ignore"

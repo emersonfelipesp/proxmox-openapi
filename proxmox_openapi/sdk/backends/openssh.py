@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import secrets
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -145,6 +146,7 @@ class OpenSshBackend(CommandBaseBackend):
         import tempfile
 
         resolved_data = dict(data or {})
+        remote_paths: list[str] = []
         loop = asyncio.get_running_loop()
 
         for key, value in list(resolved_data.items()):
@@ -153,12 +155,21 @@ class OpenSshBackend(CommandBaseBackend):
                     shutil.copyfileobj(value, tmp)
                     local_path = tmp.name
 
-                remote_path = f"/tmp/proxmox_sdk_upload_{id(value)}"  # noqa: S108
+                remote_path = f"/tmp/proxmox_sdk_upload_{secrets.token_hex(8)}"  # noqa: S108
                 await loop.run_in_executor(None, partial(self._scp_upload, local_path, remote_path))
                 os.unlink(local_path)
+                remote_paths.append(remote_path)
                 resolved_data[key] = remote_path
 
-        return await super().request(method, path, params=params, data=resolved_data)
+        try:
+            return await super().request(method, path, params=params, data=resolved_data)
+        finally:
+            if remote_paths:
+                cleanup = ["rm", "-f"] + remote_paths
+                try:
+                    await loop.run_in_executor(None, partial(self._run_openssh, cleanup))
+                except Exception:
+                    logger.warning("Failed to clean up remote temp files: %s", remote_paths)
 
     def _scp_upload(self, local_path: str, remote_path: str) -> None:
         """Upload a local file to the remote host via SCP (blocking)."""

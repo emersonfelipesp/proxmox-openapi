@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import time
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
@@ -43,15 +44,21 @@ class Tasks:
         task_id: str,
         *,
         timeout: float = 300.0,
-        polling_interval: float = 2.0,
+        polling_interval: float = 1.0,
+        max_polling_interval: float = 30.0,
     ) -> dict[str, Any]:
         """Poll a Proxmox task until it finishes or ``timeout`` is reached.
+
+        Uses exponential backoff: starts at ``polling_interval`` and doubles
+        each iteration up to ``max_polling_interval``, reducing unnecessary API
+        calls for long-running operations such as migrations or backups.
 
         Args:
             proxmox: Root :class:`~proxmox_openapi.sdk.resource.ProxmoxResource`.
             task_id: UPID string returned by the task-creating API call.
             timeout: Maximum seconds to wait (default 300).
-            polling_interval: Seconds between status polls (default 2).
+            polling_interval: Initial seconds between polls (default 1).
+            max_polling_interval: Cap for exponential backoff (default 30).
 
         Returns:
             The final task status dict (``{"status": "stopped", ...}``).
@@ -63,15 +70,20 @@ class Tasks:
         info = Tasks.decode_upid(task_id)
         node = info["node"]
 
-        elapsed = 0.0
-        while elapsed < timeout:
+        deadline = time.monotonic() + timeout
+        current_interval = polling_interval
+        while time.monotonic() < deadline:
             status: dict[str, Any] = await proxmox.nodes(node).tasks(task_id).status.get()
 
             if status.get("status") == "stopped":
                 return status
 
-            await asyncio.sleep(polling_interval)
-            elapsed += polling_interval
+            # Exponential backoff capped at max_polling_interval
+            # Sleep for min of current_interval and remaining time to respect deadline
+            remaining_time = deadline - time.monotonic()
+            sleep_duration = min(current_interval, remaining_time)
+            await asyncio.sleep(sleep_duration)
+            current_interval = min(current_interval * 2, max_polling_interval)
 
         raise TimeoutError(
             f"Task {task_id} did not finish within {timeout}s. "

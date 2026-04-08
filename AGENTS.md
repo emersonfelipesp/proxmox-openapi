@@ -7,6 +7,8 @@
 | Project architecture and package structure | [CLAUDE.md](CLAUDE.md) |
 | Developer setup and usage | [README.md](README.md) |
 | API and SDK documentation | [docs/](docs/) |
+| Security controls and hardening details | [docs/security.md](docs/security.md) |
+| Performance characteristics and optimisations | [docs/performance.md](docs/performance.md) |
 
 ## Working Rules
 

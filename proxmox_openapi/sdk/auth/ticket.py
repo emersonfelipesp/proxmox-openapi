@@ -59,17 +59,22 @@ class TicketAuth:
         """True if a valid ticket is held."""
         return self._ticket is not None
 
-    async def authenticate(self, session: aiohttp.ClientSession, ticket_url: str) -> None:
+    async def authenticate(
+        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+    ) -> None:
         """Perform the initial authentication flow.
 
         Args:
             session: Active aiohttp session to use for the auth request.
             ticket_url: Full URL for ``POST /access/ticket``.
+            ssl: SSL context or bool to control certificate verification.
+                Defaults to None (aiohttp's default). Pass the backend's
+                SSL context to ensure consistent verification behaviour.
 
         Raises:
             AuthenticationError: If authentication fails.
         """
-        ticket, csrf = await self._request_ticket(session, ticket_url, self._password)
+        ticket, csrf = await self._request_ticket(session, ticket_url, self._password, ssl=ssl)
 
         # Two-factor authentication: server signals NeedTFA
         if ticket == "NeedTFA" or (ticket and ticket.startswith("NeedTFA")):
@@ -83,13 +88,16 @@ class TicketAuth:
                 ticket_url,
                 self._otp,
                 tfa_challenge=ticket,
+                ssl=ssl,
             )
 
         self._ticket = ticket
         self._csrf_token = csrf
         self._acquired_at = time.monotonic()
 
-    async def maybe_renew(self, session: aiohttp.ClientSession, ticket_url: str) -> None:
+    async def maybe_renew(
+        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+    ) -> None:
         """Renew the ticket if it is approaching expiration.
 
         Called before every request by the HTTPS backend.
@@ -100,10 +108,19 @@ class TicketAuth:
         if age >= _TICKET_RENEW_INTERVAL:
             # Use current ticket as password for renewal (Proxmox supports this)
             assert self._ticket is not None
-            ticket, csrf = await self._request_ticket(session, ticket_url, self._ticket)
+            ticket, csrf = await self._request_ticket(session, ticket_url, self._ticket, ssl=ssl)
             self._ticket = ticket
             self._csrf_token = csrf
             self._acquired_at = time.monotonic()
+
+    async def ensure_ready(
+        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+    ) -> None:
+        """Authenticate or renew the ticket as needed before a request."""
+        if not self.is_authenticated:
+            await self.authenticate(session, ticket_url, ssl=ssl)
+        else:
+            await self.maybe_renew(session, ticket_url, ssl=ssl)
 
     def build_headers(self, method: str) -> dict[str, str]:
         """Return request headers for the given HTTP method."""
@@ -129,6 +146,7 @@ class TicketAuth:
         password: str,
         *,
         tfa_challenge: str | None = None,
+        ssl: Any = None,
     ) -> tuple[str, str]:
         """POST to /access/ticket and return (ticket, csrf_token).
 
@@ -152,7 +170,7 @@ class TicketAuth:
             payload["tfa-challenge"] = tfa_challenge
 
         try:
-            async with session.post(ticket_url, data=payload, ssl=None) as response:
+            async with session.post(ticket_url, data=payload, ssl=ssl) as response:
                 raw = await response.json(content_type=None)
 
                 if response.status != 200:

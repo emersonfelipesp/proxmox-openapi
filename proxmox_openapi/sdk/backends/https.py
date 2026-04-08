@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import posixpath
 import re
 import ssl
 from typing import TYPE_CHECKING, Any
@@ -12,11 +13,12 @@ from urllib.parse import urlsplit, urlunsplit
 
 import aiohttp
 
+from proxmox_openapi.sdk.auth.base import AuthStrategy
+from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.exceptions import ResourceException
 
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.auth.ticket import TicketAuth
-    from proxmox_openapi.sdk.auth.token import TokenAuth
     from proxmox_openapi.sdk.services import ServiceConfig
 
 logger = logging.getLogger(__name__)
@@ -84,7 +86,7 @@ def _build_ssl_context(verify_ssl: bool, cert: str | None) -> ssl.SSLContext | b
     return ctx
 
 
-class HttpsBackend:
+class HttpsBackend(AbstractBackend):
     """Async HTTPS backend — the primary way to connect to a real Proxmox service.
 
     Supports:
@@ -114,7 +116,7 @@ class HttpsBackend:
         *,
         host: str,
         service_config: ServiceConfig,
-        auth: TicketAuth | TokenAuth,
+        auth: AuthStrategy,
         port: int | None = None,
         path_prefix: str = "",
         verify_ssl: bool = True,
@@ -124,6 +126,11 @@ class HttpsBackend:
     ) -> None:
         resolved_port = port if port is not None else service_config.default_port
         self._base_url = _build_base_url(host, resolved_port, path_prefix)
+        # Cache parsed URL components to avoid re-parsing on every _url_for() call.
+        _parsed = urlsplit(self._base_url)
+        self._base_scheme = _parsed.scheme
+        self._base_netloc = _parsed.netloc
+        self._base_path = _parsed.path or "/"
         self._service_config = service_config
         self._auth = auth
         self._ssl = _build_ssl_context(verify_ssl, cert)
@@ -299,25 +306,15 @@ class HttpsBackend:
         return self._session
 
     async def _ensure_authenticated(self, session: aiohttp.ClientSession) -> None:
-        from proxmox_openapi.sdk.auth.ticket import TicketAuth
-
-        if isinstance(self._auth, TicketAuth):
-            if not self._auth.is_authenticated:
-                await self._auth.authenticate(session, self._ticket_url)
-            else:
-                await self._auth.maybe_renew(session, self._ticket_url)
+        await self._auth.ensure_ready(session, self._ticket_url, ssl=self._ssl)
 
     def _url_for(self, path: str) -> str:
         """Build full URL from a path, respecting path prefix."""
         # Avoid double-prefixing: if path already starts with base_url, return it
         if path.startswith("http://") or path.startswith("https://"):
             return path
-        # Join base URL + path cleanly
-        import posixpath
-
-        parsed = urlsplit(self._base_url)
-        joined_path = posixpath.join(parsed.path or "/", path.lstrip("/"))
-        return urlunsplit((parsed.scheme, parsed.netloc, joined_path, "", ""))
+        joined_path = posixpath.join(self._base_path, path.lstrip("/"))
+        return urlunsplit((self._base_scheme, self._base_netloc, joined_path, "", ""))
 
     async def _handle_response(
         self,

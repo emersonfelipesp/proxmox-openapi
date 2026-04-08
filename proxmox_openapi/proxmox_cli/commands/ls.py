@@ -9,11 +9,10 @@ from typing import Optional
 import typer
 
 from ..app import app
-from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter, get_context_options, resolve_output_format
-from ..sdk_bridge import ProxmoxSDKBridge
+from ..output import get_context_options
 from ..utils import validate_api_path
+from ._common import create_formatter, prepare_command
 
 logger = logging.getLogger(__name__)
 
@@ -98,16 +97,39 @@ def ls(
         help="Shortcut for --output markdown",
     ),
 ) -> None:
-    """List child resources at a given path.
+    """List child resources at a given API path.
+
+    Fetches a collection from the API endpoint and displays the results
+    with optional sorting, filtering, pagination, and format selection.
+
+    Filtering syntax:
+        - field=value      : Exact match
+        - field~substring  : Case-insensitive substring match
 
     Examples:
+        # List all nodes
         proxmox ls /nodes
+
+        # List VMs on a node
         proxmox ls /nodes/pve1/qemu
+
+        # List with specific columns
         proxmox ls /nodes/pve1/qemu --columns vmid,name,status
-        proxmox ls /nodes/pve1/qemu --sort name --reverse
-        proxmox ls /nodes/pve1/qemu --filter status=running
-        proxmox ls /nodes/pve1/qemu --limit 10 --offset 20
-        proxmox ls /nodes --watch 5
+
+        # Sort and limit results
+        proxmox ls /nodes/pve1/qemu --sort name --reverse --limit 10
+
+        # Filter running VMs and display as table
+        proxmox ls /nodes/pve1/qemu --filter status=running --output table
+
+        # Pagination (skip first 20, get 10)
+        proxmox ls /nodes/pve1/qemu --offset 20 --limit 10
+
+        # Watch mode (refresh every 5 seconds)
+        proxmox ls /nodes/pve1/qemu --watch 5
+
+        # Get storage list as JSON
+        proxmox ls /storage --json
     """
     try:
         # Get context
@@ -116,41 +138,15 @@ def ls(
         # Validate path
         path = validate_api_path(path)
 
-        # Load configuration
-        config_mgr = ConfigManager()
-        config_mgr.load_config(ctx_obj.get("config"))
-        backend_cfg = config_mgr.get_profile()
-
-        # Override with CLI options
-        if ctx_obj.get("backend"):
-            backend_cfg.backend = ctx_obj["backend"]
-        if ctx_obj.get("host"):
-            backend_cfg.host = ctx_obj["host"]
-        if ctx_obj.get("user"):
-            backend_cfg.user = ctx_obj["user"]
-        if ctx_obj.get("password"):
-            backend_cfg.password = ctx_obj["password"]
-        if ctx_obj.get("token_value"):
-            backend_cfg.token_value = ctx_obj["token_value"]
-        if ctx_obj.get("port"):
-            backend_cfg.port = ctx_obj["port"]
-        if ctx_obj.get("service"):
-            backend_cfg.service = ctx_obj["service"]
-
-        # Create SDK bridge and execute
-        bridge = ProxmoxSDKBridge.create(backend_cfg)
-
-        # Determine output format
-        output_fmt = resolve_output_format(
+        # Load config, apply overrides, create bridge
+        config_mgr, bridge = prepare_command(ctx_obj)
+        formatter = create_formatter(
+            config_mgr,
             output,
             json_output=json_output,
             yaml_output=yaml_output,
             markdown_output=markdown_output,
-            fallback=ctx_obj.get("output_format", "human"),
-        )
-        formatter = OutputFormatter(
-            format=output_fmt,
-            colors=config_mgr.global_config.colors,
+            ctx_obj=ctx_obj,
         )
 
         cols = columns.split(",") if columns else None

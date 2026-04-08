@@ -12,14 +12,20 @@ if TYPE_CHECKING:
 
 def _url_join(base: str, *args: str) -> str:
     """Join API path segments using posixpath (handles trailing slashes cleanly)."""
+    # Fast path: most Proxmox SDK paths are relative strings with no scheme/netloc.
+    # Avoid the full urlsplit/urlunsplit round-trip in that common case.
+    if "://" not in base:
+        return posixpath.join(base or "/", *[str(a) for a in args])
     scheme, netloc, path, query, fragment = urlsplit(base)
-    path = path or "/"
-    path = posixpath.join(path, *[str(a) for a in args])
+    path = posixpath.join(path or "/", *[str(a) for a in args])
     return urlunsplit((scheme, netloc, path, query, fragment))
 
 
 def _filter_none(d: dict[str, Any]) -> dict[str, Any]:
     """Remove None values — prevents pvesh/API errors."""
+    # Fast path: skip allocation when no Nones are present (common case).
+    if all(v is not None for v in d.values()):
+        return d
     return {k: v for k, v in d.items() if v is not None}
 
 

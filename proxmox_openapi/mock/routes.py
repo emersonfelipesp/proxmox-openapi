@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import sys
 from copy import deepcopy
 from dataclasses import dataclass
 from types import ModuleType
@@ -20,20 +19,54 @@ from proxmox_openapi.mock.schema_helpers import (
     schema_kind,
 )
 from proxmox_openapi.mock.state import shared_mock_store
-from proxmox_openapi.proxmox_codegen.pydantic_generator import (
-    generate_pydantic_models_from_openapi,
+from proxmox_openapi.proxmox_codegen.utils import extract_path_params, slugify_identifier
+from proxmox_openapi.routes.helpers import (
+    SUPPORTED_METHODS as _SUPPORTED_GENERATED_METHODS,
 )
-from proxmox_openapi.proxmox_codegen.utils import (
-    extract_path_params,
-    pascal_case,
-    slugify_identifier,
+from proxmox_openapi.routes.helpers import (
+    load_model_module as _load_model_module_shared,
+)
+from proxmox_openapi.routes.helpers import (
+    mounted_fastapi_path as _mounted_fastapi_path,
+)
+from proxmox_openapi.routes.helpers import (
+    normalize_body_value as _normalize_body_value,
+)
+from proxmox_openapi.routes.helpers import (
+    operation_id as _operation_id,
+)
+from proxmox_openapi.routes.helpers import (
+    operation_parameters as _operation_parameters,
+)
+from proxmox_openapi.routes.helpers import (
+    operation_request_model as _operation_request_model,
+)
+from proxmox_openapi.routes.helpers import (
+    operation_response_model as _operation_response_model,
+)
+from proxmox_openapi.routes.helpers import (
+    path_parameter_name_map as _path_parameter_name_map,
+)
+from proxmox_openapi.routes.helpers import (
+    render_path as _render_path,
+)
+from proxmox_openapi.routes.helpers import (
+    request_schema as _request_schema_without_path_params,
+)
+from proxmox_openapi.routes.helpers import (
+    response_schema as _response_schema,
+)
+from proxmox_openapi.routes.helpers import (
+    schema_to_annotation as _schema_to_annotation_base,
+)
+from proxmox_openapi.routes.helpers import (
+    server_prefix as _server_prefix,
 )
 from proxmox_openapi.schema import (
     DEFAULT_PROXMOX_OPENAPI_TAG,
     load_proxmox_generated_openapi,
 )
 
-_SUPPORTED_GENERATED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 _GENERATED_ROUTE_NAME_PREFIX = "generated_proxmox_mock__"
 _GENERATED_ROUTE_STATE: dict[str, object] = {
     "route_names": set(),
@@ -66,176 +99,30 @@ class RouteTopology:
 
 
 def _schema_to_annotation(schema: dict[str, object] | None) -> object:
-    if not isinstance(schema, dict):
-        return object
-    schema = resolved_schema(schema)
-    schema_type = schema.get("type")
-    if schema_type == "string":
-        return str
-    if schema_type == "integer":
-        return int
-    if schema_type == "number":
-        return float
-    if schema_type == "boolean":
-        return bool
-    if schema_type == "array":
-        return list[_schema_to_annotation(schema.get("items"))]
-    if schema_type == "object" or isinstance(schema.get("properties"), dict):
-        return dict[str, object]
-    return object
+    """Mock-mode wrapper: resolves $ref before delegating to the shared helper."""
+    return _schema_to_annotation_base(schema, resolver=resolved_schema)
 
 
 def _load_model_module(openapi_document: dict[str, object], version_tag: str) -> ModuleType:
-    code = generate_pydantic_models_from_openapi(openapi_document)
-    module = ModuleType(f"proxmox_openapi.mock.generated_{version_tag.replace('.', '_')}")
-    sys.modules[module.__name__] = module
-    exec(code, module.__dict__)
-    for value in module.__dict__.values():
-        if (
-            isinstance(value, type)
-            and getattr(value, "__module__", None) == module.__name__
-            and hasattr(value, "model_rebuild")
-        ):
-            value.model_rebuild(_types_namespace=module.__dict__)
-    return module
+    return _load_model_module_shared(openapi_document, version_tag, module_prefix="mock")
 
 
-def _request_schema_without_path_params(
-    path_template: str,
-    operation: dict[str, object],
-) -> dict[str, object] | None:
-    schema = (
-        operation.get("requestBody", {})
-        .get("content", {})
-        .get("application/json", {})
-        .get("schema")
-    )
-    if not isinstance(schema, dict):
-        return None
-
-    path_param_names = set(extract_path_params(path_template))
-    if not path_param_names:
-        return deepcopy(schema)
-
-    filtered = deepcopy(schema)
-    properties = filtered.get("properties")
-    if isinstance(properties, dict):
-        filtered["properties"] = {
-            name: value for name, value in properties.items() if name not in path_param_names
-        }
-    required = filtered.get("required")
-    if isinstance(required, list):
-        filtered["required"] = [name for name in required if name not in path_param_names]
-    return filtered
-
-
-def _response_schema(operation: dict[str, object]) -> dict[str, object] | None:
-    schema = (
-        operation.get("responses", {})
-        .get("200", {})
-        .get("content", {})
-        .get("application/json", {})
-        .get("schema")
-    )
-    return deepcopy(schema) if isinstance(schema, dict) else None
-
-
-def _operation_parameters(operation: dict[str, object]) -> list[dict[str, object]]:
-    parameters = operation.get("parameters")
-    if not isinstance(parameters, list):
-        return []
-    return [parameter for parameter in parameters if isinstance(parameter, dict)]
-
-
-def _path_parameter_name_map(operation: dict[str, object]) -> dict[str, str]:
-    used_parameter_names = {"request_body"}
-    mapping: dict[str, str] = {}
-
-    for parameter in _operation_parameters(operation):
-        if parameter.get("in") != "path":
-            continue
-        original_name = parameter.get("name")
-        if not isinstance(original_name, str):
-            continue
-
-        python_name = slugify_identifier(original_name)
-        if python_name in used_parameter_names:
-            candidate = f"op_{python_name}"
-            suffix = 1
-            while candidate in used_parameter_names:
-                candidate = f"op_{python_name}_{suffix}"
-                suffix += 1
-            python_name = candidate
-
-        used_parameter_names.add(python_name)
-        mapping[original_name] = python_name
-
-    return mapping
-
-
-def _mounted_fastapi_path(path_template: str, operation: dict[str, object]) -> str:
-    mounted_path = path_template
-    for original_name, python_name in _path_parameter_name_map(operation).items():
-        mounted_path = mounted_path.replace(f"{{{original_name}}}", f"{{{python_name}}}")
-    return mounted_path
-
-
-def _render_path(path_template: str, path_values: dict[str, Any]) -> str:
-    rendered = path_template
-    for name, value in path_values.items():
-        rendered = rendered.replace(f"{{{name}}}", str(value))
-    return rendered
-
-
-def _normalize_body_value(request_body: Any) -> Any:
-    if hasattr(request_body, "model_dump"):
-        return request_body.model_dump(by_alias=True, exclude_none=True)
-    return request_body
-
-
-def _server_prefix(openapi_document: dict[str, object]) -> str:
-    servers = openapi_document.get("servers")
-    if isinstance(servers, list) and servers:
-        first = servers[0]
-        if isinstance(first, dict) and isinstance(first.get("url"), str):
-            return first["url"].rstrip("/")
-    return ""
-
-
-def _operation_id(path_template: str, method: str, operation: dict[str, object]) -> str:
-    return operation.get("operationId") or f"{method.lower()}_{path_template}"
-
-
-def _operation_request_model(
-    model_module: ModuleType,
-    path_template: str,
-    operation: dict[str, object],
-    operation_id: str,
-) -> type | None:
-    request_schema = _request_schema_without_path_params(path_template, operation)
-    if not isinstance(request_schema, dict):
-        return None
-    properties = request_schema.get("properties")
-    if not isinstance(properties, dict) or not properties:
-        return None
-    return getattr(model_module, f"{pascal_case(operation_id)}Request", None)
-
-
-def _operation_response_model(model_module: ModuleType, operation_id: str) -> type | None:
-    return getattr(model_module, f"{pascal_case(operation_id)}Response", None)
-
-
-def _direct_child_template(
-    path_template: str,
+def _build_direct_child_index(
     path_items: dict[str, dict[str, object]],
-) -> tuple[str | None, str | None, dict[str, Any] | None]:
-    prefix = f"{path_template}/"
-    candidates: list[tuple[str, str, dict[str, Any] | None]] = []
+) -> dict[str, tuple[str, str, dict[str, Any] | None]]:
+    """Pre-compute a mapping of parent path → first direct child template info.
+
+    Replaces the O(P²) per-path scan in the old ``_direct_child_template``
+    function with a single O(P) pass that is reused across all paths.
+    """
+    # Collect all children keyed by parent path.
+    children: dict[str, list[tuple[str, str, dict[str, Any] | None]]] = {}
     for candidate_template, candidate_item in path_items.items():
-        if not candidate_template.startswith(prefix):
+        segments = candidate_template.rsplit("/", 1)
+        if len(segments) != 2:
             continue
-        suffix = candidate_template[len(prefix) :]
-        if suffix.count("/") != 0 or not suffix.startswith("{") or not suffix.endswith("}"):
+        parent_template, suffix = segments
+        if not suffix.startswith("{") or not suffix.endswith("}"):
             continue
         get_operation = candidate_item.get("get")
         if not isinstance(get_operation, dict):
@@ -247,10 +134,23 @@ def _direct_child_template(
                 if isinstance(parameter.get("schema"), dict):
                     parameter_schema = deepcopy(parameter["schema"])
                 break
-        candidates.append((candidate_template, parameter_name, parameter_schema))
-    if not candidates:
-        return None, None, None
-    return sorted(candidates, key=lambda item: item[0])[0]
+        children.setdefault(parent_template, []).append(
+            (candidate_template, parameter_name, parameter_schema)
+        )
+    # Keep only the lexicographically first child per parent (matches old sort).
+    return {
+        parent: sorted(candidates, key=lambda item: item[0])[0]
+        for parent, candidates in children.items()
+    }
+
+
+def _direct_child_template(
+    path_template: str,
+    path_items: dict[str, dict[str, object]],
+) -> tuple[str | None, str | None, dict[str, Any] | None]:
+    """Look up the first direct child template for a path (used without a pre-built index)."""
+    index = _build_direct_child_index(path_items)
+    return index.get(path_template, (None, None, None))
 
 
 def _parent_collection_template(
@@ -851,15 +751,20 @@ def _build_topology(
     method: str,
     operation: dict[str, object],
     path_items: dict[str, dict[str, object]],
+    direct_child_index: dict[str, tuple[str, str, dict[str, Any] | None]] | None = None,
 ) -> RouteTopology:
     same_path_get = path_items.get(path_template, {}).get("get")
     same_path_get_schema = (
         _response_schema(same_path_get) if isinstance(same_path_get, dict) else None
     )
-    direct_child_template, direct_child_param, direct_child_param_schema = _direct_child_template(
-        path_template,
-        path_items,
-    )
+    if direct_child_index is not None:
+        direct_child_template, direct_child_param, direct_child_param_schema = (
+            direct_child_index.get(path_template, (None, None, None))
+        )
+    else:
+        direct_child_template, direct_child_param, direct_child_param_schema = (
+            _direct_child_template(path_template, path_items)
+        )
     parent_collection_template, parent_collection_item_schema = _parent_collection_template(
         path_template,
         path_items,
@@ -914,6 +819,9 @@ def register_generated_proxmox_mock_routes(
         if isinstance(path_item, dict)
     }
 
+    # Pre-build the child index once (O(P)) instead of scanning all paths per path (O(P²)).
+    direct_child_index = _build_direct_child_index(path_items)
+
     route_names: set[str] = set()
     route_count = 0
     method_count = 0
@@ -930,6 +838,7 @@ def register_generated_proxmox_mock_routes(
                 operation=operation,
                 path_items=path_items,
                 base_prefix=base_prefix,
+                direct_child_index=direct_child_index,
             )
             operation_id = _operation_id(path_template, method_name, operation)
             request_model = _operation_request_model(

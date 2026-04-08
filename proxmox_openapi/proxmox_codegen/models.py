@@ -8,7 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from proxmox_openapi.schema import ProxmoxSchemaValue
 
-HTTP_METHODS = ("GET", "POST", "PUT", "DELETE")
+#: Standard HTTP methods used in Proxmox API.
+HTTP_METHODS: tuple[str, ...] = ("GET", "POST", "PUT", "DELETE")
 
 
 class RawMethodCapture(BaseModel):

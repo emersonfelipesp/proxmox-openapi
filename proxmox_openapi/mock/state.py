@@ -78,12 +78,17 @@ def _lock_path(owner_pid: int, namespace: str) -> Path:
 
 
 @contextmanager
-def _locked_file(path: Path) -> Iterator[None]:
-    """Acquire an interprocess lock for a filesystem-backed state file."""
+def _locked_file(path: Path, *, exclusive: bool = True) -> Iterator[None]:
+    """Acquire an interprocess lock for a filesystem-backed state file.
+
+    Uses LOCK_SH (shared) for read-only access so concurrent readers do not
+    block each other, and LOCK_EX (exclusive) only for writes.
+    """
     path.touch(exist_ok=True)
     with path.open("r+", encoding="utf-8") as handle:
         if fcntl is not None:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+            fcntl.flock(handle.fileno(), lock_type)
         try:
             yield
         finally:
@@ -146,8 +151,7 @@ class SharedMemoryMockStore:
         """Delete an object and mark it as removed."""
         with self._locked_state() as state:
             state["objects"].pop(key, None)
-            if key not in state["deleted"]:
-                state["deleted"].append(key)
+            state["deleted"].add(key)
 
     def is_deleted(self, key: str) -> bool:
         """Return whether a key has been marked as deleted."""
@@ -184,17 +188,24 @@ class SharedMemoryMockStore:
         with self._locked_state() as state:
             members = state["collections"].setdefault(key, {})
             members.pop(member_key, None)
-            if member_key not in state["deleted"]:
-                state["deleted"].append(member_key)
+            state["deleted"].add(member_key)
             return [deepcopy(item) for item in members.values()]
 
     @contextmanager
     def _locked_state(self, *, write: bool = True) -> Iterator[dict[str, Any]]:
-        """Load the current state under a filesystem lock and optionally persist it."""
-        with _locked_file(self._lock_path):
+        """Load the current state under a filesystem lock and optionally persist it.
+
+        Read-only callers (write=False) acquire a shared lock so concurrent GETs
+        do not block each other.  Write callers always use an exclusive lock.
+        """
+        with _locked_file(self._lock_path, exclusive=write):
             state = self._read_state()
+            # Materialise 'deleted' as a set for O(1) membership checks at runtime.
+            state["deleted"] = set(state["deleted"])
             yield state
             if write:
+                # Serialise back to list for JSON compatibility.
+                state["deleted"] = list(state["deleted"])
                 self._write_state(state)
 
     def _read_state(self) -> dict[str, Any]:

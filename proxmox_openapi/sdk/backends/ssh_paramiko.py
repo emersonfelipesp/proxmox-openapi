@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import io
 import logging
+import secrets
+import shlex
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -55,6 +57,7 @@ class SshParamikoBackend(CommandBaseBackend):
         private_key_file: str | None = None,
         port: int = 22,
         sudo: bool = False,
+        host_key_policy: Any = None,
     ) -> None:
         if not _PARAMIKO_AVAILABLE:
             raise BackendNotAvailableError(
@@ -67,6 +70,7 @@ class SshParamikoBackend(CommandBaseBackend):
         self._password = password
         self._private_key_file = private_key_file
         self._port = port
+        self._host_key_policy = host_key_policy
         self._ssh: Any = None  # paramiko.SSHClient
 
     def _connect(self) -> None:
@@ -74,7 +78,11 @@ class SshParamikoBackend(CommandBaseBackend):
         if self._ssh is not None:
             return
         client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.load_system_host_keys()
+        policy = (
+            self._host_key_policy if self._host_key_policy is not None else paramiko.WarningPolicy()
+        )
+        client.set_missing_host_key_policy(policy)
 
         kwargs: dict[str, Any] = {
             "hostname": self._host,
@@ -104,7 +112,7 @@ class SshParamikoBackend(CommandBaseBackend):
     def _run_ssh(self, command: list[str]) -> CliResponse:
         """Synchronous SSH command execution (runs in executor)."""
         self._connect()
-        cmd_str = " ".join(command)
+        cmd_str = shlex.join(command)
         _, stdout, stderr = self._ssh.exec_command(cmd_str)
 
         stdout_bytes = stdout.read()
@@ -146,7 +154,7 @@ class SshParamikoBackend(CommandBaseBackend):
 
         for key, value in list(resolved_data.items()):
             if isinstance(value, io.IOBase):
-                remote_path = f"/tmp/proxmox_sdk_upload_{id(value)}"  # noqa: S108
+                remote_path = f"/tmp/proxmox_sdk_upload_{secrets.token_hex(8)}"  # noqa: S108
                 await loop.run_in_executor(None, partial(self._sftp_upload, value, remote_path))
                 remote_paths.append(remote_path)
                 resolved_data[key] = remote_path
@@ -155,8 +163,8 @@ class SshParamikoBackend(CommandBaseBackend):
             return await super().request(method, path, params=params, data=resolved_data)
         finally:
             if remote_paths:
-                cleanup_cmd = "rm -f " + " ".join(remote_paths)
-                await loop.run_in_executor(None, partial(self._run_ssh, cleanup_cmd.split()))
+                cleanup_cmd = ["rm", "-f", *remote_paths]
+                await loop.run_in_executor(None, partial(self._run_ssh, cleanup_cmd))
 
     def _sftp_upload(self, file_obj: io.IOBase, remote_path: str) -> None:
         """Upload a file-like object via SFTP (blocking)."""

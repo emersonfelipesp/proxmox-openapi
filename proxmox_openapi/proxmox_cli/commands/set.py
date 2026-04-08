@@ -8,11 +8,10 @@ from typing import Optional
 import typer
 
 from ..app import app
-from ..config import ConfigManager
 from ..exceptions import ProxmoxCLIError
-from ..output import OutputFormatter, get_context_options, resolve_output_format
-from ..sdk_bridge import ProxmoxSDKBridge
+from ..output import get_context_options
 from ..utils import parse_parameter_data, validate_api_path
+from ._common import create_formatter, prepare_command
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +45,27 @@ def set_cmd(
         help="Shortcut for --output markdown",
     ),
 ) -> None:
-    """Update resources in the Proxmox API.
+    """Update (PUT/PATCH) resources in the Proxmox API.
+
+    Sends a PUT request to modify an existing resource. Parameters can be
+    passed via -d/--data flags or a JSON file. Some fields can be unset
+    using empty values or delete prefixes.
 
     Examples:
-        proxmox set /nodes/pve1 -d description=Node1
-        proxmox set /nodes/pve1 -d description=Node1 -d features=snapshot,nesting
-        proxmox set /nodes/pve1 -f updates.json
+        # Update node description
+        proxmox set /nodes/pve1 -d description="Production Node 1"
+
+        # Update with multiple parameters
+        proxmox set /nodes/pve1 -d features=snapshot,nesting -d cpu=host
+
+        # Update from JSON file
+        proxmox set /nodes/pve1 -f node-update.json
+
+        # Update VM configuration
+        proxmox set /nodes/pve/qemu/100 -d memory=8192 -d cores=4
+
+        # Update user profile
+        proxmox set /access/users/user@pam -d firstname="John" -d lastname="Doe"
     """
     try:
         # Get context
@@ -70,42 +84,17 @@ def set_cmd(
             typer.echo("Error: No parameters provided", err=True)
             raise typer.Exit(code=1)
 
-        # Load configuration
-        config_mgr = ConfigManager()
-        config_mgr.load_config(ctx_obj.get("config"))
-        backend_cfg = config_mgr.get_profile()
-
-        # Override with CLI options
-        if ctx_obj.get("backend"):
-            backend_cfg.backend = ctx_obj["backend"]
-        if ctx_obj.get("host"):
-            backend_cfg.host = ctx_obj["host"]
-        if ctx_obj.get("user"):
-            backend_cfg.user = ctx_obj["user"]
-        if ctx_obj.get("password"):
-            backend_cfg.password = ctx_obj["password"]
-        if ctx_obj.get("token_value"):
-            backend_cfg.token_value = ctx_obj["token_value"]
-        if ctx_obj.get("port"):
-            backend_cfg.port = ctx_obj["port"]
-        if ctx_obj.get("service"):
-            backend_cfg.service = ctx_obj["service"]
-
-        # Create SDK bridge and execute
-        bridge = ProxmoxSDKBridge.create(backend_cfg)
+        # Load config, apply overrides, create bridge
+        config_mgr, bridge = prepare_command(ctx_obj)
         result = bridge.put(path, params)
 
-        # Format and output
-        output_fmt = resolve_output_format(
+        formatter = create_formatter(
+            config_mgr,
             output,
             json_output=json_output,
             yaml_output=yaml_output,
             markdown_output=markdown_output,
-            fallback=ctx_obj.get("output_format", "human"),
-        )
-        formatter = OutputFormatter(
-            format=output_fmt,
-            colors=config_mgr.global_config.colors,
+            ctx_obj=ctx_obj,
         )
 
         payload = {

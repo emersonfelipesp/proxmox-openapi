@@ -66,8 +66,8 @@ ruff check .
 # Fix auto-fixable issues
 ruff check --fix .
 
-# Type checking (if using mypy)
-mypy proxmox_openapi/
+# Type checking
+uv run ty check proxmox_openapi tests --output-format concise
 ```
 
 ### 4. Run Tests

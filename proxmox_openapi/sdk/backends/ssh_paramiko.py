@@ -163,8 +163,8 @@ class SshParamikoBackend(CommandBaseBackend):
             return await super().request(method, path, params=params, data=resolved_data)
         finally:
             if remote_paths:
-                cleanup_cmd = "rm -f " + " ".join(shlex.quote(p) for p in remote_paths)
-                await loop.run_in_executor(None, partial(self._run_ssh, cleanup_cmd.split()))
+                cleanup_cmd = ["rm", "-f", *remote_paths]
+                await loop.run_in_executor(None, partial(self._run_ssh, cleanup_cmd))
 
     def _sftp_upload(self, file_obj: io.IOBase, remote_path: str) -> None:
         """Upload a file-like object via SFTP (blocking)."""

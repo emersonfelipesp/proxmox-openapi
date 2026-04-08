@@ -15,7 +15,7 @@ def schema_fingerprint(openapi_document: dict[str, object]) -> str:
         openapi_document: OpenAPI v3 specification as dict
 
     Returns:
-        SHA256 hex digest of normalized OpenAPI paths
+        SHA256 hex digest of the entire OpenAPI document
     """
     return GeneratedOpenAPIDocument.model_validate(openapi_document).fingerprint
 

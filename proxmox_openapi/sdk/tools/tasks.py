@@ -79,7 +79,10 @@ class Tasks:
                 return status
 
             # Exponential backoff capped at max_polling_interval
-            await asyncio.sleep(current_interval)
+            # Sleep for min of current_interval and remaining time to respect deadline
+            remaining_time = deadline - time.monotonic()
+            sleep_duration = min(current_interval, remaining_time)
+            await asyncio.sleep(sleep_duration)
             current_interval = min(current_interval * 2, max_polling_interval)
 
         raise TimeoutError(

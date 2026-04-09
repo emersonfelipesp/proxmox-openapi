@@ -1,200 +1,254 @@
-# proxmox-openapi - LLM Project Guide
+# proxmox-openapi - LLM Project Guide (Current State)
 
-Schema-driven FastAPI package for Proxmox VE API workflows.
+Schema-driven Proxmox API platform with FastAPI server modes, a standalone SDK, and a Typer CLI/TUI.
 
-This guide is for LLMs, coding agents, and automation tools that need reliable context about the repository.
+This file is for LLMs and automation agents that need implementation-accurate context.
 
-## Project Summary
+## Snapshot (as of 2026-04-09)
 
-proxmox-openapi provides a dual-mode API server:
-
-1. Mock mode (default): generated Proxmox-like endpoints with in-memory CRUD and schema validation.
-2. Real mode: validated proxy to a real Proxmox VE API server.
-
-Core capabilities:
-
-- OpenAPI generation from Proxmox API viewer data.
-- Runtime route generation from OpenAPI paths and schemas.
-- Generated Pydantic request/response models for validation.
-- Multi-version schema support (with latest tag).
-- Standalone mock server entrypoint.
-
-## Package Identity
-
-- Package name: proxmox-openapi
-- Current version: 0.0.1
-- Python: >= 3.11
+- Package name: `proxmox-openapi`
+- Package version: `0.0.2`
+- Python requirement: `>=3.11`
 - License: MIT
+- Generated schemas currently bundled:
+  - PVE: 428 paths / 646 operations
+  - PBS: 240 paths / 359 operations
 
-## Primary Runtime Modes
+## What The Codebase Actually Ships
 
-### Mock Mode (default)
+1. FastAPI server in dual mode:
+   - `mock` mode (default): schema-driven in-memory behavior.
+   - `real` mode: schema-validated proxy to live Proxmox APIs.
+2. Standalone async and sync SDK (`ProxmoxSDK`, `SyncProxmoxSDK`), no server required.
+3. Multi-backend CLI (`proxmox`, `proxmox-cli`, `pbx`) plus Textual TUI.
+4. Codegen pipeline from Proxmox API Viewer/apidoc.js to:
+   - OpenAPI JSON
+   - generated Pydantic models
+5. Service-aware support for `PVE`, `PMG`, and `PBS`.
 
-Purpose:
+## High-Value Paths
 
-- Development, tests, and demos without real Proxmox infrastructure.
+- `proxmox_openapi/main.py`: full FastAPI app factory + mode routing.
+- `proxmox_openapi/mock_main.py`: standalone mock entrypoint (`proxmox-openapi-mock`).
+- `proxmox_openapi/mock/`: mock app, schema helpers, shared-memory state, data loader.
+- `proxmox_openapi/proxmox/`: real-mode route generator + Proxmox client adapter.
+- `proxmox_openapi/sdk/`: async/sync SDK, auth, backends, tools.
+- `proxmox_openapi/proxmox_cli/`: CLI commands, config, formatting, TUI, doc capture.
+- `proxmox_openapi/proxmox_codegen/`: crawler/parser/normalizer/generator pipeline.
+- `proxmox_openapi/generated/{proxmox,pbs}/latest/`: package-bundled generated artifacts used at runtime.
+- `generated/{proxmox,pbs}/...`: repository-level generated outputs used by codegen workflows.
+- `tests/`: unit + CLI/integration test suite.
 
-Behavior:
+## Runtime Surfaces
 
-- Loads generated schema from generated/proxmox/<version>/openapi.json.
-- Dynamically registers FastAPI routes for schema operations.
-- Stores runtime objects/collections in shared-memory-backed state.
-- Supports GET/POST/PUT/PATCH/DELETE semantics.
-- Seeds data on first GET if resource/collection is absent.
-- Supports optional custom mock data source via JSON or YAML.
+### 1) Full FastAPI App (`proxmox_openapi.main:app`)
 
-### Real Mode
+Always mounted utility/management routes:
 
-Purpose:
+- `GET /`, `GET /version`, `GET /mode`
+- `GET /health` (restricted to localhost/testclient)
+- `GET /mock/*`
+- `GET /versions/*`
+- `GET/POST /codegen/*` (requires auth)
 
-- Proxy requests to actual Proxmox VE while preserving schema-based validation.
+Generated API routes are mounted from loaded schema server prefix (currently `/api2/json`).
 
-Behavior:
+### 2) Standalone Mock App (`proxmox_openapi.mock_main:app`)
 
-- Reads environment-based Proxmox credentials and API mode.
-- Forwards requests with aiohttp client logic.
-- Validates incoming requests and outgoing responses.
+- Loads generated schema version (`PROXMOX_MOCK_SCHEMA_VERSION`, default `latest`).
+- Registers generated mock routes when schema is available.
+- Falls back to custom static mock data (`PROXMOX_MOCK_DATA_PATH`) if provided.
+- Exposes root/health/version endpoints.
 
-## Key Entry Points
+### 3) SDK
 
-- proxmox_openapi/main.py
-  - Main app with mode switching.
-- proxmox_openapi/mock_main.py
-  - Mock-only server entrypoint.
-- proxmox_openapi/mock/routes.py
-  - Dynamic mock route registration and mutation logic.
-- proxmox_openapi/mock/state.py
-  - Shared in-memory state store.
-- proxmox_openapi/mock/schema_helpers.py
-  - Schema-based seeded value generation and merge helpers.
-- proxmox_openapi/proxmox/client.py
-  - Real Proxmox API client.
-- proxmox_openapi/proxmox/routes.py
-  - Real mode route registration.
-- proxmox_openapi/proxmox_codegen/pipeline.py
-  - Code generation pipeline orchestration.
+Primary classes:
 
-## Repository Layout (high-value paths)
+- `proxmox_openapi.sdk.api.ProxmoxSDK` (async)
+- `proxmox_openapi.sdk.sync.SyncProxmoxSDK` (sync wrapper)
+- `proxmox_openapi.sdk.resource.ProxmoxResource` (dynamic attribute/call path navigation)
 
-- proxmox_openapi/
-  - Runtime package implementation.
-- proxmox_openapi/generated/proxmox/latest/
-  - Package-bundled generated schema artifacts.
-- generated/proxmox/latest/
-  - Top-level generated schema artifacts used in development workflows.
-- docs/
-  - MkDocs source documentation.
-- tests/
-  - Pytest suite.
+Helpers exported at package level:
 
-## Data and Validation Pipeline
+- `Tasks`: task polling/UPID decoding utilities.
+- `Files`: file upload/download helpers for storage operations.
 
-1. Capture API structure from Proxmox source.
-2. Normalize and build OpenAPI schema.
-3. Generate Pydantic models from schema.
-4. Register runtime routes from schema + models.
-5. Validate request and response payloads per operation.
+### 4) CLI/TUI
 
-In mock mode, route handlers use schema defaults and deterministic seeded values to synthesize responses when state is absent.
+Main commands (actual Typer command names):
 
-## Mock Data Strategy
+- `batch`
+- `create`
+- `delete`
+- `get`
+- `help-cmd`
+- `ls`
+- `set-cmd`
+- `tui`
+- `usage`
+- `completion-install`
+- `init`
+- `config-list`
+- `config-show`
+- `config-add`
+- `config-remove`
+- `config-set-default`
+- `benchmark`
+- `perf-test`
+- `docs generate-capture`
 
-Mock data is schema-first and deterministic:
+Important behavior:
 
-- Field-aware value synthesis in schema_helpers.py creates meaningful Proxmox-like values.
-- Seeded outputs are stable for the same route/field context.
-- Recent logic improves semantic realism for fields like node, vmid, storage, status, cpu, memory, network, and timestamps.
+- `tui` defaults to production backend behavior.
+- `tui mock` forces mock backend.
+- Output formats include: `human`, `json`, `yaml`, `markdown`, `table`, `text`, `raw`.
 
-Custom data override:
+## Service + Backend Matrix
 
-- Set PROXMOX_MOCK_DATA_PATH to a JSON/YAML file mapping API paths to object/array payloads.
+Defined in `sdk/services.py`:
 
-## Important Environment Variables
+- `PVE`: backends `https`, `ssh_paramiko`, `openssh`, `local`, `mock`; auth `password|token`.
+- `PMG`: backends `https`, `ssh_paramiko`, `openssh`, `local`, `mock`; auth `password` only.
+- `PBS`: backends `https`, `mock`; auth `password|token`.
 
-### Mode Selection
+## Generated Route Mechanics
 
-- PROXMOX_API_MODE: mock (default) or real
+### Mock mode route engine (`mock/routes.py`)
 
-### Mock Mode
+- Builds routes dynamically from OpenAPI + generated models.
+- Supports `GET/POST/PUT/PATCH/DELETE`.
+- Deterministic seeded values via schema semantics (`schema.py` + `mock/schema_helpers.py`).
+- Maintains object/collection/deleted state in shared memory.
+- Applies response model validation; falls back to schema-merged defaults on validation mismatch.
 
-- PROXMOX_MOCK_SCHEMA_VERSION: schema tag to load (default latest)
-- PROXMOX_MOCK_DATA_PATH: custom mock data file path
-- PROXMOX_MOCK_STATE_NAMESPACE: namespace for shared mock state
-- PROXMOX_MOCK_STATE_BYTES: shared memory allocation size
+### Real mode route engine (`proxmox/routes.py`)
 
-### Real Mode
+- Builds routes dynamically from OpenAPI + generated models.
+- Validates request bodies and response payloads against generated Pydantic models.
+- Delegates transport to `ProxmoxClient` (SDK HTTPS backend under the hood).
 
-- PROXMOX_URL: Proxmox base URL (example: https://host:8006)
-- PROXMOX_API_TOKEN: API token (recommended)
-- PROXMOX_USERNAME: username fallback
-- PROXMOX_PASSWORD: password fallback
-- PROXMOX_API_VERIFY_SSL: TLS verification toggle
+## Mock State Model
 
-### Server
+Shared state implementation is in `mock/state.py`:
 
-- HOST: bind host (default 0.0.0.0)
-- PORT: bind port (default 8000)
+- Reload-safe named shared memory segment + file lock.
+- Namespace support: `PROXMOX_MOCK_STATE_NAMESPACE`.
+- Size tuning: `PROXMOX_MOCK_STATE_BYTES` (default 8 MiB).
+- Shared lock for reads / exclusive lock for writes.
+- Tracks:
+  - `objects`
+  - `collections`
+  - `deleted` tombstones
+  - schema fingerprint reset boundaries
 
-## CLI Scripts
+## Codegen Pipeline Details
 
-Defined in pyproject.toml:
+Entrypoints:
 
-- proxmox-openapi-codegen
-  - Runs code generation tooling.
-- proxmox-openapi-mock
-  - Runs standalone mock server.
+- HTTP: `/codegen/generate`, `/codegen/openapi`, `/codegen/pydantic`, `/codegen/versions`
+- CLI: `proxmox-openapi-codegen`
 
-## Developer Commands
+Pipeline (`proxmox_codegen/pipeline.py`) does:
 
-Install and run:
+1. Validate source URL and version tag.
+2. Crawl API viewer when Playwright is available.
+3. Parse `apidoc.js` and flatten schema.
+4. Merge crawler capture with `apidoc` fallback methods.
+5. Normalize operations.
+6. Generate OpenAPI document.
+7. Generate Pydantic models source.
+8. Persist artifacts if requested.
 
-- uv sync --extra test
-- uvicorn proxmox_openapi.main:app --reload
+Notes:
 
-Quality checks:
+- `latest` version tag is reserved for official service viewer URL.
+- Non-allowlisted domains are blocked by default.
 
-- ruff check .
-- ruff format --check .
-- pytest
+## Security-Critical Controls
 
-## Testing Guidance
+- Codegen auth required (`CODEGEN_API_KEY`) for all `/codegen/*`.
+- Rate limiting via SlowAPI:
+  - `/codegen/generate`: `1/hour`
+  - `/codegen/openapi`: `5/hour`
+  - `/codegen/pydantic`: `5/hour`
+- SSRF protection for source URLs:
+  - HTTPS by default
+  - allowlist for Proxmox domains
+  - private/loopback/link-local IP blocks
+  - IPv4-mapped IPv6 checks
+- Config write symlink protections in CLI config manager.
+- Sensitive env values are overwritten after read in `ProxmoxConfig.from_env()`.
+- Credential redaction filter in `logger.py`.
+- Paramiko backend defaults to `WarningPolicy` for unknown host keys (not auto-accept).
 
-When touching mock behavior:
+## Core Environment Variables
 
-- Prefer focused tests in tests/ for schema helpers and route mutation behavior.
-- Verify that generated responses still satisfy Pydantic response models.
-- Keep deterministic behavior (same seed/context => same value family).
+### Server mode / schema
 
-When touching route generation:
+- `PROXMOX_API_MODE`: `mock` (default) or `real`
+- `PROXMOX_SERVICE`: service tag used by app route loading (`PVE` default)
+- `PROXMOX_MOCK_SCHEMA_VERSION`: schema tag (`latest` default)
+- `PROXMOX_MOCK_DATA_PATH`: custom mock data JSON/YAML
+- `PROXMOX_MOCK_STATE_NAMESPACE`
+- `PROXMOX_MOCK_STATE_BYTES`
 
-- Validate both path/query parameter handling and request body model behavior.
-- Verify fallback response synthesis does not break validation.
+### Real Proxmox auth/config (for server + SDK bridging)
 
-## Design Constraints and Conventions
+- `PROXMOX_API_URL`
+- `PROXMOX_API_TOKEN_ID`
+- `PROXMOX_API_TOKEN_SECRET`
+- `PROXMOX_API_USERNAME`
+- `PROXMOX_API_PASSWORD`
+- `PROXMOX_API_VERIFY_SSL`
+- `PROXMOX_API_SERVICE`
+- `PROXMOX_API_BACKEND`
+- `PROXMOX_API_TIMEOUT`
+- `PROXMOX_API_PATH_PREFIX`
+- `PROXMOX_API_OTP`
+- `PROXMOX_API_OTPTYPE`
+- `PROXMOX_API_HTTP_PROXY`
+- `PROXMOX_API_HTTPS_PROXY`
+- `PROXMOX_CONFIG_FILE`
 
-- OpenAPI schema is source of truth for runtime route shape.
-- Keep route registration generic and schema-driven.
-- Preserve compatibility across multiple schema versions.
-- Favor deterministic mock behavior over random values.
-- Keep changes minimal and avoid broad refactors unless needed.
+### Cross-cutting
 
-## Documentation Map
+- `CODEGEN_API_KEY`
+- `CORS_ORIGINS`
+- `HOST`, `PORT`
+- `TESTING` (adds `testclient` to health allowlist)
 
-- README.md
-  - Top-level usage and quick start.
-- docs/architecture.md
-  - Internal architecture and data flow.
-- docs/mock-api.md
-  - Mock mode behavior and examples.
-- docs/development.md
-  - Contributor workflow.
-- docs/reference/
-  - Reference documents for adjacent tooling (for example Proxmoxer and pvesh).
+## Public Script Entrypoints
 
-## Safe Automation Notes for LLMs
+From `pyproject.toml`:
 
-- Prefer editing schema helper logic instead of hardcoding endpoint-specific route exceptions.
-- If adding semantic mock fields, keep defaults plausible and operationally conservative.
-- Avoid committing generated site artifacts unless explicitly requested.
-- Ignore incidental runtime artifacts (for example __pycache__) in feature commits.
-- Validate with lint + tests before finishing changes.
+- `proxmox`, `proxmox-cli`, `pbx` -> CLI entrypoint
+- `proxmox-openapi-codegen` -> codegen CLI
+- `proxmox-openapi-mock` -> mock-only server
+
+## Docker Targets
+
+Multi-stage `Dockerfile` defines:
+
+- `raw` (default): uvicorn, HTTP.
+- `nginx`: mkcert TLS + nginx + supervisor + uvicorn.
+- `granian`: mkcert TLS + granian, no nginx.
+
+## Current Validation Snapshot
+
+Executed locally on 2026-04-09:
+
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --extra test pytest -q`
+- Result: `160 passed`, `0 failed` (5 warnings)
+
+Warnings observed:
+
+- SlowAPI deprecation warning around `asyncio.iscoroutinefunction`.
+- Generated model warning about a field named `schema` shadowing parent attribute.
+
+## Practical Guidance For LLM Agents
+
+- Treat OpenAPI schema + generated models as source of truth for route behavior.
+- Keep mock behavior schema-driven; avoid endpoint-specific hardcoded hacks.
+- Preserve deterministic outputs in mock helpers (`ProxmoxSchemaValue` path/field seeded).
+- When changing CLI commands, verify actual Typer command names (`set-cmd`, `help-cmd`).
+- If validating tests, use test extras (`uv run --extra test pytest`) because async tests require plugin dependencies.

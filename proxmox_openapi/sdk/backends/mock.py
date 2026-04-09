@@ -83,10 +83,14 @@ class MockBackend(AbstractBackend):
     """
 
     def __init__(
-        self, schema_version: str = DEFAULT_PROXMOX_OPENAPI_TAG, api_path_prefix: str = "/api2/json"
+        self,
+        schema_version: str = DEFAULT_PROXMOX_OPENAPI_TAG,
+        api_path_prefix: str = "/api2/json",
+        service: str = "PVE",
     ) -> None:
         self._schema_version = schema_version
         self._api_path_prefix = api_path_prefix
+        self._service = service.upper()
         self._schema: dict[str, Any] | None = None
         self._paths: dict[str, Any] = {}
         self._fingerprint: str = ""
@@ -95,7 +99,9 @@ class MockBackend(AbstractBackend):
     def _ensure_schema(self) -> None:
         if self._schema is not None:
             return
-        doc = load_proxmox_generated_openapi(version_tag=self._schema_version)
+        doc = load_proxmox_generated_openapi(
+            version_tag=self._schema_version, service=self._service
+        )
         if doc is None:
             logger.warning(
                 "No Proxmox OpenAPI schema found for version '%s'. "

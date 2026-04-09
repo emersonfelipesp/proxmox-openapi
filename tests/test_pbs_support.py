@@ -180,3 +180,186 @@ class TestValidateSourceForVersionTag:
             version_tag="v0.1",
             service="PVE",
         )
+
+
+# ---------------------------------------------------------------------------
+# SDK / MockBackend tests
+# ---------------------------------------------------------------------------
+
+
+class TestMockBackendService:
+    """MockBackend must load the correct schema for its service."""
+
+    def test_mock_backend_defaults_to_pve(self) -> None:
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        backend = MockBackend()
+        assert backend._service == "PVE"
+
+    def test_mock_backend_accepts_pbs_service(self) -> None:
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        backend = MockBackend(service="PBS")
+        assert backend._service == "PBS"
+
+    def test_mock_backend_uppercases_service(self) -> None:
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        backend = MockBackend(service="pbs")
+        assert backend._service == "PBS"
+
+    def test_pbs_mock_backend_loads_pbs_schema(self) -> None:
+        """PBS MockBackend must contain PBS-specific paths (not PVE paths)."""
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        backend = MockBackend(service="PBS")
+        backend._ensure_schema()
+        # PBS has /admin/datastore; PVE has /nodes
+        assert any("/admin" in p or "/access" in p for p in backend._paths), (
+            "PBS schema should contain /admin or /access paths"
+        )
+        # PBS should NOT contain PVE-specific /nodes/{node}/qemu
+        pve_only = [p for p in backend._paths if "qemu" in p]
+        assert not pve_only, f"PBS schema should not contain qemu paths, found: {pve_only}"
+
+    def test_pve_mock_backend_loads_pve_schema(self) -> None:
+        """PVE MockBackend must contain PVE-specific paths."""
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        backend = MockBackend(service="PVE")
+        backend._ensure_schema()
+        assert any("qemu" in p for p in backend._paths), (
+            "PVE schema should contain qemu paths"
+        )
+
+
+class TestProxmoxSDKMockServiceRouting:
+    """ProxmoxSDK.mock(service=...) must route to the correct backend schema."""
+
+    def test_proxmoxsdk_mock_pbs_backend_has_pbs_service(self) -> None:
+        from proxmox_openapi.sdk import ProxmoxSDK
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        sdk = ProxmoxSDK.mock(service="PBS")
+        assert isinstance(sdk._backend, MockBackend)
+        assert sdk._backend._service == "PBS"
+
+    def test_proxmoxsdk_mock_pve_backend_has_pve_service(self) -> None:
+        from proxmox_openapi.sdk import ProxmoxSDK
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        sdk = ProxmoxSDK.mock(service="PVE")
+        assert isinstance(sdk._backend, MockBackend)
+        assert sdk._backend._service == "PVE"
+
+    def test_proxmoxsdk_sync_mock_pbs_crud(self) -> None:
+        """sync_mock(service='PBS') performs CRUD against PBS schema."""
+        from proxmox_openapi.sdk import ProxmoxSDK
+
+        with ProxmoxSDK.sync_mock(service="PBS") as pbs:
+            # GET /access/users — present in PBS schema (returns array)
+            result = pbs.access.users.get()
+            assert result is not None
+
+    def test_proxmoxsdk_sync_mock_pbs_get_datastore(self) -> None:
+        """PBS mock returns datastore list from /admin/datastore."""
+        from proxmox_openapi.sdk import ProxmoxSDK
+
+        with ProxmoxSDK.sync_mock(service="PBS") as pbs:
+            stores = pbs.admin.datastore.get()
+            # Should return a list (array schema) or dict, not raise
+            assert stores is not None
+
+    def test_proxmoxsdk_sync_mock_pbs_post_and_get(self) -> None:
+        """PBS mock supports POST (create) followed by GET on the same path."""
+        from proxmox_openapi.sdk import ProxmoxSDK
+
+        with ProxmoxSDK.sync_mock(service="PBS") as pbs:
+            # /access/users supports both GET and POST in PBS schema
+            created = pbs.access.users.post(userid="test@pbs", password="secret")
+            assert created is not None
+            # GET should now reflect stored state
+            fetched = pbs.access.users.get()
+            assert fetched is not None
+
+
+class TestPBSSDKModule:
+    """Tests for the proxmox_openapi.sdk.pbs convenience module."""
+
+    def test_import_pbssdk(self) -> None:
+        from proxmox_openapi.sdk.pbs import PBSSDK  # noqa: F401
+
+    def test_pbssdk_available_from_sdk_init(self) -> None:
+        from proxmox_openapi.sdk import PBSSDK  # noqa: F401
+
+    def test_pbssdk_mock_creates_pbs_backend(self) -> None:
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        sdk = PBSSDK.mock()
+        assert isinstance(sdk._backend, MockBackend)
+        assert sdk._backend._service == "PBS"
+
+    def test_pbssdk_mock_no_service_arg_needed(self) -> None:
+        """PBSSDK.mock() works without any arguments — PBS is the default."""
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        sdk = PBSSDK.mock()
+        assert sdk._service_config.default_port == 8007
+
+    def test_pbssdk_sync_mock_crud(self) -> None:
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        with PBSSDK.sync_mock() as pbs:
+            # /access/users returns an array in PBS schema
+            result = pbs.access.users.get()
+            assert result is not None
+
+    def test_pbssdk_sync_mock_datastore(self) -> None:
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        with PBSSDK.sync_mock() as pbs:
+            stores = pbs.admin.datastore.get()
+            assert stores is not None
+
+    def test_pbssdk_sync_mock_delete(self) -> None:
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        with PBSSDK.sync_mock() as pbs:
+            # DELETE returns None per MockBackend contract
+            result = pbs.admin.datastore("some-store").delete()
+            assert result is None
+
+    def test_pbssdk_service_config_is_pbs(self) -> None:
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        sdk = PBSSDK.mock()
+        assert sdk._service_config.auth_cookie_name == "PBSAuthCookie"
+        assert sdk._service_config.token_separator == ":"
+        assert sdk._service_config.default_port == 8007
+
+    def test_pbssdk_constructor_forces_pbs(self) -> None:
+        """PBSSDK.__init__ always uses service='PBS' regardless of kwargs."""
+        from proxmox_openapi.sdk.pbs import PBSSDK
+        from proxmox_openapi.sdk.services import SERVICES
+
+        # Use _backend injection to avoid needing a real host
+        from proxmox_openapi.sdk.backends.mock import MockBackend
+
+        mock_backend = MockBackend(service="PBS")
+        sdk = PBSSDK(_backend=mock_backend)
+        assert sdk._service_config == SERVICES["PBS"]
+
+    def test_pbssdk_async_mock_context_manager(self) -> None:
+        """PBSSDK.mock() works as async context manager."""
+        import asyncio
+
+        from proxmox_openapi.sdk.pbs import PBSSDK
+
+        async def run():
+            async with PBSSDK.mock() as pbs:
+                # /access/users returns an array in PBS schema
+                return await pbs.access.users.get()
+
+        result = asyncio.run(run())
+        assert result is not None

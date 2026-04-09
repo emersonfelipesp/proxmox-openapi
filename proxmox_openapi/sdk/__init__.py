@@ -7,6 +7,7 @@ from proxmox_openapi.sdk.exceptions import (
     ProxmoxSDKError,
     ResourceException,
 )
+from proxmox_openapi.sdk.pbs import PBSSDK
 from proxmox_openapi.sdk.sync import SyncProxmoxSDK
 from proxmox_openapi.sdk.tools.files import Files
 from proxmox_openapi.sdk.tools.tasks import Tasks
@@ -14,6 +15,7 @@ from proxmox_openapi.sdk.tools.tasks import Tasks
 __all__ = [
     "ProxmoxSDK",
     "SyncProxmoxSDK",
+    "PBSSDK",
     "ResourceException",
     "AuthenticationError",
     "BackendNotAvailableError",

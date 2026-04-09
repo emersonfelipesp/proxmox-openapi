@@ -122,6 +122,7 @@ class ProxmoxSDK:
             otp=otp,
             otptype=otptype,
             service_config=svc,
+            service=service_upper,
             port=port,
             path_prefix=path_prefix,
             verify_ssl=verify_ssl,
@@ -217,7 +218,11 @@ class ProxmoxSDK:
 
         from proxmox_openapi.sdk.backends.mock import MockBackend
 
-        backend = MockBackend(schema_version=schema_version, api_path_prefix=svc.api_path_prefix)
+        backend = MockBackend(
+            schema_version=schema_version,
+            api_path_prefix=svc.api_path_prefix,
+            service=service.upper(),
+        )
         instance._service_config = svc
         instance._backend_name = "mock"
         instance._backend = backend
@@ -350,6 +355,7 @@ class ProxmoxSDK:
         otp: str | None,
         otptype: str,
         service_config: ServiceConfig,
+        service: str = "PVE",
         port: int | None,
         path_prefix: str,
         verify_ssl: bool,
@@ -365,7 +371,7 @@ class ProxmoxSDK:
         if backend == "mock":
             from proxmox_openapi.sdk.backends.mock import MockBackend
 
-            return MockBackend(api_path_prefix=service_config.api_path_prefix)
+            return MockBackend(api_path_prefix=service_config.api_path_prefix, service=service)
 
         if backend == "local":
             from proxmox_openapi.sdk.backends.local import LocalBackend

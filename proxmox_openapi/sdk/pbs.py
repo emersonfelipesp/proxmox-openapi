@@ -124,7 +124,11 @@ class PBSSDK(ProxmoxSDK):
     # ------------------------------------------------------------------
 
     @classmethod
-    def mock(cls, schema_version: str = "latest") -> "PBSSDK":  # type: ignore[override]
+    def mock(  # type: ignore[override]
+        cls,
+        schema_version: str = "latest",
+        service: str = "PBS",  # noqa: ARG003
+    ) -> "PBSSDK":
         """Create a PBSSDK instance backed by the PBS in-memory mock.
 
         No real PBS host required.  Uses the pre-generated PBS OpenAPI schema
@@ -138,7 +142,11 @@ class PBSSDK(ProxmoxSDK):
         return super().mock(schema_version=schema_version, service="PBS")  # type: ignore[return-value]
 
     @classmethod
-    def sync_mock(cls, schema_version: str = "latest") -> "SyncProxmoxSDK":  # type: ignore[override]
+    def sync_mock(  # type: ignore[override]
+        cls,
+        schema_version: str = "latest",
+        service: str = "PBS",  # noqa: ARG003
+    ) -> "SyncProxmoxSDK":
         """Create a synchronous PBS mock SDK instance.
 
         No real PBS host required.  All API calls block synchronously.

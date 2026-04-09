@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
+from proxmox_openapi.sdk.auth.token import parse_token_id
+
 
 def _load_config_file(config_file: str, logger: Any) -> dict[str, str]:
     """Load and parse a JSON or YAML config file, returning PROXMOX_API_ prefixed key dict."""
@@ -245,9 +247,9 @@ class ProxmoxConfig:
         kwargs["host"] = parsed.netloc or parsed.path
 
         if self.token_id and self.token_secret:
-            parts = self.token_id.rsplit("!", 1)
-            kwargs["user"] = parts[0] if len(parts) == 2 else self.token_id
-            kwargs["token_name"] = parts[1] if len(parts) == 2 else ""
+            user, token_name = parse_token_id(self.token_id)
+            kwargs["user"] = user
+            kwargs["token_name"] = token_name
             kwargs["token_value"] = self.token_secret
         else:
             kwargs["user"] = self.username

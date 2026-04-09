@@ -58,9 +58,6 @@ class GeneratedOpenAPIDocument(BaseModel):
             return None
 
         openapi_path = _generated_dir() / version_tag / "openapi.json"
-        if not openapi_path.exists():
-            return None
-
         try:
             payload = openapi_path.read_text(encoding="utf-8")
         except OSError:
@@ -98,9 +95,6 @@ class MockDataDocument(RootModel[dict[str, Any]]):
         if file_path is None:
             return None
         path = Path(file_path)
-        if not path.exists():
-            return None
-
         try:
             content = path.read_text(encoding="utf-8")
         except OSError:
@@ -533,9 +527,6 @@ def load_pydantic_models(version_tag: str = DEFAULT_PROXMOX_OPENAPI_TAG) -> str 
         return None
 
     models_path = _generated_dir() / version_tag / "pydantic_models.py"
-    if not models_path.exists():
-        return None
-
     try:
         return models_path.read_text(encoding="utf-8")
     except OSError:

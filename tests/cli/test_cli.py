@@ -10,12 +10,6 @@ from typer.testing import CliRunner
 from proxmox_openapi.proxmox_cli.cli import app
 
 
-@pytest.fixture
-def cli_runner() -> CliRunner:
-    """Create a CLI test runner."""
-    return CliRunner()
-
-
 def test_cli_version(cli_runner: CliRunner) -> None:
     """Test --version flag."""
     result = cli_runner.invoke(app, ["--version"])

@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 from .exceptions import ParameterError, PathError
 
@@ -139,24 +136,3 @@ def extract_path_components(path: str) -> list[str]:
         List of path components (["nodes", "pve1", "qemu", "100"])
     """
     return [part for part in path.split("/") if part]
-
-
-def build_help_text(command_name: str, description: str, examples: list[str] | None = None) -> str:
-    """Build formatted help text for a command.
-
-    Args:
-        command_name: Name of the command
-        description: Command description
-        examples: Optional list of example commands
-
-    Returns:
-        Formatted help text
-    """
-    text = f"{command_name}\n{description}"
-
-    if examples:
-        text += "\n\nExamples:"
-        for example in examples:
-            text += f"\n  $ proxmox {example}"
-
-    return text

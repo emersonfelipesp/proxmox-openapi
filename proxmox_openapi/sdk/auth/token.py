@@ -61,4 +61,16 @@ class TokenAuth:
         """Token auth is stateless — no authentication step required."""
 
 
-__all__ = ["TokenAuth"]
+def parse_token_id(token_id: str) -> tuple[str, str]:
+    """Split a Proxmox token_id string into (user, token_name).
+
+    Proxmox token IDs use the format ``user@realm!token_name``.
+    Returns ``(token_id, "")`` when the ``!`` separator is absent.
+    """
+    parts = token_id.rsplit("!", 1)
+    if len(parts) == 2:
+        return parts[0], parts[1]
+    return token_id, ""
+
+
+__all__ = ["TokenAuth", "parse_token_id"]

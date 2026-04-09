@@ -16,6 +16,7 @@ import aiohttp
 from proxmox_openapi.sdk.auth.base import AuthStrategy
 from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.exceptions import ResourceException
+from proxmox_openapi.sdk.resource import _filter_none
 
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.auth.ticket import TicketAuth
@@ -167,7 +168,7 @@ class HttpsBackend(AbstractBackend):
         session = await self._ensure_session()
         await self._ensure_authenticated(session)
 
-        clean_params = _filter_none(params) or None
+        clean_params = (_filter_none(params) or None) if params else None
         clean_data = _filter_none(data) if data else None
 
         url = self._url_for(path)
@@ -402,13 +403,10 @@ class HttpsBackend(AbstractBackend):
     ) -> HttpsBackend:
         """Build an HttpsBackend from a ProxmoxConfig dataclass."""
         from proxmox_openapi.sdk.auth.ticket import TicketAuth
-        from proxmox_openapi.sdk.auth.token import TokenAuth
+        from proxmox_openapi.sdk.auth.token import TokenAuth, parse_token_id
 
         if config.token_id and config.token_secret:
-            # token_id is "user@realm!token_name", split on last "!"
-            parts = config.token_id.rsplit("!", 1)
-            user = parts[0] if len(parts) == 2 else config.token_id
-            token_name = parts[1] if len(parts) == 2 else ""
+            user, token_name = parse_token_id(config.token_id)
             auth: TicketAuth | TokenAuth = TokenAuth(
                 user=user,
                 token_name=token_name,
@@ -438,13 +436,6 @@ class HttpsBackend(AbstractBackend):
             proxies=getattr(config, "proxies", None),
             path_prefix=getattr(config, "path_prefix", ""),
         )
-
-
-def _filter_none(d: dict[str, Any] | None) -> dict[str, Any]:
-    """Remove None values from a dict (prevents pvesh/API errors)."""
-    if not d:
-        return {}
-    return {k: v for k, v in d.items() if v is not None}
 
 
 def _has_file(data: dict[str, Any]) -> bool:

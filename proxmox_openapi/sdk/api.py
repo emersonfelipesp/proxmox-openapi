@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.sync import SyncProxmoxSDK
 
+from proxmox_openapi.sdk.auth.token import parse_token_id
 from proxmox_openapi.sdk.backends.base import AbstractBackend
 from proxmox_openapi.sdk.resource import ProxmoxResource
 from proxmox_openapi.sdk.services import SERVICES, ServiceConfig
@@ -250,9 +251,7 @@ class ProxmoxSDK:
         token_value: str | None = None
 
         if token_id and token_secret:
-            parts = token_id.rsplit("!", 1)
-            token_name = parts[1] if len(parts) == 2 else ""
-            user = parts[0] if len(parts) == 2 else token_id
+            user, token_name = parse_token_id(token_id)
             token_value = token_secret
         else:
             user = config.username

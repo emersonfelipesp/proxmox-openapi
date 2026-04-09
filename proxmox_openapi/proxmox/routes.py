@@ -223,7 +223,6 @@ def register_generated_proxmox_real_routes(
             detail=f"Unable to load version tag '{version_tag}'",
         )
 
-    proxmox_config.validate_for_real_mode()
     proxmox_client = ProxmoxClient(proxmox_config)
 
     model_module = _load_model_module(document, version_tag)

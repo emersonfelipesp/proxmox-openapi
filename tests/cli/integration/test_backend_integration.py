@@ -12,12 +12,6 @@ from proxmox_openapi.proxmox_cli.sdk_bridge import ProxmoxSDKBridge
 
 
 @pytest.fixture
-def cli_runner() -> CliRunner:
-    """Create a CLI test runner."""
-    return CliRunner()
-
-
-@pytest.fixture
 def mock_backend_config() -> BackendConfig:
     """Create a mock backend configuration."""
     return BackendConfig(

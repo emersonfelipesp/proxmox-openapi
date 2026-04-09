@@ -35,9 +35,6 @@ def load_mock_data(file_path: str | Path | None = None) -> dict[str, Any] | None
         return None
 
     file_path_obj = Path(path)
-    if not file_path_obj.exists():
-        return None
-
     try:
         content = file_path_obj.read_text(encoding="utf-8")
     except OSError:

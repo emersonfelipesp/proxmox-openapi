@@ -143,9 +143,8 @@ class SharedMemoryMockStore:
         """Store an object value and return the persisted copy."""
         with self._locked_state() as state:
             state["objects"][key] = deepcopy(value)
-            if key in state["deleted"]:
-                state["deleted"].remove(key)
-            return deepcopy(state["objects"][key])
+            state["deleted"].discard(key)
+            return deepcopy(value)
 
     def delete_object(self, key: str) -> None:
         """Delete an object and mark it as removed."""
@@ -172,15 +171,14 @@ class SharedMemoryMockStore:
             state["collections"][key] = {
                 f"seed:{index}": deepcopy(value) for index, value in enumerate(values)
             }
-            return [deepcopy(value) for value in state["collections"][key].values()]
+            return [deepcopy(v) for v in values]
 
     def upsert_collection_member(self, key: str, member_key: str, value: Any) -> list[Any]:
         """Insert or replace a member in a stored collection."""
         with self._locked_state() as state:
             members = state["collections"].setdefault(key, {})
             members[member_key] = deepcopy(value)
-            if member_key in state["deleted"]:
-                state["deleted"].remove(member_key)
+            state["deleted"].discard(member_key)
             return [deepcopy(item) for item in members.values()]
 
     def delete_collection_member(self, key: str, member_key: str) -> list[Any]:

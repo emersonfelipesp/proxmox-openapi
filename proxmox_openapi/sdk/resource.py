@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import posixpath
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import quote, urlsplit, urlunsplit
 
 if TYPE_CHECKING:
     from proxmox_openapi.sdk.backends.base import AbstractBackend
@@ -15,9 +15,9 @@ def _url_join(base: str, *args: str) -> str:
     # Fast path: most Proxmox SDK paths are relative strings with no scheme/netloc.
     # Avoid the full urlsplit/urlunsplit round-trip in that common case.
     if "://" not in base:
-        return posixpath.join(base or "/", *[str(a) for a in args])
+        return posixpath.join(base or "/", *[quote(str(a), safe="") for a in args])
     scheme, netloc, path, query, fragment = urlsplit(base)
-    path = posixpath.join(path or "/", *[str(a) for a in args])
+    path = posixpath.join(path or "/", *[quote(str(a), safe="") for a in args])
     return urlunsplit((scheme, netloc, path, query, fragment))
 
 

@@ -79,10 +79,20 @@ def _build_ssl_context(verify_ssl: bool, cert: str | None) -> ssl.SSLContext | b
         return False
     ctx = ssl.create_default_context()
     if cert:
-        # cert may be a CA bundle file or a client cert PEM
+        # cert may be a CA bundle file or a client cert PEM.
+        # Try CA bundle first; if that fails, fall back to client cert chain.
+        # Log a warning on fallback so operators notice that custom CA verification
+        # is NOT active (server cert will be validated against system CAs instead).
         try:
             ctx.load_verify_locations(cafile=cert)
         except ssl.SSLError:
+            logger.warning(
+                "cert %r could not be loaded as a CA bundle (ssl.SSLError); "
+                "treating it as a client cert chain instead. "
+                "Custom CA will NOT be used for server certificate verification — "
+                "verification will fall back to system CAs.",
+                cert,
+            )
             ctx.load_cert_chain(cert)
     return ctx
 

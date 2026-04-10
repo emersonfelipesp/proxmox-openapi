@@ -7,6 +7,7 @@ import io
 import logging
 import secrets
 import shlex
+import shutil
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -167,11 +168,17 @@ class SshParamikoBackend(CommandBaseBackend):
                 await loop.run_in_executor(None, partial(self._run_ssh, cleanup_cmd))
 
     def _sftp_upload(self, file_obj: io.IOBase, remote_path: str) -> None:
-        """Upload a file-like object via SFTP (blocking)."""
+        """Upload a file-like object via SFTP (blocking).
+
+        Uses exclusive creation (O_EXCL) so the upload fails rather than
+        following a pre-existing symlink at remote_path.
+        """
         self._connect()
         sftp = self._ssh.open_sftp()
         try:
-            sftp.putfo(file_obj, remote_path)
+            with sftp.open(remote_path, "x") as remote_file:
+                remote_file.set_pipelined(True)
+                shutil.copyfileobj(file_obj, remote_file)
         finally:
             sftp.close()
 

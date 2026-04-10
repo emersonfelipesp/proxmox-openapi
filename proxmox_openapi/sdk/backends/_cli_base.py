@@ -115,10 +115,7 @@ class CommandBaseBackend(AbstractBackend):
 
             if isinstance(value, bytes):
                 value = value.decode("utf-8")
-            value_str = str(value)
-            if " " in value_str:
-                value_str = f'"{value_str}"'
-            cmd += [f"-{key}", value_str]
+            cmd += [f"-{key}", str(value)]
 
         return cmd
 

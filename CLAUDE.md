@@ -181,6 +181,57 @@ uv run pre-commit run --all-files
 
 If any hook fails, fix the issues and rerun until all hooks pass.
 
+## Release Process
+
+A release publishes the package to PyPI and pushes all three Docker image variants (`raw`, `nginx`, `granian`) to Docker Hub with both versioned and `latest` tags.
+
+### Steps
+
+1. **Bump the version** in `pyproject.toml` (`[project] version`). Use PEP 440 — e.g. `0.0.2.post4`, `0.0.3`, `0.1.0`.
+
+2. **Run pre-commit and tests** to confirm the tree is clean:
+   ```bash
+   uv run pre-commit run --all-files
+   uv run pytest
+   ```
+
+3. **Commit the version bump**:
+   ```bash
+   git add pyproject.toml
+   git commit -m "chore: bump version to <new-version>"
+   ```
+
+4. **Push the commit**:
+   ```bash
+   git push origin main
+   ```
+
+5. **Create and push the annotated tag** (must match `v<pyproject-version>`):
+   ```bash
+   git tag v<new-version>
+   git push origin v<new-version>
+   ```
+
+6. **Create the GitHub release** (triggers `publish-testpypi.yml` which publishes to PyPI and Docker Hub):
+   ```bash
+   gh release create v<new-version> \
+     --title "v<new-version>" \
+     --notes "Release notes here."
+   ```
+
+7. **Update downstream consumers** — bump `proxmox-sdk==<new-version>` in `proxbox-api/pyproject.toml` and any other dependents, commit, and push.
+
+### What CI does on release
+
+`publish-testpypi.yml` runs when a GitHub Release is published:
+- Validates that the tag matches `pyproject.toml` version
+- Builds and uploads `dist/` to TestPyPI
+- Validates the install on Python 3.11, 3.12, 3.13
+- Publishes to PyPI (`--skip-existing`)
+- Builds and pushes all three Docker images with `<version>` and `latest` tags
+
+`ci.yml` `docker-images` job also fires and pushes the same images via `docker-hub-publish.yml`.
+
 ## Key Endpoints
 
 ### Core

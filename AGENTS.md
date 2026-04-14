@@ -28,3 +28,20 @@ uv run pre-commit run --all-files
 ```
 
 Do not commit or push when pre-commit hooks are failing.
+
+## Release Process
+
+To ship a new version to PyPI and Docker Hub:
+
+1. Bump `version` in `pyproject.toml` (PEP 440, e.g. `0.0.2.post4`).
+2. Run pre-commit and tests: `uv run pre-commit run --all-files && uv run pytest`
+3. Commit: `git commit -m "chore: bump version to <new-version>" pyproject.toml`
+4. Push: `git push origin main`
+5. Tag: `git tag v<new-version> && git push origin v<new-version>`
+6. Release (triggers full publish pipeline):
+   ```bash
+   gh release create v<new-version> --title "v<new-version>" --notes "..."
+   ```
+7. Update dependents — bump `proxmox-sdk==<new-version>` in `proxbox-api/pyproject.toml` and any other consumers, commit, and push.
+
+The GitHub release triggers `publish-testpypi.yml` which validates, publishes to PyPI, and pushes all three Docker image variants (`raw`, `nginx`, `granian`) with both `<version>` and `latest` tags.

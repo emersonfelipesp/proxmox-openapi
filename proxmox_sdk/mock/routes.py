@@ -866,10 +866,17 @@ def register_generated_proxmox_mock_routes(
                     namespace=namespace,
                     owner_pid=owner_pid,
                 )
-                store.set_object(
-                    topology.absolute_path_template,
-                    custom_mock_data[topology.absolute_path_template],
-                )
+                custom_value = custom_mock_data[topology.absolute_path_template]
+                if topology.same_path_get_kind == "array" and isinstance(custom_value, list):
+                    store.replace_collection(
+                        topology.absolute_path_template,
+                        custom_value,
+                    )
+                else:
+                    store.set_object(
+                        topology.absolute_path_template,
+                        custom_value,
+                    )
 
             route_name = f"{_GENERATED_ROUTE_NAME_PREFIX}{method_name.lower()}__{operation_id}"
             app.add_api_route(

@@ -1,22 +1,39 @@
 name: Release Docker verification
 
 on:
-  release:
-    types:
-      - published
+  workflow_run:
+    workflows: ["Release proxmox-sdk"]
+    types: [completed]
 
 jobs:
   verify-image:
     name: verify Docker images on release
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-tags: true
+
+      - name: Resolve release tag
+        id: release
+        run: |
+          git fetch --tags --quiet
+          TAG=$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" \
+            | grep '^v' | sort -V | tail -1)
+          if [ -z "$TAG" ]; then
+            echo "No version tag found for ${{ github.event.workflow_run.head_sha }}, skipping."
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Pull release and latest images
         run: |
-          REL="${{ github.event.release.tag_name }}"
-          TAG="${REL#v}"
+          TAG="${{ steps.release.outputs.version }}"
           docker pull emersonfelipesp/proxmox-sdk:"$TAG"
           docker pull emersonfelipesp/proxmox-sdk:latest
           docker pull emersonfelipesp/proxmox-sdk:"${TAG}-nginx"
@@ -27,8 +44,7 @@ jobs:
       - name: Smoke-test published startup
         run: |
           set -eux
-          REL="${{ github.event.release.tag_name }}"
-          TAG="${REL#v}"
+          TAG="${{ steps.release.outputs.version }}"
 
           # raw (HTTP)
           docker rm -f proxmox-sdk-release-raw 2>/dev/null || true

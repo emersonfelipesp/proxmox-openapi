@@ -195,6 +195,19 @@ jobs:
             emersonfelipesp/proxmox-sdk:${{ needs.prepare-release.outputs.version }}-nginx
             emersonfelipesp/proxmox-sdk:latest-nginx
 
+      - name: Build and publish granian image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: granian
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_MODULE=proxmox_sdk.mock_main:app
+          tags: |
+            emersonfelipesp/proxmox-sdk:${{ needs.prepare-release.outputs.version }}-granian
+            emersonfelipesp/proxmox-sdk:latest-granian
+
   publish-pypi:
     name: publish to PyPI
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'

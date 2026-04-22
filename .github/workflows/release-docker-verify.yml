@@ -15,20 +15,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-tags: true
 
-      - name: Resolve release tag
+      - name: Resolve release version
         id: release
         run: |
-          git fetch --tags --quiet
-          TAG=$(git tag --points-at "${{ github.event.workflow_run.head_sha }}" \
-            | grep '^v' | sort -V | tail -1)
-          if [ -z "$TAG" ]; then
-            echo "No version tag found for ${{ github.event.workflow_run.head_sha }}, skipping."
-            exit 1
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          VERSION=$(python3 -c "
+          import tomllib, pathlib
+          print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])
+          ")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Pull release and latest images

@@ -243,6 +243,11 @@ class HttpsBackend(AbstractBackend):
                 last_exc = ProxmoxTimeoutError(f"Request timed out: {method} {path}")
                 last_exc.__cause__ = exc
 
+            except aiohttp.ClientSSLError as exc:
+                # SSL errors are not transient; raise immediately without retry.
+                logger.error("SSL error: %s %s — %s", method, path, exc)
+                raise ProxmoxConnectionError(f"SSL error connecting to Proxmox API: {exc}") from exc
+
             except aiohttp.ClientConnectorError as exc:
                 logger.warning(
                     "Cannot connect to Proxmox API: %s %s — %s (attempt %d)",
@@ -253,11 +258,6 @@ class HttpsBackend(AbstractBackend):
                 )
                 last_exc = ProxmoxConnectionError(f"Cannot connect to Proxmox API: {exc}")
                 last_exc.__cause__ = exc
-
-            except aiohttp.ClientSSLError as exc:
-                # SSL errors are not transient; raise immediately without retry.
-                logger.error("SSL error: %s %s — %s", method, path, exc)
-                raise ProxmoxConnectionError(f"SSL error connecting to Proxmox API: {exc}") from exc
 
             except aiohttp.ClientError as exc:
                 logger.warning(

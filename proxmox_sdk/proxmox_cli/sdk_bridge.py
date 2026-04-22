@@ -81,6 +81,7 @@ class ProxmoxSDKBridge:
                     connect_timeout=config.connect_timeout,
                     proxies=config.proxies,
                     max_retries=config.max_retries,
+                    retry_backoff=config.retry_backoff,
                 )
 
             return ProxmoxSDKBridge(sdk)

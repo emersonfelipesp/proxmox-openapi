@@ -1,6 +1,6 @@
 """Proxmox OpenAPI — schema-driven FastAPI package and standalone Python SDK."""
 
-__version__ = "0.0.3"
+__version__ = "0.0.3.post1"
 
 # Lazy imports: avoid constructing FastAPI apps or loading heavy SDK modules
 # at package import time.  Attributes are resolved on first access only.

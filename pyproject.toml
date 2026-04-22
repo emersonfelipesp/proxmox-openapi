@@ -7,7 +7,7 @@ include = ["proxmox_sdk*"]
 
 [project]
 name = "proxmox-sdk"
-version = "0.0.3"
+version = "0.0.3.post1"
 description = "pvesh-like CLI for Proxmox API with multi-backend support, performance profiling, and advanced configuration management"
 readme = "README.md"
 requires-python = ">=3.11"

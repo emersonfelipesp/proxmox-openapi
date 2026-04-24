@@ -212,7 +212,7 @@ All codegen endpoints require `Authorization: Bearer <CODEGEN_API_KEY>`. The key
 |---|---|
 | `POST /codegen/generate` | 1 request / hour |
 | `GET /codegen/pydantic` | 5 requests / hour |
-| `GET /codegen/openapi` | No limit (read-only) |
+| `GET /codegen/openapi` | 5 requests / hour |
 
 ---
 

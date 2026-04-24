@@ -313,6 +313,26 @@ The mock backend supports the same attribute-chain and path-string navigation st
 !!! tip "Mock state persistence"
     Mock state is per-process and resets on restart. For test isolation, reset state between tests using `POST /mock/reset` on the FastAPI server, or create a new `ProxmoxSDK.mock()` instance per test.
 
+### `from_config(config)` — construct from ProxmoxConfig
+
+`ProxmoxSDK.from_config()` accepts a `ProxmoxConfig` dataclass (loaded from env vars or a YAML file) and constructs the matching SDK instance — either a real HTTPS backend or a mock backend, based on `config.api_mode`:
+
+```python title="proxmox_sdk/sdk/api.py"
+config = ProxmoxConfig.from_env()      # reads PROXMOX_API_* env vars
+proxmox = ProxmoxSDK.from_config(config)
+```
+
+This is the recommended construction path when using the FastAPI server's configuration layer.
+
+### `sync_mock(**kwargs)` — synchronous mock instance
+
+`ProxmoxSDK.sync_mock()` returns a `SyncProxmoxSDK` backed by the in-memory mock, without requiring a real Proxmox host. Useful for scripting and tests in non-async contexts:
+
+```python title="proxmox_sdk/sdk/api.py"
+with ProxmoxSDK.sync_mock() as proxmox:
+    nodes = proxmox.nodes.get()   # blocking, no await
+```
+
 ---
 
 ## Services Layer

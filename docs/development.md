@@ -24,7 +24,7 @@ cd proxmox-sdk
 
 ```bash
 # Using uv (recommended)
-uv pip install -e ".[dev]"
+uv sync
 
 # Or using pip
 pip install -e ".[dev]"
@@ -32,7 +32,13 @@ pip install -e ".[dev]"
 
 This installs the package in editable mode with all development dependencies.
 
-3. **Verify installation:**
+3. **Install git hooks (one-time):**
+
+```bash
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+4. **Verify installation:**
 
 ```bash
 # Check that imports work
@@ -57,16 +63,13 @@ Edit the code, add tests, update documentation.
 ### 3. Run Quality Checks
 
 ```bash
-# Format code
+# Run all pre-commit hooks (required before every commit)
+uv run pre-commit run --all-files
+
+# Or run tools individually:
 ruff format .
-
-# Lint code
 ruff check .
-
-# Fix auto-fixable issues
 ruff check --fix .
-
-# Type checking
 uv run ty check proxmox_sdk tests --output-format concise
 ```
 
@@ -100,6 +103,7 @@ mkdocs serve
 ### 6. Commit and Push
 
 ```bash
+# Hooks run automatically on commit and push (installed in step 3 above)
 git add .
 git commit -m "feat: add new feature"
 git push origin feature/my-new-feature
@@ -116,167 +120,131 @@ Open a PR on GitHub with:
 
 ```
 proxmox-sdk/
-├── proxmox_sdk/           # Main package
-│   ├── __init__.py           # Package metadata
-│   ├── main.py               # Main FastAPI app (with mode switching)
-│   ├── mock_main.py          # Mock-only standalone app
-│   ├── schema.py             # Schema loading utilities
+├── proxmox_sdk/                  # Main package
+│   ├── __init__.py               # Package exports and public API
+│   ├── main.py                   # Full API server (mock OR real mode)
+│   ├── mock_main.py              # Standalone mock-only server entrypoint
+│   ├── schema.py                 # Schema management (load/save OpenAPI)
+│   ├── rate_limit.py             # SlowAPI rate limiting configuration
+│   ├── exception.py              # Exception classes
+│   ├── logger.py                 # Logging utilities
 │   │
-│   ├── mock/                 # Mock API implementation
-│   │   ├── __init__.py
-│   │   ├── app.py           # Mock app builder
-│   │   ├── routes.py        # Mock route registration
-│   │   ├── state.py         # In-memory state management
-│   │   └── loader.py        # Custom mock data loader
+│   ├── routes/                   # Management API routes
+│   │   ├── codegen.py            # Code generation endpoints (protected)
+│   │   ├── helpers.py            # Shared route utilities
+│   │   ├── mock.py               # Mock route handlers
+│   │   └── versions.py           # Version management endpoints
 │   │
-│   ├── proxmox/             # Real Proxmox API implementation
-│   │   ├── __init__.py
-│   │   ├── config.py        # ProxmoxConfig class
-│   │   ├── client.py        # ProxmoxClient (aiohttp)
-│   │   └── routes.py        # Real API route registration
+│   ├── proxmox/                  # Real API proxy
+│   │   ├── config.py             # ProxmoxConfig dataclass
+│   │   ├── client.py             # FastAPI adapter wrapping the SDK HTTPS backend
+│   │   └── routes.py             # Proxmox API proxy routes with validation
 │   │
-│   ├── routes/              # Management API routes
-│   │   ├── __init__.py
-│   │   ├── codegen.py       # Code generation endpoints
-│   │   └── schema.py        # Schema inspection endpoints
+│   ├── sdk/                      # Standalone Python SDK
+│   │   ├── api.py                # ProxmoxSDK main class
+│   │   ├── sync.py               # SyncProxmoxSDK wrapper
+│   │   ├── resource.py           # Resource navigation (attribute-based)
+│   │   ├── services.py           # Service configs (PVE, PMG, PBS)
+│   │   ├── exceptions.py         # SDK-specific exceptions
+│   │   ├── backends/             # Transport backends
+│   │   │   ├── base.py           # AbstractBackend protocol
+│   │   │   ├── https.py          # aiohttp HTTPS backend (default)
+│   │   │   ├── mock.py           # In-memory mock backend
+│   │   │   ├── local.py          # Local pvesh CLI backend
+│   │   │   ├── ssh_paramiko.py   # SSH via Paramiko
+│   │   │   └── openssh.py        # SSH via openssh-wrapper
+│   │   ├── auth/                 # Authentication handlers
+│   │   │   ├── base.py           # BaseAuth abstract protocol
+│   │   │   ├── token.py          # API token auth
+│   │   │   └── ticket.py         # Password/ticket auth + TOTP
+│   │   └── tools/                # Helper tools
+│   │       ├── files.py          # File upload/download
+│   │       └── tasks.py          # Task monitoring
 │   │
-│   ├── proxmox_codegen/     # OpenAPI generation pipeline
-│   │   ├── __init__.py
-│   │   ├── crawler.py       # Proxmox API crawler
-│   │   ├── pipeline.py      # Generation orchestration
-│   │   ├── openapi_builder.py  # OpenAPI schema builder
-│   │   └── pydantic_builder.py # Pydantic model generator
+│   ├── proxmox_cli/              # CLI + TUI application
+│   │   ├── cli.py                # CLI entrypoint (proxmox, pbx, proxmox-cli)
+│   │   ├── app.py                # Typer app construction and setup_logging
+│   │   ├── config.py             # Config file management
+│   │   ├── sdk_bridge.py         # Bridge between CLI and ProxmoxSDK
+│   │   ├── tui_app.py            # Textual TUI application
+│   │   ├── commands/             # Subcommands (get, set, create, delete, ls, …)
+│   │   ├── docgen/               # CLI docs generation
+│   │   └── themes/               # TUI themes
 │   │
-│   └── generated/           # Pre-generated schemas
+│   ├── proxmox_codegen/          # Proxmox API Viewer crawler
+│   │   ├── crawler.py            # Playwright-based crawler
+│   │   ├── apidoc_parser.py      # Parse Proxmox apidoc.js
+│   │   ├── normalize.py          # Normalize captured endpoints
+│   │   ├── openapi_generator.py  # Generate OpenAPI schema
+│   │   ├── pydantic_generator.py # Generate Pydantic models
+│   │   ├── pipeline.py           # Generation pipeline orchestration
+│   │   └── security.py           # SSRF protection, URL validation
+│   │
+│   ├── mock/                     # Mock API implementation
+│   │   ├── app.py                # Mock FastAPI app
+│   │   ├── routes.py             # Dynamic route registration with CRUD
+│   │   ├── state.py              # SharedMemoryMockStore (in-memory)
+│   │   ├── schema_helpers.py     # Mock value generation
+│   │   └── loader.py             # Mock data loading from JSON/YAML
+│   │
+│   └── generated/                # Pre-generated schemas (committed)
 │       └── proxmox/
-│           └── latest/      # Current version (8.1)
-│               ├── openapi.json        # 5.2MB OpenAPI schema
-│               ├── pydantic_models.py  # Generated models
-│               └── raw_capture.json    # Crawler output
+│           └── latest/
+│               ├── openapi.json        # 5.2MB OpenAPI 3.1 schema
+│               └── pydantic_models.py  # Generated Pydantic v2 models
 │
-├── tests/                   # Test suite
-│   ├── conftest.py         # Pytest fixtures
-│   ├── test_schema.py      # Schema loading tests
-│   ├── test_mock_routes.py # Mock CRUD tests
-│   ├── test_main_app.py    # Main app tests
-│   └── ...
-│
-├── docs/                    # MkDocs documentation
-│   ├── index.md
-│   ├── installation.md
-│   ├── quickstart.md
-│   └── ...
-│
-├── examples/                # Usage examples
-│   ├── mock-data-example.json
-│   └── docker-compose.yml
-│
-├── pyproject.toml          # Project config, dependencies
-├── mkdocs.yml             # Documentation config
-├── Dockerfile             # Container image
-├── README.md              # Main README
-└── CLAUDE.md              # AI agent documentation
+├── tests/                        # Test suite
+├── docs/                         # MkDocs documentation
+├── pyproject.toml                # Project config and dependencies
+├── mkdocs.yml                    # Documentation config
+├── Dockerfile                    # Container image
+├── README.md                     # Main README
+└── CLAUDE.md                     # Agent index and contributor guide
 ```
 
 ## Key Modules
 
-### `main.py` - Main Application
+### `main.py` — Dual-mode FastAPI app
 
-The central FastAPI app that supports both mock and real modes:
+Serves both mock and real modes. Start it with:
 
-```python
-from fastapi import FastAPI
-from proxmox_sdk import __version__
-from proxmox_sdk.proxmox.config import ProxmoxConfig
-
-config = ProxmoxConfig()
-app = FastAPI(title="Proxmox OpenAPI", version=__version__)
-
-if config.mode == "real":
-    # Load real Proxmox routes
-    from proxmox_sdk.proxmox.routes import register_proxmox_routes
-    register_proxmox_routes(app, config)
-else:
-    # Load mock routes (default)
-    from proxmox_sdk.mock.routes import register_generated_proxmox_mock_routes
-    register_generated_proxmox_mock_routes(app, "latest")
+```bash
+uvicorn proxmox_sdk.main:app --reload
 ```
 
-### `mock/routes.py` - Mock Route Builder
+Select mode via `PROXMOX_API_MODE=mock` (default) or `PROXMOX_API_MODE=real`.
 
-Dynamically generates CRUD endpoints from OpenAPI schema:
+### `sdk/api.py` — ProxmoxSDK
 
-```python
-def register_generated_proxmox_mock_routes(
-    app: FastAPI,
-    version: str = "latest",
-    mock_data_path: str | None = None,
-) -> None:
-    """Register all mock routes from pre-generated schema."""
-    # Load schema
-    schema = load_proxmox_schema(version)
-
-    # Create in-memory state
-    state = MockState()
-
-    # Load custom data if provided
-    if mock_data_path:
-        load_custom_mock_data(state, mock_data_path)
-
-    # Generate routes for each endpoint
-    for path, methods in schema["paths"].items():
-        for method, operation in methods.items():
-            create_mock_endpoint(app, state, method, path, operation)
-```
-
-### `proxmox/client.py` - Real API Client
-
-aiohttp-based client with authentication and validation:
+The standalone Python SDK class. Supports async, sync, and mock construction:
 
 ```python
-class ProxmoxClient:
-    """Client for real Proxmox VE API."""
+from proxmox_sdk import ProxmoxSDK
 
-    async def request(
-        self,
-        method: str,
-        path: str,
-        params: dict | None = None,
-        json: dict | None = None,
-    ) -> dict:
-        """Make authenticated request to Proxmox API."""
-        # Build URL
-        url = f"{self.config.url}/api2/json{path}"
+# Async (real Proxmox)
+async with ProxmoxSDK(host="pve.example.com", user="root@pam", password="…") as pve:
+    nodes = await pve.nodes.get()
 
-        # Add auth headers
-        headers = await self._get_auth_headers()
+# Sync wrapper
+with ProxmoxSDK.sync(host="pve.example.com", user="root@pam", password="…") as pve:
+    nodes = pve.nodes.get()
 
-        # Make request
-        async with self.session.request(
-            method, url, headers=headers, params=params, json=json
-        ) as response:
-            response.raise_for_status()
-            return await response.json()
+# Mock (no Proxmox server needed)
+async with ProxmoxSDK.mock() as pve:
+    nodes = await pve.nodes.get()
+
+# From environment / config file
+config = ProxmoxConfig.from_env()
+pve = ProxmoxSDK.from_config(config)
 ```
 
-### `schema.py` - Schema Utilities
+### `mock/routes.py` — Mock Route Builder
 
-Schema loading and validation:
+`register_generated_proxmox_mock_routes()` dynamically generates 646 CRUD endpoints from the bundled OpenAPI schema at startup. Each route operates on `SharedMemoryMockStore`.
 
-```python
-def load_proxmox_schema(version: str = "latest") -> dict:
-    """Load pre-generated Proxmox OpenAPI schema."""
-    schema_path = (
-        Path(__file__).parent
-        / "generated"
-        / "proxmox"
-        / version
-        / "openapi.json"
-    )
+### `schema.py` — Schema Utilities
 
-    with open(schema_path) as f:
-        return json.load(f)
-```
+`load_proxmox_schema(version)` loads the pre-generated OpenAPI JSON from `generated/proxmox/<version>/openapi.json`.
 
 ## Code Generation Pipeline
 
@@ -428,26 +396,22 @@ ruff check --fix .
 ```python
 """Module description."""
 
-from typing import Any
-
-from fastapi import FastAPI
-
-from proxmox_sdk.schema import load_proxmox_schema
+from proxmox_sdk import ProxmoxSDK
+from proxmox_sdk.proxmox.config import ProxmoxConfig
 
 
-def create_app(version: str = "latest") -> FastAPI:
+async def get_cluster_nodes(config: ProxmoxConfig) -> list[dict]:
     """
-    Create and configure FastAPI application.
+    Return a list of nodes from the Proxmox cluster.
 
     Args:
-        version: Proxmox API version to load.
+        config: A ProxmoxConfig loaded from environment variables.
 
     Returns:
-        Configured FastAPI app instance.
+        List of node dicts from the Proxmox API.
     """
-    app = FastAPI(title="Proxmox OpenAPI", version=version)
-    schema = load_proxmox_schema(version)
-    return app
+    async with ProxmoxSDK.from_config(config) as pve:
+        return await pve.nodes.get()
 ```
 
 ## Documentation
@@ -476,9 +440,8 @@ mkdocs gh-deploy
 
 ### Before Submitting
 
-- ✅ All tests pass
-- ✅ Code formatted with `ruff format`
-- ✅ No linting errors (`ruff check`)
+- ✅ All tests pass (`uv run pytest`)
+- ✅ All pre-commit hooks pass (`uv run pre-commit run --all-files`)
 - ✅ Documentation updated if needed
 - ✅ Commit messages follow convention
 
@@ -521,14 +484,29 @@ proper 504 Gateway Timeout response.
 
 ## Release Process
 
-1. **Update version** in `proxmox_sdk/__init__.py`
-2. **Update CHANGELOG.md** with release notes
-3. **Create git tag:**
+1. **Bump the version** in `pyproject.toml` (`[project] version`). Use PEP 440 — e.g. `0.0.3`, `0.0.3.post1`, `0.1.0`.
+2. **Run pre-commit and tests** to confirm the tree is clean:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   uv run pre-commit run --all-files
+   uv run pytest
    ```
-4. **GitHub Actions** automatically publishes to PyPI
+3. **Commit the version bump:**
+   ```bash
+   git add pyproject.toml
+   git commit -m "chore: bump version to <new-version>"
+   git push origin main
+   ```
+4. **Create and push an annotated tag** (must match `v<pyproject-version>`):
+   ```bash
+   git tag v<new-version>
+   git push origin v<new-version>
+   ```
+5. **Create the GitHub release** (triggers CI to publish to PyPI and Docker Hub):
+   ```bash
+   gh release create v<new-version> \
+     --title "v<new-version>" \
+     --notes "Release notes here."
+   ```
 
 ## Getting Help
 

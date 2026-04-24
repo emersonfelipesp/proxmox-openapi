@@ -289,7 +289,6 @@ Create a VM with cloud-init support (for automated OS provisioning):
             # Hardware (suitable for cloud-init)
             memory=1024,
             cores=2,
-            cores=2,
             agent=1,              # Enable QEMU guest agent
 
             # Storage
@@ -706,7 +705,7 @@ VM creation and many other operations return a **Task ID** because they run asyn
 
 | Parameter | Type | Example | Notes |
 |-----------|------|---------|-------|
-| `vmid` | int | `100` | Unique VM ID (1-999) |
+| `vmid` | int | `100` | Unique VM ID (100–999999999) |
 | `name` | str | `"web-server"` | VM hostname |
 | `memory` | int | `2048` | RAM in MB |
 | `cores` | int | `2` | CPU cores |

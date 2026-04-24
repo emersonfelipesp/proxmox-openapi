@@ -161,19 +161,28 @@ export PROXMOX_API_RETRY_BACKOFF=1.0    # Backoff base (1s, 2s, 4s, …, capped 
 |----------|----------|---------|-------------|
 | `PROXMOX_API_MODE` | Yes | `mock` | Must be `real` for real mode |
 | `PROXMOX_API_URL` | Yes | — | Proxmox server URL |
-| `PROXMOX_API_TOKEN_ID` | If using tokens | — | API token ID |
-| `PROXMOX_API_TOKEN_SECRET` | If using tokens | — | API token secret |
+| `PROXMOX_API_TOKEN_ID` | If using tokens | — | API token ID (`user@realm!tokenid`) |
+| `PROXMOX_API_TOKEN_SECRET` | If using tokens | — | API token secret UUID |
 | `PROXMOX_API_USERNAME` | If using password | — | Username (e.g., `root@pam`) |
 | `PROXMOX_API_PASSWORD` | If using password | — | Password |
 | `PROXMOX_API_VERIFY_SSL` | No | `true` | Verify SSL certificates |
+| `PROXMOX_API_SERVICE` | No | `PVE` | Service type: `PVE`, `PMG`, or `PBS` |
+| `PROXMOX_API_BACKEND` | No | `https` | Transport: `https`, `local`, `ssh_paramiko`, `openssh` |
+| `PROXMOX_API_PATH_PREFIX` | No | `""` | Reverse-proxy path prefix |
+| `PROXMOX_API_OTP` | No | — | OTP/TOTP code for 2FA |
+| `PROXMOX_API_OTPTYPE` | No | `totp` | OTP type |
 | `PROXMOX_API_TIMEOUT` | No | `5` | Total request timeout in seconds |
 | `PROXMOX_API_CONNECT_TIMEOUT` | No | — | TCP connection timeout in seconds |
 | `PROXMOX_API_RETRIES` | No | `0` | Max retries for GET/HEAD on 502/503/504 |
 | `PROXMOX_API_RETRY_BACKOFF` | No | `0.5` | Exponential backoff base in seconds |
 | `PROXMOX_API_HTTP_PROXY` | No | — | HTTP proxy URL (overrides `HTTP_PROXY`) |
 | `PROXMOX_API_HTTPS_PROXY` | No | — | HTTPS proxy URL (overrides `HTTPS_PROXY`) |
+| `PROXMOX_CONFIG_FILE` | No | — | Path to YAML/JSON config file |
 | `HOST` | No | `0.0.0.0` | Server bind host |
 | `PORT` | No | `8000` | Server bind port |
+| `LOG_LEVEL` | No | `INFO` | Logging level |
+| `CORS_ORIGINS` | No | — | Comma-separated allowed CORS origins |
+| `CODEGEN_API_KEY` | No | — | Bearer token for `/codegen/*` endpoints |
 
 ---
 
@@ -441,6 +450,9 @@ server {
 curl http://localhost:8000/health
 # {"status": "ready"}
 ```
+
+!!! note "Localhost only"
+    `/health` returns `404` for requests coming from outside `localhost`. Use it only from within the same host or in test environments with `TESTING=1`.
 
 ### Mode Information
 

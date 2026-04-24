@@ -70,7 +70,7 @@ nav:
       - Contributing: development.md
       - Security: security.md
       - Performance: performance.md
-  - Reference:
+  - CLI Reference:
       - CLI Command Captures: reference/command-capture/index.md
       - pvesh: reference/PVESH.md
       - proxmoxer: reference/proxmoxer.md

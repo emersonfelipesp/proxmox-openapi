@@ -24,6 +24,7 @@ proxmox_sdk/
 ├── logger.py                 # Logging utilities
 ├── routes/
 │   ├── codegen.py            # Code generation endpoints (protected)
+│   ├── helpers.py            # Shared route utilities
 │   ├── mock.py               # Mock route handlers
 │   └── versions.py           # Version management endpoints
 ├── proxmox/                  # Real API proxy
@@ -150,7 +151,7 @@ See [docs/security.md](docs/security.md) for the full reference. Key patterns to
 - **CORS** — Disabled by default. Enable via `CORS_ORIGINS`. Allowed headers are restricted to `Content-Type`, `Authorization`, `X-Requested-With`. Wildcards are never used.
 - **Health endpoint** — Returns `404` for non-localhost callers. `testclient` is only added to the allowlist when `TESTING=1`.
 - **SSH backends** — `SshParamikoBackend` defaults to `WarningPolicy` (not `AutoAddPolicy`). All SSH commands use `shlex.join()`/`shlex.quote()` to prevent shell injection. Temp files use `secrets.token_hex(8)`.
-- **Log sanitization** — `SensitiveDataFilter` in `logger.py` redacts credentials (`password=`, `token_value=`, `PVEAuthCookie=`, `CSRFPreventionToken=`, `Authorization=`) from all log output.
+- **Log sanitization** — `SensitiveDataFilter` in `logger.py` redacts credentials (`password=`, `token_value=`, `PVEAuthCookie=`, `PMGAuthCookie=`, `PBSAuthCookie=`, `CSRFPreventionToken=`, `Authorization=`) from all log output.
 - **Credential clearing** — `PROXMOX_API_TOKEN_SECRET`, `PROXMOX_API_PASSWORD`, `PROXMOX_API_OTP` are overwritten with `"********"` in `os.environ` after being read.
 - **Config symlink protection** — `save_config()` refuses to write if the config file or its parent directory is a symlink.
 - **SSL context** — `TicketAuth` receives the same `ssl` context as the main HTTPS backend, so `verify_ssl=False` applies consistently to both auth and API requests.
@@ -265,11 +266,18 @@ A release publishes the package to PyPI and pushes all three Docker image varian
 
 ### Real Mode
 - `PROXMOX_API_MODE` - Set to "real" to enable Proxmox integration
-- `PROXMOX_URL` - Proxmox server URL (e.g., "https://proxmox.example.com:8006")
-- `PROXMOX_API_TOKEN` - API token (recommended, format: "PVEAPIToken=user@realm!tokenid=uuid")
-- `PROXMOX_USERNAME` - Username (fallback, format: "user@realm")
-- `PROXMOX_PASSWORD` - Password (fallback)
+- `PROXMOX_API_URL` - Proxmox server URL (e.g., "https://proxmox.example.com:8006")
+- `PROXMOX_API_TOKEN_ID` - API token ID (format: "user@realm!tokenid")
+- `PROXMOX_API_TOKEN_SECRET` - API token secret UUID
+- `PROXMOX_API_USERNAME` - Username for password auth (format: "user@realm")
+- `PROXMOX_API_PASSWORD` - Password for password auth
 - `PROXMOX_API_VERIFY_SSL` - Verify SSL certificates (default: true)
+- `PROXMOX_API_SERVICE` - Service type: PVE, PMG, or PBS (default: "PVE")
+- `PROXMOX_API_BACKEND` - Transport backend: https, mock, local, ssh_paramiko, openssh (default: "https")
+- `PROXMOX_API_PATH_PREFIX` - Reverse-proxy path prefix (default: "")
+- `PROXMOX_API_OTP` - OTP/TOTP code for 2FA (default: none)
+- `PROXMOX_API_OTPTYPE` - OTP type (default: "totp")
+- `PROXMOX_CONFIG_FILE` - Path to YAML/JSON config file; keys are read as PROXMOX_API_* env vars
 
 ### Connection Tuning
 - `PROXMOX_API_TIMEOUT` - Total request timeout in seconds (default: `"5"`)

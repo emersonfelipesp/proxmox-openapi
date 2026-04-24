@@ -207,7 +207,7 @@ The HTTPS backend uses `aiohttp` for its native async/await support, mature sess
 ### Mock Mode
 
 - No authentication by default — safe for development environments
-- Rate-limited at the FastAPI level (`PROXMOX_RATE_LIMIT`)
+- Rate limiting is applied only on codegen endpoints via SlowAPI (hardcoded in `rate_limit.py`)
 - Codegen endpoints require `CODEGEN_API_KEY` Bearer token
 
 ### Real Mode

@@ -79,8 +79,9 @@ uvicorn proxmox_sdk.main:app --reload
 
 # Real mode
 export PROXMOX_API_MODE=real
-export PROXMOX_URL=https://proxmox.example.com:8006
-export PROXMOX_API_TOKEN=PVEAPIToken=user@realm!tokenid=uuid
+export PROXMOX_API_URL=https://proxmox.example.com:8006
+export PROXMOX_API_TOKEN_ID=user@realm!tokenid
+export PROXMOX_API_TOKEN_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 uvicorn proxmox_sdk.main:app --reload
 ```
 
@@ -150,12 +151,13 @@ Set these environment variables:
 
 ```bash
 export PROXMOX_API_MODE=real
-export PROXMOX_URL=https://proxmox.example.com:8006
-export PROXMOX_API_TOKEN=PVEAPIToken=user@realm!tokenid=uuid  # Recommended
+export PROXMOX_API_URL=https://proxmox.example.com:8006
+export PROXMOX_API_TOKEN_ID=user@realm!tokenid        # Recommended
+export PROXMOX_API_TOKEN_SECRET=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 # OR use username/password
-export PROXMOX_USERNAME=root@pam
-export PROXMOX_PASSWORD=your-password
+export PROXMOX_API_USERNAME=root@pam
+export PROXMOX_API_PASSWORD=your-password
 ```
 
 Then start the server:
@@ -353,7 +355,7 @@ uv pip install --force-reinstall proxmox-sdk
 ### Real mode: "Connection refused" error
 
 Check that:
-1. `PROXMOX_URL` is correct (including `https://` and port `:8006`)
+1. `PROXMOX_API_URL` is correct (including `https://` and port `:8006`)
 2. Proxmox server is running and accessible
 3. Firewall allows access on port 8006
 4. SSL certificate is valid (or set `PROXMOX_API_VERIFY_SSL=false` for testing)
@@ -364,11 +366,12 @@ Check your credentials:
 
 ```bash
 # For API token
-echo $PROXMOX_API_TOKEN  # Should be: PVEAPIToken=user@realm!tokenid=uuid
+echo $PROXMOX_API_TOKEN_ID      # Should be: user@realm!tokenid (e.g., root@pam!mytoken)
+echo $PROXMOX_API_TOKEN_SECRET  # Should be: UUID secret
 
 # For username/password
-echo $PROXMOX_USERNAME  # Should be: user@realm (e.g., root@pam)
-echo $PROXMOX_PASSWORD
+echo $PROXMOX_API_USERNAME  # Should be: user@realm (e.g., root@pam)
+echo $PROXMOX_API_PASSWORD
 ```
 
 Verify credentials work with direct Proxmox API access:

@@ -326,6 +326,7 @@ The API uses standard HTTP response codes:
 | `401` | Unauthorized - Missing or invalid authentication |
 | `403` | Forbidden - Insufficient permissions |
 | `404` | Not Found - Resource doesn't exist |
+| `422` | Unprocessable Entity - Pydantic request validation failed |
 | `500` | Internal Server Error |
 
 ## Pagination
@@ -390,7 +391,15 @@ See the [Mock API Guide](mock-api.md) and [Real API Guide](real-api.md) for mode
 
 ## Rate Limiting
 
-Currently, no rate limiting is implemented. This may be added in future versions.
+Proxmox API proxy endpoints have no rate limiting. The `/codegen/*` endpoints are rate-limited via SlowAPI:
+
+| Endpoint | Limit |
+|---|---|
+| `POST /codegen/generate` | 1 / hour |
+| `GET /codegen/pydantic` | 5 / hour |
+| `GET /codegen/openapi` | 5 / hour |
+
+See [Security](security.md) for details.
 
 ## Versioning
 

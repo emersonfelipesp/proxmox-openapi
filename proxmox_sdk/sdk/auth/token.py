@@ -57,7 +57,14 @@ class TokenAuth:
         """Token auth uses headers, not cookies."""
         return {}
 
-    async def ensure_ready(self, session: object, ticket_url: str, *, ssl: object = None) -> None:
+    async def ensure_ready(
+        self,
+        session: object,
+        ticket_url: str,
+        *,
+        ssl: object = None,
+        proxy: str | None = None,
+    ) -> None:
         """Token auth is stateless — no authentication step required."""
 
 

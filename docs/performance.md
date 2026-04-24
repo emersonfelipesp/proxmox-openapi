@@ -109,6 +109,54 @@ Timeout tracking uses `time.monotonic()` for accurate wall-clock measurement ins
 
 ---
 
+## Request Retry
+
+`HttpsBackend.request()` supports opt-in automatic retry for transient failures.
+
+### When retries occur
+
+| Condition | Retried? |
+|---|---|
+| HTTP 502, 503, 504 | Yes (GET/HEAD only) |
+| `asyncio.TimeoutError` | Yes (GET/HEAD only) |
+| `aiohttp.ClientError` (DNS, refused, etc.) | Yes (GET/HEAD only) |
+| SSL error | Never (not transient) |
+| HTTP 4xx (client error) | Never |
+| POST / PUT / DELETE | Never (not safe to duplicate) |
+
+### Backoff strategy
+
+Retries use exponential backoff:
+
+```
+attempt 1: backoff * 2⁰  → 0.5s
+attempt 2: backoff * 2¹  → 1.0s
+attempt 3: backoff * 2²  → 2.0s
+…                          (capped at 30s)
+```
+
+Default `max_retries=0` preserves existing behaviour with no delay or overhead on the hot path.
+
+### Configuration
+
+```python
+ProxmoxSDK(
+    host="pve.example.com",
+    user="admin@pam", password="secret",
+    max_retries=3,       # 3 retries = 4 total attempts
+    retry_backoff=0.5,   # 0.5s, 1.0s, 2.0s
+)
+```
+
+Or via environment:
+
+```bash
+PROXMOX_API_RETRIES=3
+PROXMOX_API_RETRY_BACKOFF=0.5
+```
+
+---
+
 ## Config Loading
 
 `ProxmoxConfig.from_env()` previously copied the entire `os.environ` dict (50–200+ keys) on every call. It now reads only the ~20 specific keys it needs:

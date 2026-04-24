@@ -163,11 +163,20 @@ from proxmox_sdk import (
     ResourceException,
     AuthenticationError,
     BackendNotAvailableError,
+    ProxmoxTimeoutError,
+    ProxmoxConnectionError,
 )
 
 try:
     await proxmox.nodes("pve1").qemu.post(vmid=100)
+except ProxmoxTimeoutError as e:
+    # Request exceeded the configured timeout (status_code=504)
+    print(f"Timed out: {e.content}")
+except ProxmoxConnectionError as e:
+    # TCP connection refused, DNS failure, or SSL error (status_code=503)
+    print(f"Cannot reach Proxmox: {e.content}")
 except ResourceException as e:
+    # HTTP >= 400 from the Proxmox API — also catches the two above
     print(f"API error: {e.status_code} - {e.status_message}")
     print(f"Error details: {e.errors}")
 except AuthenticationError:
@@ -175,6 +184,8 @@ except AuthenticationError:
 except BackendNotAvailableError:
     print("Required backend dependency not installed")
 ```
+
+`ProxmoxTimeoutError` and `ProxmoxConnectionError` both subclass `ResourceException`, so existing `except ResourceException` handlers continue to work without changes.
 
 ---
 
@@ -208,12 +219,19 @@ ProxmoxSDK(
     port=8006,                         # Custom port (default: 8006)
     verify_ssl=True,                   # Verify SSL cert (default: True)
     cert="/path/to/cert.pem",          # Custom CA cert
-    timeout=5,                         # Request timeout in seconds
+    timeout=30,                        # Total request timeout in seconds (default: 5)
+    connect_timeout=5,                 # TCP connection timeout (default: None = use total)
     otp="123456",                      # One-time password for 2FA
     otptype="totp",                    # OTP type: "totp" or "oath"
+    proxies={"https": "http://proxy.example.com:3128"},  # HTTP/HTTPS proxy
+    max_retries=3,                     # Retry GET/HEAD on 502/503/504 (default: 0)
+    retry_backoff=0.5,                 # Exponential backoff base in seconds (default: 0.5)
     backend="https",                   # Backend type
 )
 ```
+
+!!! note "Retry safety"
+    Only `GET` and `HEAD` requests are retried. `POST`, `PUT`, `PATCH`, and `DELETE` are never retried automatically to prevent accidental double-mutation.
 
 ### SSH Backend (Paramiko)
 
@@ -459,7 +477,20 @@ ProxmoxSDK(
     host="pve.example.com",
     user="admin@pam",
     password="secret",
-    timeout=30,  # Increase timeout
+    timeout=30,          # Total request timeout (includes connect + read)
+    connect_timeout=5,   # Separate TCP connection deadline
+)
+```
+
+A `ProxmoxTimeoutError` is raised when the request exceeds the timeout — catch it specifically or via the parent `ResourceException`. To automatically retry on transient failures:
+
+```python
+ProxmoxSDK(
+    host="pve.example.com",
+    user="admin@pam",
+    password="secret",
+    max_retries=3,       # Retry GET/HEAD up to 3 times
+    retry_backoff=1.0,   # 1s, 2s, 4s backoff between attempts
 )
 ```
 

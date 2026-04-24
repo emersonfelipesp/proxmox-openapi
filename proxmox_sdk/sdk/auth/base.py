@@ -32,6 +32,7 @@ class AuthStrategy(Protocol):
         ticket_url: str,
         *,
         ssl: Any = None,
+        proxy: str | None = None,
     ) -> None:
         """Ensure authentication state is valid before a request is sent.
 
@@ -43,6 +44,7 @@ class AuthStrategy(Protocol):
             session: Active aiohttp session to use for auth requests.
             ticket_url: Full URL for the ``POST /access/ticket`` endpoint.
             ssl: SSL context or bool passed through to aiohttp.
+            proxy: HTTP proxy URL forwarded to auth requests.
         """
         ...
 

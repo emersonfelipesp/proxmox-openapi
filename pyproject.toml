@@ -7,7 +7,7 @@ include = ["proxmox_sdk*"]
 
 [project]
 name = "proxmox-sdk"
-version = "0.0.2.post3"
+version = "0.0.3.post1"
 description = "pvesh-like CLI for Proxmox API with multi-backend support, performance profiling, and advanced configuration management"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -41,7 +41,7 @@ all = [
 test = [
     "httpx>=0.28.1",
     "playwright>=1.58.0",
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-asyncio>=0.24.0",
     "pytest-xdist>=3.6.1",
@@ -62,7 +62,7 @@ dev = [
     "ruff>=0.15.8",
     "ty>=0.0.29",
     "pre-commit>=4.3.0",
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
 ]
 

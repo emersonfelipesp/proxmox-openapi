@@ -1,6 +1,6 @@
 """Proxmox OpenAPI — schema-driven FastAPI package and standalone Python SDK."""
 
-__version__ = "0.0.2"
+__version__ = "0.0.3.post1"
 
 # Lazy imports: avoid constructing FastAPI apps or loading heavy SDK modules
 # at package import time.  Attributes are resolved on first access only.
@@ -17,6 +17,8 @@ __all__ = [
     "AuthenticationError",
     "BackendNotAvailableError",
     "ProxmoxSDKError",
+    "ProxmoxTimeoutError",
+    "ProxmoxConnectionError",
     "Tasks",
     "Files",
     "__version__",
@@ -33,6 +35,8 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AuthenticationError": ("proxmox_sdk.sdk.exceptions", "AuthenticationError"),
     "BackendNotAvailableError": ("proxmox_sdk.sdk.exceptions", "BackendNotAvailableError"),
     "ProxmoxSDKError": ("proxmox_sdk.sdk.exceptions", "ProxmoxSDKError"),
+    "ProxmoxTimeoutError": ("proxmox_sdk.sdk.exceptions", "ProxmoxTimeoutError"),
+    "ProxmoxConnectionError": ("proxmox_sdk.sdk.exceptions", "ProxmoxConnectionError"),
     "Tasks": ("proxmox_sdk.sdk.tools.tasks", "Tasks"),
     "Files": ("proxmox_sdk.sdk.tools.files", "Files"),
 }

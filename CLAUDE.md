@@ -154,6 +154,7 @@ See [docs/security.md](docs/security.md) for the full reference. Key patterns to
 - **Credential clearing** — `PROXMOX_API_TOKEN_SECRET`, `PROXMOX_API_PASSWORD`, `PROXMOX_API_OTP` are overwritten with `"********"` in `os.environ` after being read.
 - **Config symlink protection** — `save_config()` refuses to write if the config file or its parent directory is a symlink.
 - **SSL context** — `TicketAuth` receives the same `ssl` context as the main HTTPS backend, so `verify_ssl=False` applies consistently to both auth and API requests.
+- **Proxy threading** — `TicketAuth._request_ticket()` forwards `proxy=` to `session.post()` so authentication requests go through the same proxy as all other API calls. Omitting this would cause auth to bypass the proxy in proxy-only networks.
 
 ## Performance Patterns
 
@@ -168,6 +169,7 @@ See [docs/performance.md](docs/performance.md) for the full reference. Key patte
 - **Path joining fast path** — `_url_join()` in `resource.py` skips `urlsplit`/`urlunsplit` for plain paths (no `://`).
 - **None filtering fast path** — `_filter_none()` in `resource.py` returns the original dict unchanged when no `None` values are present.
 - **Task polling** — `Tasks.blocking_status()` uses exponential backoff (1s→2s→4s→8s→16s→30s cap) with `time.monotonic()` for accurate timeout tracking.
+- **Request retry** — `HttpsBackend.request()` retries GET/HEAD requests on 502/503/504 and transport errors with exponential backoff (base × 2ⁿ, capped at 30s). POST/PUT/DELETE never retry to prevent double-mutation. `max_retries=0` by default keeps existing behaviour.
 - **Config loading** — `ProxmoxConfig.from_env()` reads only the ~20 specific env keys it needs. `yaml` is only imported when a YAML config file is present.
 - **Regex pre-compilation** — `_RE_NAME_HINT` in `schema.py` is compiled once at module load.
 
@@ -268,6 +270,12 @@ A release publishes the package to PyPI and pushes all three Docker image varian
 - `PROXMOX_USERNAME` - Username (fallback, format: "user@realm")
 - `PROXMOX_PASSWORD` - Password (fallback)
 - `PROXMOX_API_VERIFY_SSL` - Verify SSL certificates (default: true)
+
+### Connection Tuning
+- `PROXMOX_API_TIMEOUT` - Total request timeout in seconds (default: `"5"`)
+- `PROXMOX_API_CONNECT_TIMEOUT` - TCP connection timeout in seconds, separate from total (default: unset)
+- `PROXMOX_API_RETRIES` - Max retry attempts for GET/HEAD on 502/503/504 or transport errors (default: `"0"`)
+- `PROXMOX_API_RETRY_BACKOFF` - Exponential backoff base in seconds for retries (default: `"0.5"`)
 
 ### Proxy Configuration
 - `HTTP_PROXY` - HTTP proxy URL

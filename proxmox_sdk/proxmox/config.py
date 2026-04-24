@@ -93,12 +93,15 @@ class ProxmoxConfig:
     service: str = "PVE"
     backend: str = "https"
     timeout: int = 5
+    connect_timeout: int | None = None
     port: int | None = None
     path_prefix: str = ""
     otp: str | None = None
     otptype: str = "totp"
     cert: str | None = None
     proxies: dict[str, str] | None = field(default=None, hash=False, compare=False)
+    max_retries: int = 0
+    retry_backoff: float = 0.5
 
     @classmethod
     def from_env(cls) -> ProxmoxConfig:
@@ -119,11 +122,14 @@ class ProxmoxConfig:
             "PROXMOX_API_SERVICE",
             "PROXMOX_API_BACKEND",
             "PROXMOX_API_TIMEOUT",
+            "PROXMOX_API_CONNECT_TIMEOUT",
             "PROXMOX_API_PATH_PREFIX",
             "PROXMOX_API_OTP",
             "PROXMOX_API_OTPTYPE",
             "PROXMOX_API_HTTP_PROXY",
             "PROXMOX_API_HTTPS_PROXY",
+            "PROXMOX_API_RETRIES",
+            "PROXMOX_API_RETRY_BACKOFF",
             "HTTP_PROXY",
             "HTTPS_PROXY",
             "http_proxy",
@@ -150,9 +156,13 @@ class ProxmoxConfig:
         service = env_config.get("PROXMOX_API_SERVICE", "PVE").upper()
         backend = env_config.get("PROXMOX_API_BACKEND", "https").lower()
         timeout = int(env_config.get("PROXMOX_API_TIMEOUT", "5"))
+        connect_timeout_str = env_config.get("PROXMOX_API_CONNECT_TIMEOUT")
+        connect_timeout = int(connect_timeout_str) if connect_timeout_str else None
         path_prefix = env_config.get("PROXMOX_API_PATH_PREFIX", "")
         otp = env_config.get("PROXMOX_API_OTP") or None
         otptype = env_config.get("PROXMOX_API_OTPTYPE", "totp")
+        max_retries = int(env_config.get("PROXMOX_API_RETRIES", "0"))
+        retry_backoff = float(env_config.get("PROXMOX_API_RETRY_BACKOFF", "0.5"))
 
         proxies = None
         http_proxy = (
@@ -184,10 +194,13 @@ class ProxmoxConfig:
             service=service,
             backend=backend,
             timeout=timeout,
+            connect_timeout=connect_timeout,
             path_prefix=path_prefix,
             otp=otp,
             otptype=otptype,
             proxies=proxies,
+            max_retries=max_retries,
+            retry_backoff=retry_backoff,
         )
 
     def validate_for_real_mode(self) -> None:
@@ -228,8 +241,11 @@ class ProxmoxConfig:
             "backend": self.backend if self.api_mode != "mock" else "mock",
             "verify_ssl": self.verify_ssl,
             "timeout": self.timeout,
+            "connect_timeout": self.connect_timeout,
             "path_prefix": self.path_prefix,
             "otptype": self.otptype,
+            "max_retries": self.max_retries,
+            "retry_backoff": self.retry_backoff,
         }
 
         if self.cert:

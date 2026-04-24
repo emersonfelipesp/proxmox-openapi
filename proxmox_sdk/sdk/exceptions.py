@@ -34,9 +34,25 @@ class BackendNotAvailableError(ProxmoxSDKError):
     """Raised when a required optional backend dependency is not installed."""
 
 
+class ProxmoxTimeoutError(ResourceException):
+    """Request timed out waiting for the Proxmox API to respond."""
+
+    def __init__(self, content: str = "") -> None:
+        super().__init__(status_code=504, status_message="Gateway Timeout", content=content)
+
+
+class ProxmoxConnectionError(ResourceException):
+    """Transport-level failure: DNS resolution, connection refused, or SSL error."""
+
+    def __init__(self, content: str = "") -> None:
+        super().__init__(status_code=503, status_message="Service Unavailable", content=content)
+
+
 __all__ = [
     "ProxmoxSDKError",
     "ResourceException",
     "AuthenticationError",
     "BackendNotAvailableError",
+    "ProxmoxTimeoutError",
+    "ProxmoxConnectionError",
 ]

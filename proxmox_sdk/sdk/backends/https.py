@@ -15,7 +15,11 @@ import aiohttp
 
 from proxmox_sdk.sdk.auth.base import AuthStrategy
 from proxmox_sdk.sdk.backends.base import AbstractBackend
-from proxmox_sdk.sdk.exceptions import ResourceException
+from proxmox_sdk.sdk.exceptions import (
+    ProxmoxConnectionError,
+    ProxmoxTimeoutError,
+    ResourceException,
+)
 from proxmox_sdk.sdk.resource import _filter_none
 
 if TYPE_CHECKING:
@@ -133,7 +137,10 @@ class HttpsBackend(AbstractBackend):
         verify_ssl: bool = True,
         cert: str | None = None,
         timeout: int = 5,
+        connect_timeout: int | None = None,
         proxies: dict[str, str] | None = None,
+        max_retries: int = 0,
+        retry_backoff: float = 0.5,
     ) -> None:
         resolved_port = port if port is not None else service_config.default_port
         self._base_url = _build_base_url(host, resolved_port, path_prefix)
@@ -145,8 +152,11 @@ class HttpsBackend(AbstractBackend):
         self._service_config = service_config
         self._auth = auth
         self._ssl = _build_ssl_context(verify_ssl, cert)
-        self._timeout = aiohttp.ClientTimeout(total=timeout)
-        self._proxy = (proxies or {}).get("https") or (proxies or {}).get("http")
+        self._timeout = aiohttp.ClientTimeout(total=timeout, connect=connect_timeout)
+        _proxies = proxies or {}
+        self._proxy = _proxies.get("https") or _proxies.get("http")
+        self._max_retries = max_retries
+        self._retry_backoff = retry_backoff
 
         self._session: aiohttp.ClientSession | None = None
         self._session_loop: asyncio.AbstractEventLoop | None = None
@@ -181,6 +191,7 @@ class HttpsBackend(AbstractBackend):
         clean_params = (_filter_none(params) or None) if params else None
         clean_data = _filter_none(data) if data else None
 
+        method = method.upper()
         url = self._url_for(path)
         headers = {
             "Accept": "application/json",
@@ -196,8 +207,8 @@ class HttpsBackend(AbstractBackend):
             )
 
         # Regular JSON request
-        json_body = clean_data if method.upper() not in ("GET", "DELETE") else None
-        if method.upper() in ("GET", "DELETE") and clean_data:
+        json_body = clean_data if method not in ("GET", "DELETE") else None
+        if method in ("GET", "DELETE") and clean_data:
             # For GET/DELETE, merge data into params (edge cases)
             if clean_params:
                 clean_params.update(clean_data)
@@ -205,27 +216,77 @@ class HttpsBackend(AbstractBackend):
                 clean_params = clean_data
             json_body = None
 
-        try:
-            async with session.request(
-                method=method,
-                url=url,
-                headers=headers,
-                cookies=cookies,
-                params=clean_params,
-                json=json_body,
-                ssl=self._ssl,
-                timeout=self._timeout,
-                proxy=proxy,
-            ) as resp:
-                return await self._handle_response(resp, method, path)
+        # Only safe methods are retried to avoid accidental double-mutation.
+        is_safe = method in ("GET", "HEAD")
+        attempts = self._max_retries + 1 if is_safe else 1
+        last_exc: ResourceException | None = None
 
-        except aiohttp.ClientError as exc:
-            logger.exception("HTTPS request failed: %s %s", method, path)
-            raise ResourceException(
-                status_code=503,
-                status_message="Service Unavailable",
-                content=f"Failed to connect to Proxmox API: {exc}",
-            ) from exc
+        for attempt in range(attempts):
+            if attempt > 0:
+                delay = min(self._retry_backoff * (2 ** (attempt - 1)), 30.0)
+                await asyncio.sleep(delay)
+
+            try:
+                async with session.request(
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    cookies=cookies,
+                    params=clean_params,
+                    json=json_body,
+                    ssl=self._ssl,
+                    timeout=self._timeout,
+                    proxy=proxy,
+                ) as resp:
+                    return await self._handle_response(resp, method, path)
+
+            except asyncio.TimeoutError as exc:
+                logger.warning("Request timed out: %s %s (attempt %d)", method, path, attempt + 1)
+                last_exc = ProxmoxTimeoutError(f"Request timed out: {method} {path}")
+                last_exc.__cause__ = exc
+
+            except aiohttp.ClientSSLError as exc:
+                # SSL errors are not transient; raise immediately without retry.
+                logger.error("SSL error: %s %s — %s", method, path, exc)
+                raise ProxmoxConnectionError(f"SSL error connecting to Proxmox API: {exc}") from exc
+
+            except aiohttp.ClientConnectorError as exc:
+                logger.warning(
+                    "Cannot connect to Proxmox API: %s %s — %s (attempt %d)",
+                    method,
+                    path,
+                    exc,
+                    attempt + 1,
+                )
+                last_exc = ProxmoxConnectionError(f"Cannot connect to Proxmox API: {exc}")
+                last_exc.__cause__ = exc
+
+            except aiohttp.ClientError as exc:
+                logger.warning(
+                    "HTTPS request failed: %s %s — %s (attempt %d)",
+                    method,
+                    path,
+                    exc,
+                    attempt + 1,
+                )
+                last_exc = ProxmoxConnectionError(f"Network error: {exc}")
+                last_exc.__cause__ = exc
+
+            except ResourceException as exc:
+                if exc.status_code in (502, 503, 504):
+                    logger.warning(
+                        "Retryable HTTP %d: %s %s (attempt %d)",
+                        exc.status_code,
+                        method,
+                        path,
+                        attempt + 1,
+                    )
+                    last_exc = exc
+                else:
+                    raise
+
+        assert last_exc is not None
+        raise last_exc
 
     async def close(self) -> None:
         """Close the underlying aiohttp session."""
@@ -317,7 +378,7 @@ class HttpsBackend(AbstractBackend):
         return self._session
 
     async def _ensure_authenticated(self, session: aiohttp.ClientSession) -> None:
-        await self._auth.ensure_ready(session, self._ticket_url, ssl=self._ssl)
+        await self._auth.ensure_ready(session, self._ticket_url, ssl=self._ssl, proxy=self._proxy)
 
     def _url_for(self, path: str) -> str:
         """Build full URL from a path, respecting path prefix."""
@@ -443,8 +504,11 @@ class HttpsBackend(AbstractBackend):
             verify_ssl=config.verify_ssl,
             cert=getattr(config, "cert", None),
             timeout=getattr(config, "timeout", 5),
+            connect_timeout=getattr(config, "connect_timeout", None),
             proxies=getattr(config, "proxies", None),
             path_prefix=getattr(config, "path_prefix", ""),
+            max_retries=getattr(config, "max_retries", 0),
+            retry_backoff=getattr(config, "retry_backoff", 0.5),
         )
 
 

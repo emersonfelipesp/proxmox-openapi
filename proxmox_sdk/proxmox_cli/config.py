@@ -29,6 +29,10 @@ class BackendConfig:
     token_value: str | None = None
     verify_ssl: bool = True
     timeout: int = 30
+    connect_timeout: int | None = None
+    proxies: dict[str, str] | None = None
+    max_retries: int = 0
+    retry_backoff: float = 0.5
     custom: dict = field(default_factory=dict)
 
 
@@ -139,6 +143,10 @@ class ConfigManager:
                 token_value=profile_data.get("token_value"),
                 verify_ssl=profile_data.get("verify_ssl", True),
                 timeout=profile_data.get("timeout", 30),
+                connect_timeout=profile_data.get("connect_timeout"),
+                proxies=profile_data.get("proxies"),
+                max_retries=profile_data.get("max_retries", 0),
+                retry_backoff=profile_data.get("retry_backoff", 0.5),
                 custom=profile_data.get("custom", {}),
             )
 
@@ -245,8 +253,13 @@ class ConfigManager:
                 "user": cfg.user,
                 "verify_ssl": cfg.verify_ssl,
                 "timeout": cfg.timeout,
+                "connect_timeout": cfg.connect_timeout,
+                "max_retries": cfg.max_retries,
+                "retry_backoff": cfg.retry_backoff,
                 "custom": cfg.custom,
             }
+            if cfg.proxies is not None:
+                entry["proxies"] = cfg.proxies
             # Only include secret fields when they have a value so that the
             # serialized JSON doesn't suggest credentials are expected.
             if cfg.password is not None:

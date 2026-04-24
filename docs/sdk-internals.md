@@ -278,7 +278,7 @@ sequenceDiagram
     T-->>B: ok (no HTTP call — ticket still valid)
 ```
 
-`TicketAuth` receives the same SSL context as the main HTTPS backend, so `verify_ssl=False` applies consistently to both the auth call and all subsequent API requests.
+`TicketAuth` receives the same SSL context **and the same proxy** as the main HTTPS backend, so `verify_ssl=False` and `proxies=` apply consistently to the auth call and all subsequent API requests. This ensures the SDK works correctly in proxy-only networks where the authentication POST would otherwise bypass the proxy.
 
 ### Auth Selection in `ProxmoxSDK`
 
@@ -361,3 +361,45 @@ with ProxmoxSDK.sync(host="pve.example.com", user="admin@pam", password="secret"
 
 !!! warning "Do not mix sync and async"
     `SyncProxmoxSDK` creates its own event loop. Using it inside an already-running async context will raise `RuntimeError: This event loop is already running`. Use `ProxmoxSDK` (async) in FastAPI, asyncio scripts, and pytest-asyncio tests.
+
+---
+
+## Exception Hierarchy
+
+All SDK exceptions live in `proxmox_sdk.sdk.exceptions` and are re-exported from the top-level `proxmox_sdk` package.
+
+```
+ProxmoxSDKError (base)
+├── ResourceException          HTTP ≥ 400 from the Proxmox API
+│   ├── ProxmoxTimeoutError    Request exceeded timeout (status_code=504)
+│   └── ProxmoxConnectionError TCP refused, DNS failure, SSL error (status_code=503)
+├── AuthenticationError        Bad credentials, NeedTFA without OTP, or auth timeout
+└── BackendNotAvailableError   Optional backend dep (paramiko, openssh_wrapper) missing
+```
+
+`ProxmoxTimeoutError` and `ProxmoxConnectionError` subclass `ResourceException` so existing `except ResourceException` handlers continue to work without modification. Catch the specific subtype first when you need to distinguish a timeout from a server-side error:
+
+```python
+from proxmox_sdk import ProxmoxTimeoutError, ProxmoxConnectionError, ResourceException
+
+try:
+    nodes = await proxmox.nodes.get()
+except ProxmoxTimeoutError:
+    # retry or back off
+    ...
+except ProxmoxConnectionError:
+    # host unreachable or SSL misconfigured
+    ...
+except ResourceException as e:
+    # Proxmox returned 4xx/5xx
+    print(e.status_code, e.errors)
+```
+
+`HttpsBackend.request()` maps `aiohttp` exceptions to these types:
+
+| `aiohttp` exception | SDK exception |
+|---|---|
+| `asyncio.TimeoutError` | `ProxmoxTimeoutError` |
+| `aiohttp.ClientConnectorError` | `ProxmoxConnectionError` |
+| `aiohttp.ClientSSLError` | `ProxmoxConnectionError` |
+| other `aiohttp.ClientError` | `ProxmoxConnectionError` |

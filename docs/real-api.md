@@ -109,17 +109,69 @@ Use this for:
 
 ---
 
+## Proxy Configuration
+
+Connections can be routed through an HTTP or HTTPS proxy.
+
+### Via environment variables
+
+```bash
+# SDK-specific (highest priority)
+export PROXMOX_API_HTTPS_PROXY=http://proxy.corp.example.com:3128
+export PROXMOX_API_HTTP_PROXY=http://proxy.corp.example.com:3128
+
+# Standard system-wide proxy vars (fallback)
+export HTTPS_PROXY=http://proxy.corp.example.com:3128
+```
+
+### Via SDK constructor
+
+```python
+ProxmoxSDK(
+    host="pve.example.com",
+    user="admin@pam",
+    password="secret",
+    proxies={"https": "http://proxy.corp.example.com:3128"},
+)
+```
+
+The proxy is applied to **all** requests, including the initial authentication ticket POST, so the SDK works correctly in proxy-only networks.
+
+---
+
+## Connection Tuning
+
+Control timeouts and automatic retry behaviour:
+
+```bash
+export PROXMOX_API_TIMEOUT=30           # Total request timeout (seconds)
+export PROXMOX_API_CONNECT_TIMEOUT=5    # TCP connection timeout (seconds)
+export PROXMOX_API_RETRIES=3            # Retry GET/HEAD on 502/503/504
+export PROXMOX_API_RETRY_BACKOFF=1.0    # Backoff base (1s, 2s, 4s, …, capped at 30s)
+```
+
+!!! note "Retry safety"
+    Only `GET` and `HEAD` requests are retried automatically. Mutating methods (`POST`, `PUT`, `DELETE`) are never retried to prevent accidental duplicate operations.
+
+---
+
 ## Environment Variables Reference
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `PROXMOX_API_MODE` | Yes | `mock` | Must be `real` for real mode |
-| `PROXMOX_API_URL` | Yes | - | Proxmox server URL |
-| `PROXMOX_API_TOKEN_ID` | If using tokens | - | API token ID |
-| `PROXMOX_API_TOKEN_SECRET` | If using tokens | - | API token secret |
-| `PROXMOX_API_USERNAME` | If using password | - | Username (e.g., `root@pam`) |
-| `PROXMOX_API_PASSWORD` | If using password | - | Password |
+| `PROXMOX_API_URL` | Yes | — | Proxmox server URL |
+| `PROXMOX_API_TOKEN_ID` | If using tokens | — | API token ID |
+| `PROXMOX_API_TOKEN_SECRET` | If using tokens | — | API token secret |
+| `PROXMOX_API_USERNAME` | If using password | — | Username (e.g., `root@pam`) |
+| `PROXMOX_API_PASSWORD` | If using password | — | Password |
 | `PROXMOX_API_VERIFY_SSL` | No | `true` | Verify SSL certificates |
+| `PROXMOX_API_TIMEOUT` | No | `5` | Total request timeout in seconds |
+| `PROXMOX_API_CONNECT_TIMEOUT` | No | — | TCP connection timeout in seconds |
+| `PROXMOX_API_RETRIES` | No | `0` | Max retries for GET/HEAD on 502/503/504 |
+| `PROXMOX_API_RETRY_BACKOFF` | No | `0.5` | Exponential backoff base in seconds |
+| `PROXMOX_API_HTTP_PROXY` | No | — | HTTP proxy URL (overrides `HTTP_PROXY`) |
+| `PROXMOX_API_HTTPS_PROXY` | No | — | HTTPS proxy URL (overrides `HTTPS_PROXY`) |
 | `HOST` | No | `0.0.0.0` | Server bind host |
 | `PORT` | No | `8000` | Server bind port |
 
@@ -268,14 +320,17 @@ print(response.json())
 ### Connection Refused
 
 ```
-Failed to connect to Proxmox API: Cannot connect to host pve.example.com:8006
+ProxmoxConnectionError: Cannot connect to Proxmox API: …
 ```
+
+The SDK raises `ProxmoxConnectionError` (a subclass of `ResourceException`, status 503) for TCP connection failures, DNS errors, and SSL errors.
 
 **Solutions:**
 - Verify Proxmox server is running
 - Check network connectivity: `ping pve.example.com`
 - Verify port 8006 is accessible: `telnet pve.example.com 8006`
 - Check firewall rules
+- If using a proxy, ensure `PROXMOX_API_HTTPS_PROXY` is set correctly
 
 ### SSL Certificate Verification Failed
 

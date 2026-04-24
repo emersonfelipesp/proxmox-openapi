@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -60,7 +61,12 @@ class TicketAuth:
         return self._ticket is not None
 
     async def authenticate(
-        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+        self,
+        session: aiohttp.ClientSession,
+        ticket_url: str,
+        *,
+        ssl: Any = None,
+        proxy: str | None = None,
     ) -> None:
         """Perform the initial authentication flow.
 
@@ -70,11 +76,14 @@ class TicketAuth:
             ssl: SSL context or bool to control certificate verification.
                 Defaults to None (aiohttp's default). Pass the backend's
                 SSL context to ensure consistent verification behaviour.
+            proxy: HTTP proxy URL, forwarded to the auth POST request.
 
         Raises:
             AuthenticationError: If authentication fails.
         """
-        ticket, csrf = await self._request_ticket(session, ticket_url, self._password, ssl=ssl)
+        ticket, csrf = await self._request_ticket(
+            session, ticket_url, self._password, ssl=ssl, proxy=proxy
+        )
 
         # Two-factor authentication: server signals NeedTFA
         if ticket == "NeedTFA" or (ticket and ticket.startswith("NeedTFA")):
@@ -89,6 +98,7 @@ class TicketAuth:
                 self._otp,
                 tfa_challenge=ticket,
                 ssl=ssl,
+                proxy=proxy,
             )
 
         self._ticket = ticket
@@ -96,7 +106,12 @@ class TicketAuth:
         self._acquired_at = time.monotonic()
 
     async def maybe_renew(
-        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+        self,
+        session: aiohttp.ClientSession,
+        ticket_url: str,
+        *,
+        ssl: Any = None,
+        proxy: str | None = None,
     ) -> None:
         """Renew the ticket if it is approaching expiration.
 
@@ -108,19 +123,26 @@ class TicketAuth:
         if age >= _TICKET_RENEW_INTERVAL:
             # Use current ticket as password for renewal (Proxmox supports this)
             assert self._ticket is not None
-            ticket, csrf = await self._request_ticket(session, ticket_url, self._ticket, ssl=ssl)
+            ticket, csrf = await self._request_ticket(
+                session, ticket_url, self._ticket, ssl=ssl, proxy=proxy
+            )
             self._ticket = ticket
             self._csrf_token = csrf
             self._acquired_at = time.monotonic()
 
     async def ensure_ready(
-        self, session: aiohttp.ClientSession, ticket_url: str, *, ssl: Any = None
+        self,
+        session: aiohttp.ClientSession,
+        ticket_url: str,
+        *,
+        ssl: Any = None,
+        proxy: str | None = None,
     ) -> None:
         """Authenticate or renew the ticket as needed before a request."""
         if not self.is_authenticated:
-            await self.authenticate(session, ticket_url, ssl=ssl)
+            await self.authenticate(session, ticket_url, ssl=ssl, proxy=proxy)
         else:
-            await self.maybe_renew(session, ticket_url, ssl=ssl)
+            await self.maybe_renew(session, ticket_url, ssl=ssl, proxy=proxy)
 
     def build_headers(self, method: str) -> dict[str, str]:
         """Return request headers for the given HTTP method."""
@@ -147,6 +169,7 @@ class TicketAuth:
         *,
         tfa_challenge: str | None = None,
         ssl: Any = None,
+        proxy: str | None = None,
     ) -> tuple[str, str]:
         """POST to /access/ticket and return (ticket, csrf_token).
 
@@ -155,6 +178,7 @@ class TicketAuth:
             ticket_url: Full URL for the ticket endpoint.
             password: Password or OTP code (for the second 2FA step).
             tfa_challenge: The challenge ticket returned in the first 2FA step.
+            proxy: HTTP proxy URL to use for this request.
 
         Returns:
             Tuple of (ticket, csrf_prevention_token).
@@ -170,7 +194,7 @@ class TicketAuth:
             payload["tfa-challenge"] = tfa_challenge
 
         try:
-            async with session.post(ticket_url, data=payload, ssl=ssl) as response:
+            async with session.post(ticket_url, data=payload, ssl=ssl, proxy=proxy) as response:
                 raw = await response.json(content_type=None)
 
                 if response.status != 200:
@@ -191,6 +215,10 @@ class TicketAuth:
 
                 return ticket, csrf or ""
 
+        except asyncio.TimeoutError as exc:
+            raise AuthenticationError(
+                f"Proxmox authentication timed out connecting to {ticket_url}"
+            ) from exc
         except aiohttp.ClientError as exc:
             raise AuthenticationError(
                 f"Network error during Proxmox authentication: {exc}"
